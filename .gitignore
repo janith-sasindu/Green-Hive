@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.apk
+*.aab
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE & System files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# React Native / Expo / Mobile
+.expo/
+web-build/
+*.log
+
+# Temp & Cache
+*.tmp
+.cache/
