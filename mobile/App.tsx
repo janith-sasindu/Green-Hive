@@ -1,20 +1,15 @@
 import "./global.css";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import WelcomeScreen from "./src/screens/auth/WelcomeScreen";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Green Hive Mobile App</Text>
-    </View>
+   <SafeAreaProvider>
+    <WelcomeScreen/>
+   </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#df0b0b",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+
