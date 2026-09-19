@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // API Base Client Configuration
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/api', // Replace with production backend URL / local IP
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
