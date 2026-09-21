@@ -6,9 +6,9 @@ import WelcomeScreen from "./src/screens/auth/WelcomeScreen";
 
 export default function App() {
   return (
-   <SafeAreaProvider>
-    <WelcomeScreen/>
-   </SafeAreaProvider>
+    <SafeAreaProvider>
+      <WelcomeScreen />
+    </SafeAreaProvider>
   );
 }
 
