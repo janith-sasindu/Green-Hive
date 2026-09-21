@@ -33,6 +33,7 @@ export default function WelcomeScreen({
 
     return(
         <View className="flex-1 bg-[#1c5d26]">
+            <View className="flex-[0.55] bg-[#1c5d26]">
             <StatusBar barStyle="light-content" backgroundColor="#1a5323"/>
 
             {/*Top Section*/}
@@ -42,7 +43,7 @@ export default function WelcomeScreen({
                     {/*logo*/}
                     <View className="item-center justify-center mb-5">
                         <Image source={require('../../assets/logo.png')}
-                        className="w-48 h-32"
+                        className="w-48 h-32 self-center margin mt-[120px]"
                         resizeMode="contain"/>
                     </View>
                     <Text className="text-white text-x5 font-extrabold tracking-widest text-center mb-2.5">
@@ -51,11 +52,34 @@ export default function WelcomeScreen({
 
                     {/* Subtitle*/}
 
-                    <Text className="text-[#d1e7d4] text-x5 text-center leading-relaxed font-normal"></Text>
+                    <Text className="text-[#d1e7d4] text-x5 text-center leading-relaxed font-normal">
+                        Sri Lanka's agricultural marketplace — connecting{'\n'}
+            farmers, sellers & transporters
+                    </Text>
                 </ScrollView>
-
             </SafeAreaView>
+         </View>
+
+
+            <View className="flex-[0.45] bg-white rounded-t-[40px] px-6 pt-5">
+
+                {/* feature badges */}
+                <View className="flex-row flex-wrap justify-center gap-2">
+                    <View className="bg-[#1c5d26] rounded-full px-4 py-2">
+                        <Text className="text-white text-xs font-medium">
+                             🌿 Farm Fresh
+                        </Text>
+                            
+                         
+
+                    </View>
+
+                </View>
+
+            </View>
+
         </View>
     )
+
 }
 
