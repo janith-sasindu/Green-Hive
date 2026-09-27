@@ -109,8 +109,47 @@ export default function WelcomeScreen({
                         </Text>
                     </TouchableOpacity>
                 </View>
-            </View>
 
+                {/* Quick move */}
+        <View className="mt-8">
+
+    <View className="flex-row justify-between gap-2">
+        {/* Farmer */}
+        <TouchableOpacity
+            onPress={() => handleQuickDemo('farmer')}
+            activeOpacity={0.7}
+            className="flex-1 bg-[#e8f5e9] border border-[#c8e6c9] rounded-xl py-3 items-center justify-center"
+        >
+            <Text className="text-[#1c5d26] text-xs font-bold" numberOfLines={1}>
+                🌾 Farmer
+            </Text>
+        </TouchableOpacity>
+
+        {/* Retail Seller */}
+        <TouchableOpacity
+            onPress={() => handleQuickDemo('seller')}
+            activeOpacity={0.7}
+            className="flex-1 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl py-3 items-center justify-center"
+        >
+            <Text className="text-[#1d4ed8] text-xs font-bold" numberOfLines={1}>
+                🏪 Retail Seller
+            </Text>
+        </TouchableOpacity>
+
+        {/* Transporter */}
+        <TouchableOpacity
+            onPress={() => handleQuickDemo('transporter')}
+            activeOpacity={0.7}
+            className="flex-1 bg-[#fffbeb] border border-[#fde68a] rounded-xl py-3 items-center justify-center"
+        >
+            <Text className="text-[#b45309] text-xs font-bold" numberOfLines={1}>
+                🚛 Transporter
+            </Text>
+        </TouchableOpacity>
+    </View>
+</View>
+
+            </View>
         </View>
     )
 
