@@ -89,7 +89,26 @@ export default function WelcomeScreen({
                         </Text>  
                     </View>                    
                 </View>
+                {/* Buttons */}
 
+                <View className="mt-6 gap-3">
+                    <TouchableOpacity onPress={handleGetStarted}
+                    activeOpacity={0.8}
+                    className="bg-[#1c5d26] rounded-2xl py-4 items-center justify-center shadow-sm">
+                        <Text className="text-white text-base font-bold">
+                            Get Started
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                <View className="mt-6 gap-3">
+                    <TouchableOpacity onPress={handleGetStarted}
+                    activeOpacity={0.8}
+                    className="bg-[#e8f5e9] rounded-2xl py-4 items-center justify-center shadow-sm cursor-pointer">
+                        <Text className="text-[#1c5d26] text-base font-bold">
+                            Get Started
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
         </View>
