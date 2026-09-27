@@ -65,15 +65,29 @@ export default function WelcomeScreen({
 
                 {/* feature badges */}
                 <View className="flex-row flex-wrap justify-center gap-2">
-                    <View className="bg-[#1c5d26] rounded-full px-4 py-2">
-                        <Text className="text-white text-xs font-medium">
-                             🌿 Farm Fresh
-                        </Text>
-                            
-                         
-
+                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
+                        <Text className="text-[#1c5d26] text-xs font-medium">
+                             🌿 Farm Fresh 
+                        </Text>  
                     </View>
-
+                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
+                        <Text className="text-[#1c5d26] text-xs font-medium">
+                            🔒 Secure Payment 
+                        </Text>  
+                    </View>                    
+                </View>
+                {/*Row 2*/}
+                <View className="flex-row flex-wrap justify-center gap-2">
+                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
+                        <Text className="text-[#1c5d26] text-xs font-medium">
+                          🚛  Transport Network 
+                        </Text>  
+                    </View>
+                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
+                        <Text className="text-[#1c5d26] text-xs font-medium">
+                            ✅ Verifed Users 
+                        </Text>  
+                    </View>                    
                 </View>
 
             </View>
