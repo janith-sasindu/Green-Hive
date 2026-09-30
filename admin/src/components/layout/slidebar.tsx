@@ -82,15 +82,17 @@ export default function Sidebar({
         {/* {Scrollable upper area} */}
         <div className='flex-1 overflow-y-auto'>
                     {/* Top Header Section with Logo & Brand */}
-        <div className='p-5 border-b border-slate-100 flex flex-col items-center text-center bg-gradient-to-b from-emerald-950 via-emerald-900 to-emerald-800 text-white rounded-b-2xl shadow-sm'>
+        <div className='relative p-5 flex flex-col items-center text-center bg-gradient-to-b from-emerald-950 via-emerald-900 to-emerald-900 text-white rounded-b-2xl overflow-hidden shadow-sm'>
             <img
             src={logo}
             alt='Green Hive Logo'
             className='w-20 h-20 object-contain drop-shadow-md mb-2'/>
-            <p className='text-[10px] tracking-wider font-semibold text-emerald-200/90 uppercase'>
+            <p className='text-[10px] tracking-wider font-semibold text-emerald-200/90 uppercase relative z-10'>
               CONNECT · TRADE · TRANSPORT · GROW
 </p>
+ <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white/40 to-transparent backdrop-blur-[1px] pointer-events-none" />
         </div>
+
         {/* Admin tags */}
         <div className='px-5 pt-4 pb-2'>
             <span className='inline-flex item-center px-3 py-1 bg-emerald-50 text-xs font-semibold rounded-full text-emerald-700 border border-emerald-200'>
