@@ -147,11 +147,10 @@ export default function WelcomeScreen({
             </Text>
         </TouchableOpacity>
     </View>
-</View>
+</View>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
             </View>
         </View>
     )
-
+                                                                    
 }
-
