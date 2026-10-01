@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import { useState } from "react";
 import {Moon,Sun} from "lucide-react";
 
 interface HeaderProps {
