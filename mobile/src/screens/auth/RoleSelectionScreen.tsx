@@ -111,6 +111,20 @@ const RoleSelectionScreen = ({
                     description="Offer transport services for agricultural goods"
                     onPress={() => handleRoleSelect("Transporter")}
                 />
+                {/* Sign In */}
+                <View className="mt-7 flex-row items-center justify-center">
+                    <Text className="text-[10px] text-[#89918D]">
+                        Already have an account?
+                    </Text>
+
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate("Login")}
+                    >
+                        <Text className="text-[10px] font-medium text-[#16853A]">
+                            Sign In
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
         </SafeAreaView>
