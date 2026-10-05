@@ -10,7 +10,7 @@ interface welcomeScreenProps {
 export default function WelcomeScreen({
     navigation}: welcomeScreenProps){
         const handleGetStarted = () => {
-            navigation?.navigate('Register');
+            navigation?.navigate('RoleSelection');
         };
 
         const handleSignIn = ()=>{
