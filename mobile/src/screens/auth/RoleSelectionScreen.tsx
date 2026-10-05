@@ -96,6 +96,21 @@ const RoleSelectionScreen = ({
                     description="List and sell your farm produce directly to buyers"
                     onPress={() => handleRoleSelect("Farmer")}
                 />
+                {/* Retail Seller */}
+                <RoleCard
+                    icon="🏪"
+                    title="Retail Seller"
+                    description="Browse and purchase farm products for your business"
+                    onPress={() => handleRoleSelect("Retail Seller")}
+                />
+
+                {/* Transporter */}
+                <RoleCard
+                    icon="🚚"
+                    title="Transporter"
+                    description="Offer transport services for agricultural goods"
+                    onPress={() => handleRoleSelect("Transporter")}
+                />
             </View>
 
         </SafeAreaView>
