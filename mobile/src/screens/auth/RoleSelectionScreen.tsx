@@ -42,8 +42,22 @@ const RoleSelectionScreen = ({
                     resizeMode="contain"
 
                 />
+                {/* Step */}
+                <Text className="mb-0.5 text-[9px] font-medium text-[#B9E2C1]">
+                    Step 1 of 4
+                </Text>
 
+                {/* Title */}
+                <Text className="mb-0.5 text-base font-bold text-white">
+                    Choose your role
+                </Text>
+
+                {/* Subtitle */}
+                <Text className="text-[10px] text-[#D9EEDC]">
+                    How will you use Green Hive?
+                </Text>
             </View>
+
         </SafeAreaView>
     );
 };
