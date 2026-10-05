@@ -13,34 +13,6 @@ interface RoleSelectionScreenProps {
     navigation: any;
 }
 
-interface RoleCardProps {
-    icon: string;
-    title: string;
-    description: string;
-    onPress: () => void;
-}
-
-const RoleCard = ({ icon, title, description, onPress }: RoleCardProps) => (
-    <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.8}
-        className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100"
-    >
-        <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-[#E8F5E9]">
-            <Text className="text-2xl">{icon}</Text>
-        </View>
-        <View className="flex-1">
-            <View className="flex-row items-center justify-between">
-                <Text className="text-base font-bold text-gray-800">{title}</Text>
-                <Ionicons name="chevron-forward" size={18} color="#176B2C" />
-            </View>
-            <Text className="mt-1 text-xs text-gray-500 leading-relaxed">
-                {description}
-            </Text>
-        </View>
-    </TouchableOpacity>
-);
-
 
 const RoleSelectionScreen = ({
     navigation,
@@ -130,5 +102,52 @@ const RoleSelectionScreen = ({
         </SafeAreaView>
     );
 };
+interface RoleCardProps {
+    icon: string;
+    title: string;
+    description: string;
+    onPress: () => void;
+}
+
+const RoleCard = ({
+    icon,
+    title,
+    description,
+    onPress,
+}: RoleCardProps) => {
+    return (
+        <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={onPress}
+            className="mb-2 flex-row items-center rounded-xl bg-white px-3 py-3 shadow-sm"
+        >
+            {/* Icon */}
+            <View className="mr-2 w-7 items-center justify-center">
+                <Text className="text-[22px]">
+                    {icon}
+                </Text>
+            </View>
+
+            {/* Text */}
+            <View className="flex-1 pr-1">
+                <Text className="mb-0.5 text-xs font-medium text-[#111111]">
+                    {title}
+                </Text>
+
+                <Text className="text-[9.5px] leading-[13px] text-[#777777]">
+                    {description}
+                </Text>
+            </View>
+
+            {/* Arrow */}
+            <Ionicons
+                name="chevron-forward"
+                size={18}
+                color="#CBD2D0"
+            />
+        </TouchableOpacity>
+    );
+};
+
 
 export default RoleSelectionScreen;
