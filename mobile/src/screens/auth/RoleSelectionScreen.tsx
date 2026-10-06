@@ -67,13 +67,9 @@ const RoleSelectionScreen = ({
     const isSmallDevice = screenHeight < 700;
 
     const handleRoleSelect = (role: string) => {
-        if (role === "Farmer") {
-            navigation.navigate("FarmerRegistration");
-        } else if (role === "Retail Seller") {
-            navigation.navigate("SellerRegistration");
-        } else if (role === "Transporter") {
-            navigation.navigate("TransporterRegistration");
-        }
+        navigation.navigate("CreateAccount", {
+            role: role,
+        });
     };
 
     return (
@@ -176,5 +172,3 @@ const RoleSelectionScreen = ({
 };
 
 export default RoleSelectionScreen;
-
-
