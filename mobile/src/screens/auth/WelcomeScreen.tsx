@@ -1,157 +1,182 @@
 import React from "react";
-import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView, StatusBar} from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import {Colors} from '../../constants/colors'
+import {
+    Text,
+    View,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    StatusBar,
+    useWindowDimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-interface welcomeScreenProps {
-    navigation?:any;
+interface WelcomeScreenProps {
+    navigation?: any;
 }
 
-export default function WelcomeScreen({
-    navigation}: welcomeScreenProps){
-        const handleGetStarted = () => {
-            navigation?.navigate('Register');
-        };
+export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
+    const { height: screenHeight } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700;
 
-        const handleSignIn = ()=>{
-            navigation?.navigate('Login')
-        };
-
-        const handleQuickDemo = (role: 'farmer' | 'seller' | 'transporter') =>{
-            switch(role){
-                case 'farmer':
-        navigation?.navigate('FarmerHome');
-        break;
-      case 'seller':
-        navigation?.navigate('SellerHome');
-        break;
-      case 'transporter':
-        navigation?.navigate('TransporterHome');
-        break;
-            }
+    const handleGetStarted = () => {
+        navigation?.navigate("RoleSelection");
     };
 
-    return(
-        <View className="flex-1 bg-[#1c5d26]">
-            <View className="flex-[0.55] bg-[#1c5d26]">
-            <StatusBar barStyle="light-content" backgroundColor="#1a5323"/>
+    const handleSignIn = () => {
+        navigation?.navigate("Login");
+    };
 
-            {/*Top Section*/}
-            <SafeAreaView edges={['top']} className="flex-1 justify-center">
-                <ScrollView contentContainerClassName="item-center justify-center px-6 py-5" showsVerticalScrollIndicator={false} bounces={false}>
-                    
-                    {/*logo*/}
-                    <View className="item-center justify-center mb-5">
-                        <Image source={require('../../assets/logo.png')}
-                        className="w-48 h-32 self-center margin mt-[120px]"
-                        resizeMode="contain"/>
-                    </View>
-                    <Text className="text-white text-x5 font-extrabold tracking-widest text-center mb-2.5">
-                        CONNECT TRADE TRANSPORT GROW
+    const handleQuickDemo = (role: "farmer" | "seller" | "transporter") => {
+        switch (role) {
+            case "farmer":
+                navigation?.navigate("FarmerHome");
+                break;
+            case "seller":
+                navigation?.navigate("SellerHome");
+                break;
+            case "transporter":
+                navigation?.navigate("TransporterHome");
+                break;
+        }
+    };
+
+    return (
+        <SafeAreaView className="flex-1 bg-[#1c5d26]" edges={["top", "bottom"]}>
+            <StatusBar barStyle="light-content" backgroundColor="#1c5d26" />
+
+            <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                bounces={false}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Top Section */}
+                <View
+                    className={`items-center justify-center px-6 ${
+                        isSmallDevice ? "py-6" : "py-10 flex-1"
+                    }`}
+                >
+                    {/* Logo */}
+                    <Image
+                        source={require("../../assets/logo.png")}
+                        style={{
+                            width: isSmallDevice ? 160 : 200,
+                            height: isSmallDevice ? 90 : 120,
+                        }}
+                        resizeMode="contain"
+                        className="mb-4"
+                    />
+
+                    {/* Tagline */}
+                    <Text className="mb-2 text-center text-xs font-extrabold tracking-widest text-white">
+                        CONNECT • TRADE • TRANSPORT • GROW
                     </Text>
 
-                    {/* Subtitle*/}
-
-                    <Text className="text-[#d1e7d4] text-x5 text-center leading-relaxed font-normal">
-                        Sri Lanka's agricultural marketplace — connecting{'\n'}
-            farmers, sellers & transporters
+                    {/* Subtitle */}
+                    <Text className="text-center text-xs font-normal leading-relaxed text-[#d1e7d4] px-2">
+                        Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
                     </Text>
-                </ScrollView>
-            </SafeAreaView>
-         </View>
+                </View>
 
-
-            <View className="flex-[0.45] bg-white rounded-t-[40px] px-6 pt-5">
-
-                {/* feature badges */}
-                <View className="flex-row flex-wrap justify-center gap-2">
-                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
-                        <Text className="text-[#1c5d26] text-xs font-medium">
-                             🌿 Farm Fresh 
-                        </Text>  
+                {/* Bottom Card */}
+                <View className="rounded-t-[36px] bg-white px-6 pt-6 pb-8 shadow-lg">
+                    {/* Feature Badges */}
+                    <View className="flex-row flex-wrap justify-center gap-2 mb-6">
+                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
+                            <Text className="text-xs font-semibold text-[#1c5d26]">
+                                🌿 Farm Fresh
+                            </Text>
+                        </View>
+                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
+                            <Text className="text-xs font-semibold text-[#1c5d26]">
+                                🔒 Secure Payment
+                            </Text>
+                        </View>
+                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
+                            <Text className="text-xs font-semibold text-[#1c5d26]">
+                                🚛 Transport Network
+                            </Text>
+                        </View>
+                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
+                            <Text className="text-xs font-semibold text-[#1c5d26]">
+                                ✅ Verified Users
+                            </Text>
+                        </View>
                     </View>
-                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
-                        <Text className="text-[#1c5d26] text-xs font-medium">
-                            🔒 Secure Payment 
-                        </Text>  
-                    </View>                    
-                </View>
-                {/*Row 2*/}
-                <View className="flex-row flex-wrap justify-center gap-2">
-                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
-                        <Text className="text-[#1c5d26] text-xs font-medium">
-                          🚛  Transport Network 
-                        </Text>  
+
+                    {/* Action Buttons */}
+                    <View className="gap-3">
+                        <TouchableOpacity
+                            onPress={handleGetStarted}
+                            activeOpacity={0.8}
+                            className="items-center justify-center rounded-2xl bg-[#1c5d26] py-4 shadow-sm"
+                        >
+                            <Text className="text-base font-bold text-white">
+                                Get Started
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={handleSignIn}
+                            activeOpacity={0.8}
+                            className="items-center justify-center rounded-2xl bg-[#e8f5e9] py-4 shadow-sm"
+                        >
+                            <Text className="text-base font-bold text-[#1c5d26]">
+                                Sign In
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                    <View className="bg-[#e8f5e9] rounded-full px-4 py-2">
-                        <Text className="text-[#1c5d26] text-xs font-medium">
-                            ✅ Verifed Users 
-                        </Text>  
-                    </View>                    
-                </View>
-                {/* Buttons */}
 
-                <View className="mt-6 gap-3">
-                    <TouchableOpacity onPress={handleGetStarted}
-                    activeOpacity={0.8}
-                    className="bg-[#1c5d26] rounded-2xl py-4 items-center justify-center shadow-sm">
-                        <Text className="text-white text-base font-bold">
-                            Get Started
+                    {/* Quick Demo Section */}
+                    <View className="mt-7">
+                        <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                            Quick Demo Access
                         </Text>
-                    </TouchableOpacity>
+                        <View className="flex-row justify-between gap-2">
+                            {/* Farmer */}
+                            <TouchableOpacity
+                                onPress={() => handleQuickDemo("farmer")}
+                                activeOpacity={0.7}
+                                className="flex-1 items-center justify-center rounded-xl border border-[#c8e6c9] bg-[#e8f5e9] py-3"
+                            >
+                                <Text
+                                    className="text-xs font-bold text-[#1c5d26]"
+                                    numberOfLines={1}
+                                >
+                                    🌾 Farmer
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Retail Seller */}
+                            <TouchableOpacity
+                                onPress={() => handleQuickDemo("seller")}
+                                activeOpacity={0.7}
+                                className="flex-1 items-center justify-center rounded-xl border border-[#bfdbfe] bg-[#eff6ff] py-3"
+                            >
+                                <Text
+                                    className="text-xs font-bold text-[#1d4ed8]"
+                                    numberOfLines={1}
+                                >
+                                    🏪 Retail Seller
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Transporter */}
+                            <TouchableOpacity
+                                onPress={() => handleQuickDemo("transporter")}
+                                activeOpacity={0.7}
+                                className="flex-1 items-center justify-center rounded-xl border border-[#fde68a] bg-[#fffbeb] py-3"
+                            >
+                                <Text
+                                    className="text-xs font-bold text-[#b45309]"
+                                    numberOfLines={1}
+                                >
+                                    🚛 Transporter
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                <View className="mt-6 gap-3">
-                    <TouchableOpacity onPress={handleGetStarted}
-                    activeOpacity={0.8}
-                    className="bg-[#e8f5e9] rounded-2xl py-4 items-center justify-center shadow-sm cursor-pointer">
-                        <Text className="text-[#1c5d26] text-base font-bold">
-                            Get Started
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Quick move */}
-        <View className="mt-8">
-
-    <View className="flex-row justify-between gap-2">
-        {/* Farmer */}
-        <TouchableOpacity
-            onPress={() => handleQuickDemo('farmer')}
-            activeOpacity={0.7}
-            className="flex-1 bg-[#e8f5e9] border border-[#c8e6c9] rounded-xl py-3 items-center justify-center"
-        >
-            <Text className="text-[#1c5d26] text-xs font-bold" numberOfLines={1}>
-                🌾 Farmer
-            </Text>
-        </TouchableOpacity>
-
-        {/* Retail Seller */}
-        <TouchableOpacity
-            onPress={() => handleQuickDemo('seller')}
-            activeOpacity={0.7}
-            className="flex-1 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl py-3 items-center justify-center"
-        >
-            <Text className="text-[#1d4ed8] text-xs font-bold" numberOfLines={1}>
-                🏪 Retail Seller
-            </Text>
-        </TouchableOpacity>
-
-        {/* Transporter */}
-        <TouchableOpacity
-            onPress={() => handleQuickDemo('transporter')}
-            activeOpacity={0.7}
-            className="flex-1 bg-[#fffbeb] border border-[#fde68a] rounded-xl py-3 items-center justify-center"
-        >
-            <Text className="text-[#b45309] text-xs font-bold" numberOfLines={1}>
-                🚛 Transporter
-            </Text>
-        </TouchableOpacity>
-    </View>
-</View>
-
-            </View>
-        </View>
-    )
-
-}
-
+            </ScrollView>
+        </SafeAreaView>
+    );
+}
