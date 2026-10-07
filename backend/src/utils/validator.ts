@@ -102,6 +102,16 @@ export class Validator {
     return value;
   }
 
+  /** A positive whole number, e.g. the id of another record. */
+  positiveInteger(field: string): number {
+    const value = this.positiveNumber(field, { max: Number.MAX_SAFE_INTEGER });
+    if (value !== 0 && !Number.isInteger(value)) {
+      this.fail(field, `${toLabel(field)} must be a whole number`);
+      return 0;
+    }
+    return value;
+  }
+
   oneOf<T extends string>(field: string, allowed: readonly T[]): T {
     const value = this.source[field];
     const match = allowed.find((option) => option === value);

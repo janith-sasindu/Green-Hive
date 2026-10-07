@@ -105,6 +105,67 @@ export async function listAvailableProducts(
   return { products: rows.map(toProduct), total: countRows[0].total };
 }
 
+interface LockedAdvertisementRow extends RowDataPacket {
+  id: number;
+  farmer_id: number;
+  product_name: string;
+  image_url: string | null;
+  quantity_available_kg: number;
+  unit_price_lkr: number;
+  status: MarketplaceProduct['status'];
+  within_period: number;
+  pickup_address: string;
+}
+
+export interface LockedAdvertisement {
+  id: number;
+  farmerId: number;
+  productName: string;
+  imageUrl: string | null;
+  quantityAvailableKg: number;
+  unitPriceLkr: number;
+  pickupAddress: string;
+  /** Listed and not past its availability period. */
+  isOpenForOrders: boolean;
+}
+
+/**
+ * Reads an advertisement and locks its row until the transaction ends, so two sellers
+ * ordering at the same time cannot both take the same stock.
+ */
+export async function lockAdvertisement(db: Db, advertisementId: number): Promise<LockedAdvertisement | null> {
+  const [rows] = await db.query<LockedAdvertisementRow[]>(
+    `SELECT a.id, a.farmer_id, a.product_name, a.image_url, a.quantity_available_kg, a.unit_price_lkr, a.status,
+            (a.availability_end_date >= CURDATE()) AS within_period,
+            COALESCE(fp.farm_address, a.location) AS pickup_address
+       FROM advertisements a
+       LEFT JOIN farmer_profiles fp ON fp.user_id = a.farmer_id
+      WHERE a.id = ?
+        FOR UPDATE OF a`,
+    [advertisementId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    farmerId: row.farmer_id,
+    productName: row.product_name,
+    imageUrl: row.image_url,
+    quantityAvailableKg: row.quantity_available_kg,
+    unitPriceLkr: row.unit_price_lkr,
+    pickupAddress: row.pickup_address,
+    isOpenForOrders: row.status === 'ACTIVE' && row.within_period === 1,
+  };
+}
+
+/** Sets the remaining stock of a locked advertisement and marks it sold out when nothing is left. */
+export async function setAdvertisementStock(db: Db, advertisementId: number, remainingKg: number): Promise<void> {
+  await db.query(
+    "UPDATE advertisements SET quantity_available_kg = ?, status = IF(? <= 0, 'SOLD_OUT', status) WHERE id = ?",
+    [remainingKg, remainingKg, advertisementId],
+  );
+}
+
 /** Returns the advertisement whatever its status, so a sold out product can still be shown. */
 export async function findProductById(db: Db, productId: number): Promise<MarketplaceProduct | null> {
   const [rows] = await db.query<ProductRow[]>(`${PRODUCT_SELECT} WHERE a.id = ?`, [productId]);

@@ -14,4 +14,8 @@ router.patch('/profile', asyncHandler(seller.updateProfile));
 router.get('/products', asyncHandler(seller.listProducts));
 router.get('/products/:productId', asyncHandler(seller.getProduct));
 
+router.post('/orders', asyncHandler(seller.createOrder));
+router.get('/orders', asyncHandler(seller.listOrders));
+router.get('/orders/:orderId', asyncHandler(seller.getOrder));
+
 export default router;

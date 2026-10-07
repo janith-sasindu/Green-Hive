@@ -53,6 +53,57 @@ export interface MarketplaceProduct {
   imageUrl: string | null;
 }
 
+export const DELIVERY_METHODS = ['SELF_PICKUP', 'TRANSPORTATION'] as const;
+
+export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
+
+export type OrderStatus = 'CREATED' | 'PAYMENT_HELD' | 'PICKED_UP' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED';
+
+/**
+ * Payment state as the seller sees it. NOT_REQUIRED and PENDING describe a payment that
+ * does not exist: self pickup needs no transport payment, and a transported order has none
+ * until a transporter is approved.
+ */
+export type PaymentStatus = 'NOT_REQUIRED' | 'PENDING' | 'HELD' | 'RELEASED' | 'REFUNDED';
+
+export interface SellerOrder {
+  id: number;
+  orderNumber: string;
+  sellerId: number;
+  farmerId: number;
+  productName: string;
+  quantityKg: number;
+  productPricePerKg: number;
+  totalProductAmount: number;
+  deliveryMethod: DeliveryMethod;
+  status: OrderStatus;
+  farmer: FarmerSummary;
+  pickupAddress: string;
+  imageUrl: string | null;
+  productPaymentStatus: PaymentStatus;
+  transportPaymentStatus: PaymentStatus;
+  /** Agreed transportation cost; null until the seller approves a transporter offer. */
+  transportCost: number | null;
+  transportJobId: number | null;
+  /** Set when the order was reserved from a requirement instead of an advertisement. */
+  requirementId: number | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export const ORDER_FILTERS = ['all', 'active', 'inTransit', 'completed'] as const;
+
+export type OrderFilter = (typeof ORDER_FILTERS)[number];
+
+/** Where and when the goods should be delivered when the seller requests transportation. */
+export interface TransportRequest {
+  deliveryLocation: string;
+  /** YYYY-MM-DD */
+  requiredDate: string;
+  /** HH:mm, 24 hour */
+  requiredTime: string;
+}
+
 export const PRODUCT_SORTS = ['recommended', 'priceLow', 'priceHigh', 'quantity'] as const;
 
 export type ProductSort = (typeof PRODUCT_SORTS)[number];
