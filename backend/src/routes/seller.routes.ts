@@ -8,6 +8,8 @@ const router = Router();
 // Every seller route needs a signed-in user with the SELLER role
 router.use(authenticate, authorize('SELLER'));
 
+router.get('/dashboard', asyncHandler(seller.getDashboard));
+
 router.get('/profile', asyncHandler(seller.getProfile));
 router.patch('/profile', asyncHandler(seller.updateProfile));
 

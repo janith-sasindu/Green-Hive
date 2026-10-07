@@ -189,6 +189,22 @@ export interface RequirementDetail extends SellerRequirement {
   fulfillmentRequests: FulfillmentRequestView[];
 }
 
+export interface DashboardStats {
+  activeOrders: number;
+  completedOrders: number;
+  inTransitOrders: number;
+  /** Everything the seller has paid, whether still held or already released. */
+  totalSpent: number;
+}
+
+/** Everything the seller's home screen shows, in one response. */
+export interface DashboardSummary {
+  stats: DashboardStats;
+  recentOrders: SellerOrder[];
+  openRequirements: SellerRequirement[];
+  unreadNotifications: number;
+}
+
 export const PRODUCT_SORTS = ['recommended', 'priceLow', 'priceHigh', 'quantity'] as const;
 
 export type ProductSort = (typeof PRODUCT_SORTS)[number];

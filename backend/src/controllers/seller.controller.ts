@@ -10,6 +10,7 @@ import {
   markNotificationRead,
   saveNotificationSettings,
 } from '../models/notification.model';
+import { getSellerDashboard } from '../services/sellerDashboard.service';
 import { confirmReceipt, getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
 import {
@@ -55,6 +56,14 @@ const readDeliveryChoice = (body: Validator) => {
     transport: deliveryMethod === 'TRANSPORTATION' ? readTransportRequest(body.nested('transport')) : undefined,
   };
 };
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+export async function getDashboard(req: Request, res: Response): Promise<void> {
+  res.json(await getSellerDashboard(currentUser(req).id));
+}
 
 // ---------------------------------------------------------------------------
 // Profile

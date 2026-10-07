@@ -132,6 +132,17 @@ export async function listSellerRequirements(db: Db, sellerId: number): Promise<
   return rows.map(toRequirement);
 }
 
+/** The seller's newest requirements that farmers can still respond to. */
+export async function listOpenRequirements(db: Db, sellerId: number, limit: number): Promise<SellerRequirement[]> {
+  const [rows] = await db.query<RequirementRow[]>(
+    `${REQUIREMENT_SELECT}
+      WHERE r.seller_id = ? AND r.status = 'OPEN' AND r.deadline_date >= CURDATE()
+      ORDER BY r.created_at DESC, r.id DESC LIMIT ?`,
+    [sellerId, limit],
+  );
+  return rows.map(toRequirement);
+}
+
 export async function findSellerRequirement(
   db: Db,
   sellerId: number,

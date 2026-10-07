@@ -1,6 +1,15 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import type { Db } from '../config/db';
-import type { DeliveryMethod, OrderFilter, OrderStatus, PaymentStatus, SellerOrder } from '../types/seller';
+import type {
+  DashboardStats,
+  DeliveryMethod,
+  OrderFilter,
+  OrderStatus,
+  PaymentStatus,
+  SellerOrder,
+} from '../types/seller';
+
+const MAX_LISTED_ORDERS = 200;
 
 interface OrderRow extends RowDataPacket {
   id: number;
@@ -150,12 +159,39 @@ export async function findSellerOrder(db: Db, sellerId: number, orderId: number)
   return rows.length > 0 ? toSellerOrder(rows[0]) : null;
 }
 
-export async function listSellerOrders(db: Db, sellerId: number, filter: OrderFilter): Promise<SellerOrder[]> {
+export async function listSellerOrders(
+  db: Db,
+  sellerId: number,
+  filter: OrderFilter,
+  limit = MAX_LISTED_ORDERS,
+): Promise<SellerOrder[]> {
   const [rows] = await db.query<OrderRow[]>(
-    `${ORDER_SELECT} WHERE o.seller_id = ? ${FILTER_CONDITIONS[filter]} ORDER BY o.created_at DESC, o.id DESC`,
-    [sellerId],
+    `${ORDER_SELECT} WHERE o.seller_id = ? ${FILTER_CONDITIONS[filter]}
+      ORDER BY o.created_at DESC, o.id DESC LIMIT ?`,
+    [sellerId, limit],
   );
   return rows.map(toSellerOrder);
+}
+
+/** Order counts for the dashboard and everything the seller has paid, held or released. */
+export async function getSellerOrderStats(db: Db, sellerId: number): Promise<DashboardStats> {
+  const [counts] = await db.query<(RowDataPacket & Omit<DashboardStats, 'totalSpent'>)[]>(
+    `SELECT COUNT(CASE WHEN status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 END) AS activeOrders,
+            COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completedOrders,
+            COUNT(CASE WHEN status IN ('PICKED_UP', 'DELIVERED') THEN 1 END) AS inTransitOrders
+       FROM orders WHERE seller_id = ?`,
+    [sellerId],
+  );
+  const [spent] = await db.query<(RowDataPacket & { total: number })[]>(
+    "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE payer_id = ? AND status IN ('HELD', 'RELEASED')",
+    [sellerId],
+  );
+  return {
+    activeOrders: counts[0].activeOrders,
+    completedOrders: counts[0].completedOrders,
+    inTransitOrders: counts[0].inTransitOrders,
+    totalSpent: spent[0].total,
+  };
 }
 
 /** Reads one of the seller's orders and locks it until the transaction ends. */
