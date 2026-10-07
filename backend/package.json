@@ -6,7 +6,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "db:setup": "ts-node-dev --transpile-only src/scripts/dbSetup.ts",
+    "db:seed": "ts-node-dev --transpile-only src/scripts/dbSetup.ts --seed",
+    "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,8 +24,13 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.7",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.14",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   }
