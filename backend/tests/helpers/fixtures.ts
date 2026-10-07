@@ -111,3 +111,17 @@ export async function createAdvertisement(farmerId: number, options: Advertiseme
 }
 
 export const authHeader = (user: TestUser): Record<string, string> => ({ Authorization: `Bearer ${user.token}` });
+
+/** Reads rows straight from the test database to check what an endpoint stored. */
+export async function selectRows<T = Record<string, unknown>>(sql: string, values: unknown[] = []): Promise<T[]> {
+  const [rows] = await pool.query(sql, values);
+  return rows as T[];
+}
+
+/** A date `days` from today as YYYY-MM-DD, in the same time zone the API uses. */
+export const dateFromToday = (days: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
