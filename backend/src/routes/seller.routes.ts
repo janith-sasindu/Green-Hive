@@ -17,6 +17,7 @@ router.get('/products/:productId', asyncHandler(seller.getProduct));
 router.post('/orders', asyncHandler(seller.createOrder));
 router.get('/orders', asyncHandler(seller.listOrders));
 router.get('/orders/:orderId', asyncHandler(seller.getOrder));
+router.post('/orders/:orderId/confirm-receipt', asyncHandler(seller.confirmOrderReceipt));
 
 router.get('/transport-jobs', asyncHandler(seller.listTransportJobs));
 router.get('/transport-jobs/:jobId', asyncHandler(seller.getTransportJob));

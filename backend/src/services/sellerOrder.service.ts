@@ -1,12 +1,19 @@
 import { Db, pool, withTransaction } from '../config/db';
 import { lockAdvertisement, setAdvertisementStock } from '../models/advertisement.model';
-import { findSellerOrder, insertOrder, listSellerOrders } from '../models/order.model';
-import { insertTransportJob } from '../models/transport.model';
+import {
+  findSellerOrder,
+  insertOrder,
+  listSellerOrders,
+  lockSellerOrder,
+  markOrderCompleted,
+} from '../models/order.model';
+import { insertTransportJob, markJobDelivered } from '../models/transport.model';
+import { findUserById } from '../models/user.model';
 import type { DeliveryMethod, OrderFilter, SellerOrder, TransportRequest } from '../types/seller';
 import { badRequest, conflict, notFound } from '../utils/AppError';
 import { formatKg, formatLkr, roundMoney } from '../utils/format';
 import { notify } from './notification.service';
-import { holdPayment } from './payment.service';
+import { holdPayment, releasePayment } from './payment.service';
 
 export interface PlaceOrderInput {
   advertisementId: number;
@@ -134,6 +141,61 @@ export async function placeOrder(sellerId: number, input: PlaceOrderInput): Prom
       pickupAddress: advertisement.pickupAddress,
       deliveryMethod: input.deliveryMethod,
       transport: input.transport,
+    });
+  });
+  return getSellerOrder(sellerId, orderId);
+}
+
+/**
+ * The seller confirms that the goods were received, which completes the order and releases
+ * the payment still on hold:
+ *  - self pickup: the product payment goes to the farmer;
+ *  - transportation: the transport payment goes to the transporter. The farmer was already
+ *    paid when the transporter confirmed pickup, so receipt cannot be confirmed before that.
+ */
+export async function confirmReceipt(sellerId: number, orderId: number): Promise<SellerOrder> {
+  await withTransaction(async (connection) => {
+    const order = await lockSellerOrder(connection, sellerId, orderId);
+    if (!order) throw notFound('Order not found');
+    if (order.status === 'COMPLETED') throw conflict('Receipt has already been confirmed for this order');
+
+    const transported = order.deliveryMethod === 'TRANSPORTATION';
+    const awaitingReceipt = transported
+      ? order.status === 'PICKED_UP' || order.status === 'DELIVERED'
+      : order.status === 'PAYMENT_HELD';
+    if (!awaitingReceipt) {
+      throw conflict(
+        transported && order.status === 'PAYMENT_HELD'
+          ? 'Receipt can be confirmed after the transporter has picked up the goods'
+          : 'Receipt cannot be confirmed for this order',
+      );
+    }
+
+    const released = await releasePayment(connection, order.id, transported ? 'TRANSPORTATION' : 'PRODUCT');
+    if (transported) await markJobDelivered(connection, order.id);
+    await markOrderCompleted(connection, order.id);
+
+    const payee = await findUserById(connection, released.payeeId);
+    const link = { type: 'ORDER' as const, id: order.id };
+    const title = transported ? 'Transportation Payment Released' : 'Product Payment Released';
+    const milestone = transported ? 'delivery' : 'receipt';
+    await notify(connection, {
+      userId: sellerId,
+      category: 'payments',
+      title,
+      message: `${formatLkr(released.amount)} was released to ${
+        payee?.name ?? 'the payee'
+      } after you confirmed ${milestone} of Order #${order.orderNumber}.`,
+      link,
+    });
+    await notify(connection, {
+      userId: released.payeeId,
+      category: 'payments',
+      title,
+      message: `${formatLkr(released.amount)} for Order #${
+        order.orderNumber
+      } was released to you after the buyer confirmed ${milestone}.`,
+      link,
     });
   });
   return getSellerOrder(sellerId, orderId);

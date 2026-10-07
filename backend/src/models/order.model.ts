@@ -44,6 +44,16 @@ export interface NewOrder {
   fulfillmentRequestId?: number;
 }
 
+/** The order fields the workflow rules need, read with a row lock. */
+export interface LockedOrder {
+  id: number;
+  orderNumber: string;
+  farmerId: number;
+  totalProductAmount: number;
+  deliveryMethod: DeliveryMethod;
+  status: OrderStatus;
+}
+
 // Each order has at most one payment of each type and at most one transport job
 const ORDER_SELECT = `
   SELECT o.id, o.order_number, o.seller_id, o.farmer_id, o.product_name, o.image_url, o.quantity_kg,
@@ -146,4 +156,30 @@ export async function listSellerOrders(db: Db, sellerId: number, filter: OrderFi
     [sellerId],
   );
   return rows.map(toSellerOrder);
+}
+
+/** Reads one of the seller's orders and locks it until the transaction ends. */
+export async function lockSellerOrder(db: Db, sellerId: number, orderId: number): Promise<LockedOrder | null> {
+  const [rows] = await db.query<OrderRow[]>(
+    `SELECT id, order_number, farmer_id, total_product_amount, delivery_method, status
+       FROM orders WHERE id = ? AND seller_id = ? FOR UPDATE`,
+    [orderId, sellerId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    orderNumber: row.order_number,
+    farmerId: row.farmer_id,
+    totalProductAmount: row.total_product_amount,
+    deliveryMethod: row.delivery_method,
+    status: row.status,
+  };
+}
+
+export async function markOrderCompleted(db: Db, orderId: number): Promise<void> {
+  await db.query<ResultSetHeader>(
+    "UPDATE orders SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP WHERE id = ?",
+    [orderId],
+  );
 }

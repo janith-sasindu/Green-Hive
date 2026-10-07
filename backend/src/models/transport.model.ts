@@ -205,6 +205,13 @@ export async function rejectOffer(db: Db, offerId: number): Promise<void> {
   await db.query<ResultSetHeader>("UPDATE transportation_offers SET status = 'REJECTED' WHERE id = ?", [offerId]);
 }
 
+/** Closes the job once the seller has confirmed that the goods arrived. */
+export async function markJobDelivered(db: Db, orderId: number): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE transportation_jobs SET status = 'GOODS_DELIVERED' WHERE order_id = ?", [
+    orderId,
+  ]);
+}
+
 export async function assignTransporter(db: Db, jobId: number, transporterId: number, cost: number): Promise<void> {
   await db.query<ResultSetHeader>(
     `UPDATE transportation_jobs

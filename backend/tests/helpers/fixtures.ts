@@ -1,5 +1,6 @@
 import type { ResultSetHeader } from 'mysql2';
-import { pool } from '../../src/config/db';
+import { pool, withTransaction } from '../../src/config/db';
+import { releasePayment } from '../../src/services/payment.service';
 import type { UserRole } from '../../src/types/auth';
 import { signToken } from '../../src/utils/jwt';
 
@@ -122,6 +123,18 @@ export async function createTransportOffer(
      VALUES (?, ?, ?, ?)`,
     [jobId, transporterId, proposedCost, estimatedDeliveryTime],
   );
+}
+
+/**
+ * Stands in for the transporter module's pickup confirmation: the goods are collected,
+ * so the order is in transit and the farmer's product payment is released.
+ */
+export async function simulatePickupConfirmation(orderId: number): Promise<void> {
+  await withTransaction(async (connection) => {
+    await releasePayment(connection, orderId, 'PRODUCT');
+    await connection.query("UPDATE orders SET status = 'PICKED_UP' WHERE id = ?", [orderId]);
+    await connection.query("UPDATE transportation_jobs SET status = 'GOODS_PICKED_UP' WHERE order_id = ?", [orderId]);
+  });
 }
 
 export const authHeader = (user: TestUser): Record<string, string> => ({ Authorization: `Bearer ${user.token}` });

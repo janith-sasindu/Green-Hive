@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { pool } from '../config/db';
 import { currentUser } from '../middleware/auth';
 import { findProductById, listAvailableProducts } from '../models/advertisement.model';
-import { getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
+import { confirmReceipt, getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
 import {
   approveTransportOffer,
@@ -114,6 +114,11 @@ export async function getOrder(req: Request, res: Response): Promise<void> {
   // The order screen also shows the delivery, so the job comes with it
   const transportJob = order.transportJobId ? await getSellerTransportJob(sellerId, order.transportJobId) : null;
   res.json({ order, transportJob });
+}
+
+export async function confirmOrderReceipt(req: Request, res: Response): Promise<void> {
+  const order = await confirmReceipt(currentUser(req).id, parseId(req.params.orderId, 'orderId'));
+  res.json({ order });
 }
 
 // ---------------------------------------------------------------------------
