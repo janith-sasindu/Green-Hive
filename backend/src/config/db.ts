@@ -17,7 +17,7 @@ export const pool = mysql.createPool({
 });
 
 /** The pool or a transaction connection. Models accept either so they can run inside a transaction. */
-export type Db = Pool | PoolConnection;
+export type Db = Pick<Pool, 'query'>;
 
 /**
  * Runs `work` in a single transaction: commits when it resolves and rolls back when it throws,
