@@ -1,7 +1,14 @@
 import type { Request, Response } from 'express';
+import { pool } from '../config/db';
 import { currentUser } from '../middleware/auth';
+import { findProductById, listAvailableProducts } from '../models/advertisement.model';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
-import { Validator } from '../utils/validator';
+import { PRODUCT_SORTS } from '../types/seller';
+import { notFound } from '../utils/AppError';
+import { parseId, queryInt, queryText, Validator } from '../utils/validator';
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 
 // ---------------------------------------------------------------------------
 // Profile
@@ -25,4 +32,28 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
   body.assertValid();
 
   res.json({ profile: await changeSellerProfile(currentUser(req).id, changes) });
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace: farmer advertisements
+// ---------------------------------------------------------------------------
+
+export async function listProducts(req: Request, res: Response): Promise<void> {
+  const result = await listAvailableProducts(pool, {
+    search: queryText(req.query.search),
+    category: queryText(req.query.category),
+    location: queryText(req.query.location),
+    verifiedOnly: req.query.verifiedOnly === 'true',
+    // An unknown sort falls back to the default order instead of failing the request
+    sort: PRODUCT_SORTS.find((sort) => sort === req.query.sort) ?? 'recommended',
+    limit: queryInt(req.query.limit, DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE),
+    offset: queryInt(req.query.offset, 0, 0, Number.MAX_SAFE_INTEGER),
+  });
+  res.json(result);
+}
+
+export async function getProduct(req: Request, res: Response): Promise<void> {
+  const product = await findProductById(pool, parseId(req.params.productId, 'productId'));
+  if (!product) throw notFound('Product not found');
+  res.json({ product });
 }

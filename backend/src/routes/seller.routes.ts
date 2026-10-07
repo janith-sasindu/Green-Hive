@@ -11,4 +11,7 @@ router.use(authenticate, authorize('SELLER'));
 router.get('/profile', asyncHandler(seller.getProfile));
 router.patch('/profile', asyncHandler(seller.updateProfile));
 
+router.get('/products', asyncHandler(seller.listProducts));
+router.get('/products/:productId', asyncHandler(seller.getProduct));
+
 export default router;

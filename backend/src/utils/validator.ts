@@ -155,6 +155,19 @@ export class Validator {
   }
 }
 
+/** A single text query parameter; missing, empty or repeated parameters give undefined. */
+export const queryText = (value: unknown, max = 100): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed === '' ? undefined : trimmed.slice(0, max);
+};
+
+/** A whole-number query parameter kept within [min, max], or the fallback when it is not a number. */
+export const queryInt = (value: unknown, fallback: number, min: number, max: number): number => {
+  const parsed = typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+  return Number.isInteger(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+};
+
 /** Parses a positive integer route parameter such as an order id. */
 export const parseId = (value: string | undefined, name = 'id'): number => {
   const id = Number(value);
