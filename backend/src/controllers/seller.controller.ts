@@ -2,6 +2,14 @@ import type { Request, Response } from 'express';
 import { pool } from '../config/db';
 import { currentUser } from '../middleware/auth';
 import { findProductById, listAvailableProducts } from '../models/advertisement.model';
+import {
+  countUnreadNotifications,
+  findNotificationSettings,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  saveNotificationSettings,
+} from '../models/notification.model';
 import { confirmReceipt, getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
 import {
@@ -220,4 +228,49 @@ export async function rejectRequest(req: Request, res: Response): Promise<void> 
     parseId(req.params.requestId, 'requestId'),
   );
   res.json({ requirement });
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export async function getNotifications(req: Request, res: Response): Promise<void> {
+  const userId = currentUser(req).id;
+  const limit = queryInt(req.query.limit, DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE);
+  res.json({
+    notifications: await listNotifications(pool, userId, limit),
+    unreadCount: await countUnreadNotifications(pool, userId),
+  });
+}
+
+export async function readNotification(req: Request, res: Response): Promise<void> {
+  const userId = currentUser(req).id;
+  const found = await markNotificationRead(pool, userId, parseId(req.params.notificationId, 'notificationId'));
+  if (!found) throw notFound('Notification not found');
+  res.json({ unreadCount: await countUnreadNotifications(pool, userId) });
+}
+
+export async function readAllNotifications(req: Request, res: Response): Promise<void> {
+  await markAllNotificationsRead(pool, currentUser(req).id);
+  res.json({ unreadCount: 0 });
+}
+
+export async function getNotificationSettings(req: Request, res: Response): Promise<void> {
+  res.json({ settings: await findNotificationSettings(pool, currentUser(req).id) });
+}
+
+export async function updateNotificationSettings(req: Request, res: Response): Promise<void> {
+  const body = Validator.of(req.body);
+  const settings = {
+    orders: body.boolean('orders'),
+    payments: body.boolean('payments'),
+    transportation: body.boolean('transportation'),
+    fulfillment: body.boolean('fulfillment'),
+    promotions: body.boolean('promotions'),
+    security: body.boolean('security'),
+  };
+  body.assertValid();
+
+  await saveNotificationSettings(pool, currentUser(req).id, settings);
+  res.json({ settings });
 }

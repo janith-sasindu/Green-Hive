@@ -30,4 +30,10 @@ router.get('/requirements/:requirementId', asyncHandler(seller.getRequirement));
 router.post('/fulfillment-requests/:requestId/accept', asyncHandler(seller.acceptRequest));
 router.post('/fulfillment-requests/:requestId/reject', asyncHandler(seller.rejectRequest));
 
+router.get('/notifications', asyncHandler(seller.getNotifications));
+router.post('/notifications/read-all', asyncHandler(seller.readAllNotifications));
+router.patch('/notifications/:notificationId/read', asyncHandler(seller.readNotification));
+router.get('/notification-settings', asyncHandler(seller.getNotificationSettings));
+router.put('/notification-settings', asyncHandler(seller.updateNotificationSettings));
+
 export default router;
