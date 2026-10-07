@@ -43,6 +43,11 @@ export class Validator {
     return new Validator(isRecord(value) ? value : {}, `${this.prefix}${field}.`, this.errors);
   }
 
+  /** Whether the field was sent at all; lets optional fields reuse the strict readers. */
+  has(field: string): boolean {
+    return this.source[field] !== undefined;
+  }
+
   string(field: string, options: { max?: number } = {}): string {
     const value = this.optionalString(field, options);
     if (value === undefined && !this.hasError(field)) this.fail(field, `${toLabel(field)} is required`);

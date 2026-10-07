@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth.routes';
+import sellerRoutes from './routes/seller.routes';
 
 /** The Express application, kept separate from server.ts so tests can call it without a port. */
 export const app = express();
@@ -14,6 +15,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/seller', sellerRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
