@@ -5,6 +5,13 @@ import { findProductById, listAvailableProducts } from '../models/advertisement.
 import { confirmReceipt, getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
 import {
+  acceptFulfillmentRequest,
+  createRequirement,
+  declineFulfillmentRequest,
+  getSellerRequirement,
+  getSellerRequirements,
+} from '../services/sellerRequirement.service';
+import {
   approveTransportOffer,
   getSellerTransportJob,
   getSellerTransportJobs,
@@ -30,6 +37,15 @@ const readTransportRequest = (transport: Validator): TransportRequest => {
     transport.fail('requiredDate', 'Required date cannot be in the past');
   }
   return request;
+};
+
+/** Reads how the seller wants to receive the goods: self pickup, or transportation with its details. */
+const readDeliveryChoice = (body: Validator) => {
+  const deliveryMethod = body.oneOf('deliveryMethod', DELIVERY_METHODS);
+  return {
+    deliveryMethod,
+    transport: deliveryMethod === 'TRANSPORTATION' ? readTransportRequest(body.nested('transport')) : undefined,
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -86,14 +102,12 @@ export async function getProduct(req: Request, res: Response): Promise<void> {
 
 export async function createOrder(req: Request, res: Response): Promise<void> {
   const body = Validator.of(req.body);
-  const deliveryMethod = body.oneOf('deliveryMethod', DELIVERY_METHODS);
   const requestedKg = body.positiveNumber('quantityKg', { max: MAX_ORDER_QUANTITY_KG });
   const input = {
     advertisementId: body.positiveInteger('advertisementId'),
     // Quantities are stored to two decimal places
     quantityKg: roundMoney(requestedKg),
-    deliveryMethod,
-    transport: deliveryMethod === 'TRANSPORTATION' ? readTransportRequest(body.nested('transport')) : undefined,
+    ...readDeliveryChoice(body),
   };
   if (requestedKg > 0 && input.quantityKg === 0) {
     body.fail('quantityKg', 'Quantity kg must be at least 0.01');
@@ -150,4 +164,60 @@ export async function rejectOffer(req: Request, res: Response): Promise<void> {
     parseId(req.params.offerId, 'offerId'),
   );
   res.json({ transportJob });
+}
+
+// ---------------------------------------------------------------------------
+// Requirements and farmer fulfillment requests
+// ---------------------------------------------------------------------------
+
+export async function listRequirements(req: Request, res: Response): Promise<void> {
+  res.json({ requirements: await getSellerRequirements(currentUser(req).id) });
+}
+
+export async function getRequirement(req: Request, res: Response): Promise<void> {
+  const requirement = await getSellerRequirement(
+    currentUser(req).id,
+    parseId(req.params.requirementId, 'requirementId'),
+  );
+  res.json({ requirement });
+}
+
+export async function postRequirement(req: Request, res: Response): Promise<void> {
+  const body = Validator.of(req.body);
+  const requirement = {
+    productName: body.string('productName', { max: 120 }),
+    category: body.string('category', { max: 60 }),
+    quantityNeededKg: roundMoney(body.positiveNumber('quantityNeededKg', { max: MAX_ORDER_QUANTITY_KG })),
+    maxBudgetPerKg: roundMoney(body.positiveNumber('maxBudgetPerKg')),
+    deliveryLocation: body.string('deliveryLocation'),
+    description: body.optionalString('description', { max: 1000 }) ?? '',
+    deadlineDate: body.date('deadlineDate'),
+  };
+  if (requirement.deadlineDate !== '' && requirement.deadlineDate < todayDateString()) {
+    body.fail('deadlineDate', 'Deadline date cannot be in the past');
+  }
+  body.assertValid();
+
+  res.status(201).json({ requirement: await createRequirement(currentUser(req).id, requirement) });
+}
+
+export async function acceptRequest(req: Request, res: Response): Promise<void> {
+  const body = Validator.of(req.body);
+  const reservation = readDeliveryChoice(body);
+  body.assertValid();
+
+  const order = await acceptFulfillmentRequest(
+    currentUser(req).id,
+    parseId(req.params.requestId, 'requestId'),
+    reservation,
+  );
+  res.status(201).json({ order });
+}
+
+export async function rejectRequest(req: Request, res: Response): Promise<void> {
+  const requirement = await declineFulfillmentRequest(
+    currentUser(req).id,
+    parseId(req.params.requestId, 'requestId'),
+  );
+  res.json({ requirement });
 }

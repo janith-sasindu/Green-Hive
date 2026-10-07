@@ -125,6 +125,21 @@ export async function createTransportOffer(
   );
 }
 
+/** A farmer's response to a seller requirement, as the farmer module will create it. */
+export async function createFulfillmentRequest(
+  requirementId: number,
+  farmerId: number,
+  offeredQuantityKg: number,
+  offeredPricePerKg: number,
+  notes = 'Can supply this week',
+): Promise<number> {
+  return insert(
+    `INSERT INTO fulfillment_requests (requirement_id, farmer_id, offered_quantity_kg, offered_price_per_kg, notes)
+     VALUES (?, ?, ?, ?, ?)`,
+    [requirementId, farmerId, offeredQuantityKg, offeredPricePerKg, notes],
+  );
+}
+
 /**
  * Stands in for the transporter module's pickup confirmation: the goods are collected,
  * so the order is in transit and the farmer's product payment is released.

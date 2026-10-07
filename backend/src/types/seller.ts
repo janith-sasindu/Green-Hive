@@ -145,6 +145,50 @@ export interface TransportJob extends TransportRequest {
   offers: TransportOffer[];
 }
 
+/** EXPIRED is also reported for an OPEN requirement whose deadline has passed. */
+export type RequirementStatus = 'OPEN' | 'FULFILLED' | 'EXPIRED';
+
+export interface NewRequirement {
+  productName: string;
+  category: string;
+  quantityNeededKg: number;
+  maxBudgetPerKg: number;
+  deliveryLocation: string;
+  description: string;
+  /** YYYY-MM-DD */
+  deadlineDate: string;
+}
+
+/** A product requirement the seller has published for farmers to fulfil. */
+export interface SellerRequirement extends NewRequirement {
+  id: number;
+  sellerId: number;
+  status: RequirementStatus;
+  createdAt: string;
+  /** Fulfillment requests still waiting for the seller's decision. */
+  pendingRequests: number;
+  /** The order that reserved this requirement, once a farmer has been accepted. */
+  orderId: number | null;
+}
+
+/** A farmer's response to one of the seller's requirements. */
+export interface FulfillmentRequestView {
+  id: number;
+  requirementId: number;
+  farmerId: number;
+  offeredQuantityKg: number;
+  offeredPricePerKg: number;
+  notes: string | null;
+  status: ResponseStatus;
+  submittedAt: string;
+  farmer: FarmerSummary;
+  pickupAddress: string;
+}
+
+export interface RequirementDetail extends SellerRequirement {
+  fulfillmentRequests: FulfillmentRequestView[];
+}
+
 export const PRODUCT_SORTS = ['recommended', 'priceLow', 'priceHigh', 'quantity'] as const;
 
 export type ProductSort = (typeof PRODUCT_SORTS)[number];

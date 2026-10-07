@@ -24,4 +24,10 @@ router.get('/transport-jobs/:jobId', asyncHandler(seller.getTransportJob));
 router.post('/transport-jobs/:jobId/offers/:offerId/approve', asyncHandler(seller.approveOffer));
 router.post('/transport-jobs/:jobId/offers/:offerId/reject', asyncHandler(seller.rejectOffer));
 
+router.post('/requirements', asyncHandler(seller.postRequirement));
+router.get('/requirements', asyncHandler(seller.listRequirements));
+router.get('/requirements/:requirementId', asyncHandler(seller.getRequirement));
+router.post('/fulfillment-requests/:requestId/accept', asyncHandler(seller.acceptRequest));
+router.post('/fulfillment-requests/:requestId/reject', asyncHandler(seller.rejectRequest));
+
 export default router;
