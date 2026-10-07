@@ -1,0 +1,113 @@
+import type { ResultSetHeader } from 'mysql2';
+import { pool } from '../../src/config/db';
+import type { UserRole } from '../../src/types/auth';
+import { signToken } from '../../src/utils/jwt';
+
+/**
+ * Creates records directly in the test database. Farmers, transporters and their
+ * advertisements, requests and offers belong to other modules, so tests insert them here
+ * instead of going through endpoints the seller API does not own.
+ */
+
+export interface TestUser {
+  id: number;
+  email: string;
+  /** A valid bearer token for this user. */
+  token: string;
+}
+
+let sequence = 0;
+const nextSequence = (): number => {
+  sequence += 1;
+  return sequence;
+};
+
+const insert = async (sql: string, values: unknown[]): Promise<number> => {
+  const [result] = await pool.query<ResultSetHeader>(sql, values);
+  return result.insertId;
+};
+
+interface UserOptions {
+  name?: string;
+  location?: string;
+  isVerified?: boolean;
+  rating?: number;
+}
+
+async function createUser(role: UserRole, options: UserOptions = {}): Promise<TestUser> {
+  const n = nextSequence();
+  const email = `${role.toLowerCase()}${n}@greenhive.test`;
+  const id = await insert(
+    `INSERT INTO users (name, email, phone, password_hash, role, location, is_verified, rating)
+     VALUES (?, ?, ?, 'fixture-accounts-cannot-log-in', ?, ?, ?, ?)`,
+    [
+      options.name ?? `Test ${role} ${n}`,
+      email,
+      `071${String(1000000 + n)}`,
+      role,
+      options.location ?? null,
+      options.isVerified ?? false,
+      options.rating ?? null,
+    ],
+  );
+  return { id, email, token: signToken({ id, role }) };
+}
+
+export async function createSeller(options: UserOptions & { businessName?: string; address?: string } = {}) {
+  const seller = await createUser('SELLER', options);
+  await insert('INSERT INTO seller_profiles (user_id, business_name, address) VALUES (?, ?, ?)', [
+    seller.id,
+    options.businessName ?? 'Test Market',
+    options.address ?? 'Test Market, Colombo 07',
+  ]);
+  return seller;
+}
+
+export async function createFarmer(options: UserOptions & { farmAddress?: string } = {}) {
+  const farmer = await createUser('FARMER', options);
+  if (options.farmAddress) {
+    await insert('INSERT INTO farmer_profiles (user_id, farm_address) VALUES (?, ?)', [farmer.id, options.farmAddress]);
+  }
+  return farmer;
+}
+
+export async function createTransporter(options: UserOptions & { vehicleType?: string } = {}) {
+  const transporter = await createUser('TRANSPORTER', options);
+  await insert('INSERT INTO transporter_profiles (user_id, vehicle_type) VALUES (?, ?)', [
+    transporter.id,
+    options.vehicleType ?? 'Isuzu Elf lorry',
+  ]);
+  return transporter;
+}
+
+interface AdvertisementOptions {
+  productName?: string;
+  category?: string;
+  quantityKg?: number;
+  pricePerKg?: number;
+  location?: string;
+  status?: 'ACTIVE' | 'SOLD_OUT' | 'CANCELLED';
+  /** Days from today until the advertisement stops being available; negative means it has ended. */
+  availableForDays?: number;
+}
+
+export async function createAdvertisement(farmerId: number, options: AdvertisementOptions = {}): Promise<number> {
+  return insert(
+    `INSERT INTO advertisements
+       (farmer_id, product_name, category, quantity_available_kg, unit_price_lkr, location, description,
+        availability_start_date, availability_end_date, status)
+     VALUES (?, ?, ?, ?, ?, ?, 'Test produce', CURDATE() - INTERVAL 30 DAY, CURDATE() + INTERVAL ? DAY, ?)`,
+    [
+      farmerId,
+      options.productName ?? 'Fresh Cabbage',
+      options.category ?? 'Vegetables',
+      options.quantityKg ?? 500,
+      options.pricePerKg ?? 80,
+      options.location ?? 'Nuwara Eliya',
+      options.availableForDays ?? 10,
+      options.status ?? 'ACTIVE',
+    ],
+  );
+}
+
+export const authHeader = (user: TestUser): Record<string, string> => ({ Authorization: `Bearer ${user.token}` });

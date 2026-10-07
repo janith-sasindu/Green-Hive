@@ -7,7 +7,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "db:setup": "ts-node-dev --transpile-only src/scripts/dbSetup.ts"
+    "db:setup": "ts-node-dev --transpile-only src/scripts/dbSetup.ts",
+    "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
