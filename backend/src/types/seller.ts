@@ -104,6 +104,47 @@ export interface TransportRequest {
   requiredTime: string;
 }
 
+export interface TransporterSummary {
+  id: number;
+  name: string;
+  vehicle: string | null;
+  rating: number | null;
+  /** Jobs this transporter has delivered on Green Hive. */
+  completedJobs: number;
+}
+
+export type TransportJobStatus = 'OPEN_FOR_BIDS' | 'TRANSPORTER_ASSIGNED' | 'GOODS_PICKED_UP' | 'GOODS_DELIVERED';
+
+/** State of a transporter offer or a farmer fulfillment request. */
+export type ResponseStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+/** A transporter's proposed cost for a job. */
+export interface TransportOffer {
+  id: number;
+  jobId: number;
+  transporterId: number;
+  proposedCost: number;
+  estimatedDeliveryTime: string | null;
+  status: ResponseStatus;
+  submittedAt: string;
+  transporter: TransporterSummary;
+}
+
+export interface TransportJob extends TransportRequest {
+  id: number;
+  jobNumber: string;
+  orderId: number;
+  orderNumber: string;
+  productName: string;
+  pickupLocation: string;
+  quantityKg: number;
+  assignedTransporterId: number | null;
+  agreedTransportCost: number | null;
+  status: TransportJobStatus;
+  /** Cheapest first. */
+  offers: TransportOffer[];
+}
+
 export const PRODUCT_SORTS = ['recommended', 'priceLow', 'priceHigh', 'quantity'] as const;
 
 export type ProductSort = (typeof PRODUCT_SORTS)[number];

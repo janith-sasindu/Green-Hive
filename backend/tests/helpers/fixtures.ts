@@ -110,6 +110,20 @@ export async function createAdvertisement(farmerId: number, options: Advertiseme
   );
 }
 
+/** A transporter's cost submission for a job, as the transporter module will create it. */
+export async function createTransportOffer(
+  jobId: number,
+  transporterId: number,
+  proposedCost: number,
+  estimatedDeliveryTime = '4 hours',
+): Promise<number> {
+  return insert(
+    `INSERT INTO transportation_offers (job_id, transporter_id, proposed_cost, estimated_delivery_time)
+     VALUES (?, ?, ?, ?)`,
+    [jobId, transporterId, proposedCost, estimatedDeliveryTime],
+  );
+}
+
 export const authHeader = (user: TestUser): Record<string, string> => ({ Authorization: `Bearer ${user.token}` });
 
 /** Reads rows straight from the test database to check what an endpoint stored. */

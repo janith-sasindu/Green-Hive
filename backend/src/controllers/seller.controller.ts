@@ -4,6 +4,12 @@ import { currentUser } from '../middleware/auth';
 import { findProductById, listAvailableProducts } from '../models/advertisement.model';
 import { getSellerOrder, getSellerOrders, placeOrder } from '../services/sellerOrder.service';
 import { changeSellerProfile, getSellerProfile } from '../services/sellerProfile.service';
+import {
+  approveTransportOffer,
+  getSellerTransportJob,
+  getSellerTransportJobs,
+  rejectTransportOffer,
+} from '../services/sellerTransport.service';
 import { DELIVERY_METHODS, ORDER_FILTERS, PRODUCT_SORTS, TransportRequest } from '../types/seller';
 import { notFound } from '../utils/AppError';
 import { roundMoney, todayDateString } from '../utils/format';
@@ -103,6 +109,40 @@ export async function listOrders(req: Request, res: Response): Promise<void> {
 }
 
 export async function getOrder(req: Request, res: Response): Promise<void> {
-  const order = await getSellerOrder(currentUser(req).id, parseId(req.params.orderId, 'orderId'));
-  res.json({ order });
+  const sellerId = currentUser(req).id;
+  const order = await getSellerOrder(sellerId, parseId(req.params.orderId, 'orderId'));
+  // The order screen also shows the delivery, so the job comes with it
+  const transportJob = order.transportJobId ? await getSellerTransportJob(sellerId, order.transportJobId) : null;
+  res.json({ order, transportJob });
+}
+
+// ---------------------------------------------------------------------------
+// Transportation
+// ---------------------------------------------------------------------------
+
+export async function listTransportJobs(req: Request, res: Response): Promise<void> {
+  res.json({ transportJobs: await getSellerTransportJobs(currentUser(req).id) });
+}
+
+export async function getTransportJob(req: Request, res: Response): Promise<void> {
+  const transportJob = await getSellerTransportJob(currentUser(req).id, parseId(req.params.jobId, 'jobId'));
+  res.json({ transportJob });
+}
+
+export async function approveOffer(req: Request, res: Response): Promise<void> {
+  const transportJob = await approveTransportOffer(
+    currentUser(req).id,
+    parseId(req.params.jobId, 'jobId'),
+    parseId(req.params.offerId, 'offerId'),
+  );
+  res.json({ transportJob });
+}
+
+export async function rejectOffer(req: Request, res: Response): Promise<void> {
+  const transportJob = await rejectTransportOffer(
+    currentUser(req).id,
+    parseId(req.params.jobId, 'jobId'),
+    parseId(req.params.offerId, 'offerId'),
+  );
+  res.json({ transportJob });
 }

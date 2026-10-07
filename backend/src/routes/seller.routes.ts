@@ -18,4 +18,9 @@ router.post('/orders', asyncHandler(seller.createOrder));
 router.get('/orders', asyncHandler(seller.listOrders));
 router.get('/orders/:orderId', asyncHandler(seller.getOrder));
 
+router.get('/transport-jobs', asyncHandler(seller.listTransportJobs));
+router.get('/transport-jobs/:jobId', asyncHandler(seller.getTransportJob));
+router.post('/transport-jobs/:jobId/offers/:offerId/approve', asyncHandler(seller.approveOffer));
+router.post('/transport-jobs/:jobId/offers/:offerId/reject', asyncHandler(seller.rejectOffer));
+
 export default router;
