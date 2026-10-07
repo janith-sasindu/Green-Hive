@@ -249,7 +249,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- A user without a row here receives every category
+-- A user without a row here gets the column defaults below
 CREATE TABLE IF NOT EXISTS notification_settings (
   user_id        INT UNSIGNED NOT NULL,
   orders         BOOLEAN NOT NULL DEFAULT TRUE,
