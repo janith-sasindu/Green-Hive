@@ -2,6 +2,8 @@ import { Users, ShoppingBag, CreditCard, Truck } from 'lucide-react';
 import StatCard from '../components/dashbord/StatCard';
 import { mockStats, mockRoleCounts} from '../data/mockData';
 import RoleCard from '../components/dashbord/RoleCard';
+import OrdersChart from '../components/dashbord/OrdersChart';
+
 
 export default function DashboardPage() {
   return (
@@ -63,6 +65,10 @@ export default function DashboardPage() {
     theme="amber"
   />
 </section>
+
+ <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OrdersChart />
+      </section>
 
     </div>
   );
