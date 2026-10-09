@@ -128,9 +128,9 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
                     {/* Quick Demo Section */}
                     <View className="mt-7">
-                        <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                        {/* <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
                             Quick Demo Access
-                        </Text>
+                        </Text> */}
                         <View className="flex-row justify-between gap-2">
                             {/* Farmer */}
                             <TouchableOpacity
@@ -179,4 +179,4 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             </ScrollView>
         </SafeAreaView>
     );
-}
+}
