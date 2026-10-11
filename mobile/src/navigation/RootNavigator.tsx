@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
+import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import { SellerHomeScreen } from '../screens/seller/SellerHomeScreen';
 import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
@@ -11,6 +12,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   RoleSelection: undefined;
   CreateAccount: { role: string };
+  AccountDetailsScreen: { role: string };
+  AccountDetails: { role: string };
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
@@ -27,6 +30,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
+      <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
       <Stack.Screen
         name="FarmerHome"
         component={FarmerHomeScreen}
