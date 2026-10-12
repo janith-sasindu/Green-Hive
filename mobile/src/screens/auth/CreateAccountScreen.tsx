@@ -42,7 +42,7 @@ const CreateAccountScreen = ({
 
     // Email Sign Up
     const handleEmailSignUp = () => {
-        navigation.navigate("EmailRegistration", {
+        navigation.navigate("AccountDetailsScreen", {
             role: selectedRole,
         });
     };
