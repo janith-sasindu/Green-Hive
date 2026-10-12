@@ -5,12 +5,15 @@ import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import IdentityVerificationScreen from '../screens/auth/IdentityVerificationScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import { SellerHomeScreen } from '../screens/seller/SellerHomeScreen';
 import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
+  Login: undefined;
+  LoginScreen: undefined;
   RoleSelection: undefined;
   CreateAccount: { role: string };
   AccountDetailsScreen: { role: string };
@@ -43,6 +46,8 @@ export default function RootNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />

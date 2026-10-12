@@ -14,6 +14,7 @@ import {
     Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { verifyMockLogin } from "../../data/mockAuth";
 
 interface LoginScreenProps {
     navigation: any;
@@ -40,11 +41,16 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         setLoading(true);
 
         try {
+            const result = verifyMockLogin(email, password);
 
-            Alert.alert(
-                "Authentication not connected",
-                "Connect your login API to authenticate your account."
-            );
+            if (result.success && result.data) {
+                navigation.navigate("FarmerHome");
+            } else {
+                Alert.alert(
+                    "Login failed",
+                    result.error || "Invalid username or password."
+                );
+            }
         } catch {
             Alert.alert(
                 "Login failed",
@@ -62,7 +68,6 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
 
     // Google sign in
     const handleGoogleSignIn = () => {
-
         Alert.alert(
             "Google Sign In",
             "Google authentication will be available after setup."
@@ -72,16 +77,12 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
     // Quick demo access
     const handleDemoAccess = (role: DemoRole) => {
         const demoRoutes: Record<DemoRole, string> = {
-            Farmer: "FarmerDashboard",
-            Seller: "SellerDashboard",
-            Transporter: "TransporterDashboard",
+            Farmer: "FarmerHome",
+            Seller: "SellerHome",
+            Transporter: "TransporterHome",
         };
 
-        // These dashboard routes must be registered in your navigator.
-        navigation.navigate(demoRoutes[role], {
-            role,
-            demo: true,
-        });
+        navigation.navigate(demoRoutes[role]);
     };
 
     return (
