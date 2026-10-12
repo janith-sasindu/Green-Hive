@@ -3,7 +3,7 @@ import StatCard from '../components/dashbord/StatCard';
 import { mockStats, mockRoleCounts} from '../data/mockData';
 import RoleCard from '../components/dashbord/RoleCard';
 import OrdersChart from '../components/dashbord/OrdersChart';
-
+import UserGrowthChart from '../components/dashbord/UserGrowthChart';
 
 export default function DashboardPage() {
   return (
@@ -68,7 +68,10 @@ export default function DashboardPage() {
 
  <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <OrdersChart />
+        <UserGrowthChart />
       </section>
+
+     
 
     </div>
   );
