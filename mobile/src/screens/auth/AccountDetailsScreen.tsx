@@ -52,7 +52,7 @@ const AccountDetailsScreen = ({
             return;
         }
 
-        navigation.navigate("CompleteProfile", {
+        navigation.navigate("IdentityVerificationScreen", {
             role,
             fullName: fullName.trim(),
             email: email.trim(),

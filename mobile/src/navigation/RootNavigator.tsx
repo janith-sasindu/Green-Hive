@@ -4,6 +4,7 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
+import IdentityVerificationScreen from '../screens/auth/IdentityVerificationScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import { SellerHomeScreen } from '../screens/seller/SellerHomeScreen';
 import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
@@ -14,6 +15,20 @@ export type RootStackParamList = {
   CreateAccount: { role: string };
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
+  IdentityVerificationScreen: {
+    role?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+  };
+  IdentityVerification: {
+    role?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+  };
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
@@ -32,6 +47,14 @@ export default function RootNavigator() {
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
+      <Stack.Screen
+        name="IdentityVerificationScreen"
+        component={IdentityVerificationScreen}
+      />
+      <Stack.Screen
+        name="IdentityVerification"
+        component={IdentityVerificationScreen}
+      />
       <Stack.Screen
         name="FarmerHome"
         component={FarmerHomeScreen}

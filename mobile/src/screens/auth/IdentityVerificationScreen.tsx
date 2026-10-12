@@ -23,6 +23,10 @@ const IdentityVerificationScreen = ({
     route,
 }: IdentityVerificationScreenProps) => {
     const role = route?.params?.role ?? "Farmer";
+    const fullName = route?.params?.fullName ?? "";
+    const email = route?.params?.email ?? "";
+    const phone = route?.params?.phone ?? "";
+    const password = route?.params?.password ?? "";
 
     const [document, setDocument] =
         useState<DocumentPicker.DocumentPickerAsset | null>(null);
@@ -74,15 +78,13 @@ const IdentityVerificationScreen = ({
         setUploading(true);
 
         try {
-            // TODO: Upload the selected document to your backend
-            // using multipart/form-data before completing registration.
-            //
-            // document.uri  -> local file URI
-            // document.name -> original filename
-            // document.mimeType -> file MIME type
 
             navigation.navigate("RegistrationComplete", {
                 role,
+                fullName,
+                email,
+                phone,
+                password,
                 idDocument: {
                     uri: document.uri,
                     name: document.name,
