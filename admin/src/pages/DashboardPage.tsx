@@ -4,6 +4,7 @@ import { mockStats, mockRoleCounts} from '../data/mockData';
 import RoleCard from '../components/dashbord/RoleCard';
 import OrdersChart from '../components/dashbord/OrdersChart';
 import UserGrowthChart from '../components/dashbord/UserGrowthChart';
+import TransactionVolumeChart from '../components/dashbord/TransactionVolumeChart';
 
 export default function DashboardPage() {
   return (
@@ -71,7 +72,9 @@ export default function DashboardPage() {
         <UserGrowthChart />
       </section>
 
-     
+     <section>
+        <TransactionVolumeChart />
+     </section>
 
     </div>
   );
