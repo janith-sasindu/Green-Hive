@@ -183,7 +183,8 @@ const AccountDetailsScreen = ({
                                         />
 
                                         <TextInput
-                                            className="ml-2 flex-1 py-0 text-[12px] text-[#334155]"
+                                            className="ml-2 flex-1 h-full text-[12px] text-[#334155]"
+                                            style={{ height: "100%" }}
                                             placeholder="Create password (min 8 characters)"
                                             placeholderTextColor="#9AA39D"
                                             value={password}
@@ -272,7 +273,8 @@ const FormField = ({
                 <Ionicons name={icon} size={isSmallDevice ? 15 : 16} color="#94A3B8" />
 
                 <TextInput
-                    className="ml-2 flex-1 py-0 text-[12px] text-[#334155]"
+                    className="ml-2 flex-1 h-full text-[12px] text-[#334155]"
+                    style={{ height: "100%" }}
                     placeholder={placeholder}
                     placeholderTextColor="#9AA39D"
                     value={value}
