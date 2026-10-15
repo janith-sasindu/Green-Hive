@@ -154,7 +154,7 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
 
               {/* Profile details row */}
               <View className="flex-row items-center">
-                <View className="h-14 w-14 rounded-2xl bg-[#28813F] items-center justify-center mr-3.5 border border-white/10">
+                <View className="h-14 w-14 rounded-2xl bg-[#28813F] items-center justify-center m-5 mr-3.5 border border-white/10 ">
                   <Text className="text-2xl font-bold text-white">S</Text>
                 </View>
                 <View className="flex-1">
@@ -181,7 +181,7 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               <TouchableOpacity
                 onPress={() => setNotificationsModalOpen(true)}
                 activeOpacity={0.8}
-                className="mt-3.5 self-start flex-row items-center rounded-full bg-[#125324]/90 px-3.5 py-1.5 border border-white/10"
+                className=" mb-3.5 ml-5 self-start flex-row items-center rounded-full bg-[#125324]/90 px-3.5 py-1.5 border border-white/10"
               >
                 <Text className="text-xs mr-1.5">🔔</Text>
                 <Text className="text-xs font-semibold text-[#DCFCE7]">
@@ -313,7 +313,7 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
                   shadowOffset: { width: 0, height: 2 },
                 }}
               >
-                <Ionicons name="add" size={28} color="#A855F7" />
+                <Ionicons name="add" size={28} color="#C6E7CD" />
                 <Text className="text-sm font-bold text-white mt-1">
                   Add Product
                 </Text>
@@ -597,11 +597,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               color={activeTab === "Home" ? "#16A34A" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
-                activeTab === "Home"
-                  ? "font-bold text-[#16A34A]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              className={`text-[11px] mt-0.5 ${activeTab === "Home"
+                ? "font-bold text-[#16A34A]"
+                : "font-medium text-[#9CA3AF]"
+                }`}
             >
               Home
             </Text>
@@ -622,11 +621,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               color={activeTab === "Products" ? "#16A34A" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
-                activeTab === "Products"
-                  ? "font-bold text-[#16A34A]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              className={`text-[11px] mt-0.5 ${activeTab === "Products"
+                ? "font-bold text-[#16A34A]"
+                : "font-medium text-[#9CA3AF]"
+                }`}
             >
               Products
             </Text>
@@ -651,11 +649,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               color={activeTab === "Requirements" ? "#16A34A" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
-                activeTab === "Requirements"
-                  ? "font-bold text-[#16A34A]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              className={`text-[11px] mt-0.5 ${activeTab === "Requirements"
+                ? "font-bold text-[#16A34A]"
+                : "font-medium text-[#9CA3AF]"
+                }`}
             >
               Requirements
             </Text>
@@ -678,11 +675,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               color={activeTab === "Orders" ? "#16A34A" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
-                activeTab === "Orders"
-                  ? "font-bold text-[#16A34A]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              className={`text-[11px] mt-0.5 ${activeTab === "Orders"
+                ? "font-bold text-[#16A34A]"
+                : "font-medium text-[#9CA3AF]"
+                }`}
             >
               Orders
             </Text>
@@ -703,11 +699,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               color={activeTab === "Profile" ? "#16A34A" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
-                activeTab === "Profile"
-                  ? "font-bold text-[#16A34A]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              className={`text-[11px] mt-0.5 ${activeTab === "Profile"
+                ? "font-bold text-[#16A34A]"
+                : "font-medium text-[#9CA3AF]"
+                }`}
             >
               Profile
             </Text>
