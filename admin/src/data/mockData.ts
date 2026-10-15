@@ -98,3 +98,94 @@ export const mockTransactionVolume = [
   { month: 'Nov', product: 5.3, transport: 0.9 },
   { month: 'Dec', product: 5.8, transport: 1.0 },
 ];
+export interface UserItem {
+  id: string;
+  name: string;
+  role: 'farmer' | 'seller' | 'transporter';
+  email: string;
+  phone: string;
+  location: string;
+  verified: boolean;
+  status: 'active' | 'pending' | 'suspended';
+  joined: string;
+}
+
+export const mockUsers: UserItem[] = [
+  {
+    id: '1',
+    name: 'Sunil Perera',
+    role: 'farmer',
+    email: 'sunil@gmail.com',
+    phone: '+94 77 123 4567',
+    location: 'Nuwara Eliya',
+    verified: true,
+    status: 'active',
+    joined: '2026-01-15',
+  },
+  {
+    id: '2',
+    name: 'Kamal Jayasinghe',
+    role: 'farmer',
+    email: 'kamal@farm.lk',
+    phone: '+94 71 234 5678',
+    location: 'Dambulla',
+    verified: true,
+    status: 'active',
+    joined: '2026-02-08',
+  },
+  {
+    id: '3',
+    name: 'Priya Kumarasinghe',
+    role: 'farmer',
+    email: 'priya@farm.lk',
+    phone: '+94 76 345 6789',
+    location: 'Kandy',
+    verified: false,
+    status: 'pending',
+    joined: '2026-07-20',
+  },
+  {
+    id: '4',
+    name: 'Amara Wickramasinghe',
+    role: 'seller',
+    email: 'amara@colombofresh.lk',
+    phone: '+94 71 456 7890',
+    location: 'Colombo 07',
+    verified: true,
+    status: 'active',
+    joined: '2026-01-20',
+  },
+  {
+    id: '5',
+    name: 'Niroshan Silva',
+    role: 'seller',
+    email: 'niro@kandymart.lk',
+    phone: '+94 77 567 8901',
+    location: 'Kandy',
+    verified: true,
+    status: 'active',
+    joined: '2026-03-12',
+  },
+  {
+    id: '6',
+    name: 'Ruwan Bandara',
+    role: 'transporter',
+    email: 'ruwan@transport.lk',
+    phone: '+94 76 678 9012',
+    location: 'Colombo',
+    verified: true,
+    status: 'active',
+    joined: '2026-02-25',
+  },
+  {
+    id: '7',
+    name: 'Sisira Gamage',
+    role: 'transporter',
+    email: 'sisira@logist.lk',
+    phone: '+94 71 789 0123',
+    location: 'Gampaha',
+    verified: false,
+    status: 'suspended',
+    joined: '2026-06-01',
+  },
+];

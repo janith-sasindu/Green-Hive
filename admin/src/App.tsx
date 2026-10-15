@@ -1,12 +1,16 @@
+import React, {useState} from "react";
 import Sidebar from "./components/layout/slidebar";
 import Header from "./components/layout/Header";
 import DashboardPage from "./pages/DashboardPage";
+import UsersPage from "./pages/UsersPage";
 
 export default function App() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50/50">
       {/* 1. Left Sidebar */}
-      <Sidebar />
+      <Sidebar activeItem={currentPage}
+        onSelectItem={(pageId) => setCurrentPage(pageId)}
+      />
 
       {/* 2. Right Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
