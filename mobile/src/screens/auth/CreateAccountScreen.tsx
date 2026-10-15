@@ -36,22 +36,15 @@ const CreateAccountScreen = ({
 
     // Google Sign Up
     const handleGoogleSignUp = () => {
-        if (selectedRole === "Farmer") {
-            navigation.navigate("FarmerHome");
-        } else {
-            console.log("Continue with Google");
-        }
+        console.log("Continue with Google");
+        // TODO: Implement Google authentication here
     };
 
     // Email Sign Up
     const handleEmailSignUp = () => {
-        if (selectedRole === "Farmer") {
-            navigation.navigate("FarmerHome");
-        } else {
-            navigation.navigate("EmailRegistration", {
-                role: selectedRole,
-            });
-        }
+        navigation.navigate("AccountDetailsScreen", {
+            role: selectedRole,
+        });
     };
 
     // Go Back
@@ -211,5 +204,3 @@ const CreateAccountScreen = ({
 };
 
 export default CreateAccountScreen;
-
-
