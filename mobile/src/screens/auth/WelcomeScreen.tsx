@@ -70,11 +70,6 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                     <Text className="mb-2 text-center text-xs font-extrabold tracking-widest text-white">
                         CONNECT • TRADE • TRANSPORT • GROW
                     </Text>
-
-                    {/* Subtitle */}
-                    <Text className="text-center text-xs font-normal leading-relaxed text-[#d1e7d4] px-2">
-                        Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
-                    </Text>
                 </View>
 
                 {/* Bottom Card */}
