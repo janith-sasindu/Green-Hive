@@ -63,7 +63,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="FarmerHome"
         component={FarmerHomeScreen}
-        options={{ headerShown: true, title: 'Farmer Dashboard' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen name="SellerHome" component={SellerNavigator} />
       <Stack.Screen

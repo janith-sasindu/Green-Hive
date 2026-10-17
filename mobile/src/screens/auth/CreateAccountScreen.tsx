@@ -204,5 +204,3 @@ const CreateAccountScreen = ({
 };
 
 export default CreateAccountScreen;
-
-
