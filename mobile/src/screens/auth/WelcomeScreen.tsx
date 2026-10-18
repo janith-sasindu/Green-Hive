@@ -79,27 +79,76 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
                 {/* Bottom Card */}
                 <View className="rounded-t-[36px] bg-white px-6 pt-6 pb-8 shadow-lg">
-                    {/* Feature Badges */}
-                    <View className="flex-row flex-wrap justify-center gap-2 mb-6">
-                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
-                            <Text className="text-xs font-semibold text-[#1c5d26]">
-                                🌿 Farm Fresh
-                            </Text>
-                        </View>
-                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
-                            <Text className="text-xs font-semibold text-[#1c5d26]">
-                                🔒 Secure Payment
-                            </Text>
-                        </View>
-                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
-                            <Text className="text-xs font-semibold text-[#1c5d26]">
-                                🚛 Transport Network
-                            </Text>
-                        </View>
-                        <View className="rounded-full bg-[#e8f5e9] px-3.5 py-1.5">
-                            <Text className="text-xs font-semibold text-[#1c5d26]">
-                                ✅ Verified Users
-                            </Text>
+                    {/* Platform Features Section */}
+                    <View
+                        className={`rounded-2xl bg-[#F8FAF8] border border-[#E8F0E8] ${
+                            isSmallDevice ? "mb-4 p-3" : "mb-6 p-3.5"
+                        }`}
+                    >
+
+                        {/* Feature Items 2x2 Grid */}
+                        <View className="flex-row justify-between">
+                            {/* Left Column */}
+                            <View className="flex-1 pr-1.5 gap-2.5">
+                                <View className="flex-row items-center">
+                                    <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
+                                        <Text className="text-sm">🌿</Text>
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-xs font-bold text-gray-800">
+                                            Farm Fresh
+                                        </Text>
+                                        <Text className="text-[10px] text-gray-500">
+                                            Direct from growers
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View className="flex-row items-center">
+                                    <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
+                                        <Text className="text-sm">🚛</Text>
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-xs font-bold text-gray-800">
+                                            Transport Network
+                                        </Text>
+                                        <Text className="text-[10px] text-gray-500">
+                                            Island-wide logistics
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Right Column */}
+                            <View className="flex-1 pl-1.5 gap-2.5">
+                                <View className="flex-row items-center">
+                                    <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
+                                        <Text className="text-sm">🔒</Text>
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-xs font-bold text-gray-800">
+                                            Secure Payment
+                                        </Text>
+                                        <Text className="text-[10px] text-gray-500">
+                                            Escrow protected
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View className="flex-row items-center">
+                                    <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
+                                        <Text className="text-sm">✅</Text>
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-xs font-bold text-gray-800">
+                                            Verified Users
+                                        </Text>
+                                        <Text className="text-[10px] text-gray-500">
+                                            Trusted community
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
                         </View>
                     </View>
 
