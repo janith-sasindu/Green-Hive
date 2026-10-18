@@ -32,20 +32,20 @@ const RoleCard = ({
         <TouchableOpacity
             activeOpacity={0.8}
             onPress={onPress}
-            className="mb-3.5 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/60"
+            className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/60"
         >
             {/* Icon Container */}
-            <View className="mr-3.5 h-12 w-12 items-center justify-center rounded-xl bg-[#F0F7F2]">
-                <Text className="text-2xl">{icon}</Text>
+            <View className="mr-3.5 h-14 w-14 items-center justify-center rounded-xl bg-[#F0F7F2]">
+                <Text className="text-3xl">{icon}</Text>
             </View>
 
             {/* Text Content */}
             <View className="flex-1 pr-2">
-                <Text className="mb-0.5 text-base font-bold text-[#1F2937]">
+                <Text className="mb-1 text-xl font-bold text-[#1F2937]">
                     {title}
                 </Text>
 
-                <Text className="text-xs leading-5 text-[#6B7280]">
+                <Text className="text-base leading-6 text-[#6B7280]">
                     {description}
                 </Text>
             </View>
@@ -53,7 +53,7 @@ const RoleCard = ({
             {/* Chevron Arrow */}
             <Ionicons
                 name="chevron-forward"
-                size={18}
+                size={22}
                 color="#D1D5DB"
             />
         </TouchableOpacity>
@@ -87,32 +87,32 @@ const RoleSelectionScreen = ({
                         className="mb-2 -ml-1 p-1"
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                        <Ionicons name="arrow-back" size={26} color="#FFFFFF" />
                     </TouchableOpacity>
 
                     {/* Logo under Back Button */}
                     <Image
                         source={require("../../assets/logo.png")}
                         style={{
-                            width: isSmallDevice ? 90 : 120,
-                            height: isSmallDevice ? 54 : 72,
+                            width: isSmallDevice ? 100 : 130,
+                            height: isSmallDevice ? 60 : 78,
                         }}
                         className="mb-2 -ml-2.5 self-start"
                         resizeMode="contain"
                     />
 
                     {/* Step */}
-                    <Text className="mb-0.5 text-xs font-semibold text-[#B9E2C1]">
+                    <Text className="mb-1 text-lg font-semibold text-[#B9E2C1]">
                         Step 1 of 4
                     </Text>
 
                     {/* Title */}
-                    <Text className={`font-bold text-white mb-0.5 ${isSmallDevice ? "text-xl" : "text-2xl"}`}>
+                    <Text className={`font-bold text-white mb-1 ${isSmallDevice ? "text-[28px]" : "text-[34px]"}`}>
                         Choose your role
                     </Text>
 
                     {/* Subtitle */}
-                    <Text className="text-xs text-[#D9EEDC]">
+                    <Text className="text-lg text-[#D9EEDC]">
                         How will you use Green Hive?
                     </Text>
                 </View>
@@ -151,8 +151,8 @@ const RoleSelectionScreen = ({
                     />
 
                     {/* Sign In Footer */}
-                    <View className="mt-auto pt-6 mb-4 flex-row items-center justify-center gap-1">
-                        <Text className="text-xs text-[#6B7280]">
+                    <View className="mt-auto pt-6 mb-4 flex-row items-center justify-center gap-1.5">
+                        <Text className="text-base text-[#6B7280]">
                             Already have an account?
                         </Text>
 
@@ -160,7 +160,7 @@ const RoleSelectionScreen = ({
                             onPress={() => navigation.navigate("Login")}
                             activeOpacity={0.7}
                         >
-                            <Text className="text-xs font-bold text-[#176B2C]">
+                            <Text className="text-base font-bold text-[#176B2C]">
                                 Sign In
                             </Text>
                         </TouchableOpacity>

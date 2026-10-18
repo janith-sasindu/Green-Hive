@@ -147,28 +147,28 @@ const IdentityVerificationScreen = ({
                         >
                             <Ionicons
                                 name="arrow-back"
-                                size={16}
+                                size={20}
                                 color="#FFFFFF"
                             />
 
-                            <Text className="ml-1.5 text-xs text-white">
+                            <Text className="ml-1.5 text-base text-white">
                                 Back
                             </Text>
                         </TouchableOpacity>
 
-                        <Text className="mb-0.5 text-xs font-medium text-[#C6E6CC]">
+                        <Text className="mb-1 text-lg font-semibold text-[#C6E6CC]">
                             Step 4 of 4
                         </Text>
 
                         <Text
-                            className={`font-semibold text-white ${
-                                isSmallDevice ? "text-[16px]" : "text-[18px]"
+                            className={`font-bold text-white mb-1 ${
+                                isSmallDevice ? "text-[28px]" : "text-[34px]"
                             }`}
                         >
                             Verify Your Identity
                         </Text>
 
-                        <Text className="mt-0.5 text-xs text-[#D9EEDC]">
+                        <Text className="text-lg text-[#D9EEDC]">
                             Upload your National ID Card
                         </Text>
                     </View>
