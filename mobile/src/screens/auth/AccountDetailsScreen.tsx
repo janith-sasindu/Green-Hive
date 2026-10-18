@@ -23,7 +23,7 @@ const AccountDetailsScreen = ({
     route,
 }: AccountDetailsScreenProps) => {
     const { height: screenHeight, width: screenWidth } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
 
     const role = route?.params?.role ?? "Farmer";
 
@@ -103,19 +103,19 @@ const AccountDetailsScreen = ({
                                 <Text className="ml-1.5 text-base text-white">Back</Text>
                             </TouchableOpacity>
 
-                            <Text className="mb-1 text-lg font-semibold text-[#C6E6CC]">
+                            <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                                 Step 3 of 4
                             </Text>
 
                             <Text
                                 className={`font-bold text-white mb-1 ${
-                                    isSmallDevice ? "text-[28px]" : "text-[34px]"
+                                    isSmallDevice ? "text-2xl" : "text-3xl"
                                 }`}
                             >
                                 Create Account
                             </Text>
 
-                            <Text className="text-lg text-[#D9EEDC]">
+                            <Text className={`text-[#D9EEDC] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                                 Registering as a {role.toLowerCase()}
                             </Text>
                         </View>
@@ -167,23 +167,23 @@ const AccountDetailsScreen = ({
 
                                 {/* Password */}
                                 <View className={isSmallDevice ? "mb-3" : "mb-3.5"}>
-                                    <Text className="mb-1.5 text-[11px] font-medium text-[#334155]">
+                                    <Text className="mb-1.5 text-[13px] font-semibold text-[#344054]">
                                         Password
                                     </Text>
 
                                     <View
                                         className={`${
-                                            isSmallDevice ? "h-[38px]" : "h-[42px]"
+                                            isSmallDevice ? "h-[42px]" : "h-[46px]"
                                         } flex-row items-center rounded-[11px] border border-[#E0E5EB] px-2.5 bg-white`}
                                     >
                                         <Ionicons
                                             name="lock-closed-outline"
-                                            size={isSmallDevice ? 15 : 16}
+                                            size={isSmallDevice ? 16 : 18}
                                             color="#94A3B8"
                                         />
 
                                         <TextInput
-                                            className="ml-2 flex-1 h-full text-[12px] text-[#334155]"
+                                            className="ml-2 flex-1 h-full text-[14px] text-[#344054]"
                                             style={{ height: "100%" }}
                                             placeholder="Create password (min 8 characters)"
                                             placeholderTextColor="#9AA39D"
@@ -201,7 +201,7 @@ const AccountDetailsScreen = ({
                                         >
                                             <Ionicons
                                                 name={showPassword ? "eye-off-outline" : "eye-outline"}
-                                                size={isSmallDevice ? 15 : 16}
+                                                size={isSmallDevice ? 16 : 18}
                                                 color="#94A3B8"
                                             />
                                         </TouchableOpacity>
@@ -210,7 +210,7 @@ const AccountDetailsScreen = ({
 
                                 {/* Validation message */}
                                 {error ? (
-                                    <Text className="mb-3 text-[11px] text-red-600">
+                                    <Text className="mb-3 text-[12px] text-red-600">
                                         {error}
                                     </Text>
                                 ) : null}
@@ -220,10 +220,10 @@ const AccountDetailsScreen = ({
                                     onPress={handleContinue}
                                     activeOpacity={0.8}
                                     className={`${
-                                        isSmallDevice ? "h-[42px]" : "h-[46px]"
-                                    } items-center justify-center rounded-[12px] bg-[#00A844] shadow-sm`}
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
+                                    } items-center justify-center rounded-[12px] bg-[#176B2C] shadow-sm`}
                                 >
-                                    <Text className="text-[13px] font-semibold text-white">
+                                    <Text className="text-[15px] font-bold text-white">
                                         Continue
                                     </Text>
                                 </TouchableOpacity>
@@ -261,19 +261,19 @@ const FormField = ({
 }: FormFieldProps) => {
     return (
         <View className={isSmallDevice ? "mb-3" : "mb-3.5"}>
-            <Text className="mb-1.5 text-[11px] font-medium text-[#334155]">
+            <Text className="mb-1.5 text-[13px] font-semibold text-[#344054]">
                 {label}
             </Text>
 
             <View
                 className={`${
-                    isSmallDevice ? "h-[38px]" : "h-[42px]"
+                    isSmallDevice ? "h-[42px]" : "h-[46px]"
                 } flex-row items-center rounded-[11px] border border-[#E0E5EB] px-2.5 bg-white`}
             >
-                <Ionicons name={icon} size={isSmallDevice ? 15 : 16} color="#94A3B8" />
+                <Ionicons name={icon} size={isSmallDevice ? 16 : 18} color="#94A3B8" />
 
                 <TextInput
-                    className="ml-2 flex-1 h-full text-[12px] text-[#334155]"
+                    className="ml-2 flex-1 h-full text-[14px] text-[#344054]"
                     style={{ height: "100%" }}
                     placeholder={placeholder}
                     placeholderTextColor="#9AA39D"

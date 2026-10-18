@@ -20,8 +20,8 @@ const CreateAccountScreen = ({
     navigation,
     route,
 }: CreateAccountScreenProps) => {
-    const { height: screenHeight } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
 
     // Get the role selected from Step 1
     const selectedRole = route?.params?.role || "Farmer";
@@ -87,17 +87,17 @@ const CreateAccountScreen = ({
                     />
 
                     {/* Step */}
-                    <Text className="mb-1 text-lg font-semibold text-[#B9E2C1]">
+                    <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                         Step 2 of 4
                     </Text>
 
                     {/* Title */}
-                    <Text className={`font-bold text-white mb-1 ${isSmallDevice ? "text-[28px]" : "text-[34px]"}`}>
+                    <Text className={`font-bold text-white mb-1 ${isSmallDevice ? "text-2xl" : "text-3xl"}`}>
                         Create your account
                     </Text>
 
                     {/* Subtitle with Selected Role */}
-                    <Text className="text-lg text-[#D9EEDC]">
+                    <Text className={`text-[#D9EEDC] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                         Signing up as <Text className="font-semibold text-white">{roleIcon} {selectedRole}</Text>
                     </Text>
                 </View>
@@ -115,19 +115,39 @@ const CreateAccountScreen = ({
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={handleGoogleSignUp}
-                        className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/60"
+                        className={`${
+                            isSmallDevice ? "mb-3 p-3.5" : "mb-4 p-4"
+                        } flex-row items-center rounded-2xl bg-white shadow-sm border border-gray-100/60`}
                     >
                         {/* Google Icon Container */}
-                        <View className="mr-3.5 h-14 w-14 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-2xs">
-                            <Text className="text-3xl font-bold text-[#4285F4]">G</Text>
+                        <View
+                            className={`mr-3.5 ${
+                                isSmallDevice ? "h-12 w-12" : "h-14 w-14"
+                            } items-center justify-center rounded-xl bg-white border border-gray-100 shadow-2xs`}
+                        >
+                            <Text
+                                className={`${
+                                    isSmallDevice ? "text-2xl" : "text-3xl"
+                                } font-bold text-[#4285F4]`}
+                            >
+                                G
+                            </Text>
                         </View>
 
                         {/* Google Text */}
                         <View className="flex-1 pr-2">
-                            <Text className="mb-1 text-xl font-bold text-[#1F2937]">
+                            <Text
+                                className={`mb-1 font-bold text-[#1F2937] ${
+                                    isSmallDevice ? "text-lg" : "text-xl"
+                                }`}
+                            >
                                 Continue with Google
                             </Text>
-                            <Text className="text-base leading-6 text-[#6B7280]">
+                            <Text
+                                className={`text-[#6B7280] ${
+                                    isSmallDevice ? "text-sm leading-5" : "text-base leading-6"
+                                }`}
+                            >
                                 Fast sign-up using your Google account
                             </Text>
                         </View>
@@ -135,7 +155,7 @@ const CreateAccountScreen = ({
                         {/* Arrow */}
                         <Ionicons
                             name="chevron-forward"
-                            size={22}
+                            size={isSmallDevice ? 18 : 22}
                             color="#D1D5DB"
                         />
                     </TouchableOpacity>
@@ -153,23 +173,37 @@ const CreateAccountScreen = ({
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={handleEmailSignUp}
-                        className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/60"
+                        className={`${
+                            isSmallDevice ? "mb-3 p-3.5" : "mb-4 p-4"
+                        } flex-row items-center rounded-2xl bg-white shadow-sm border border-gray-100/60`}
                     >
                         {/* Email Icon Container */}
-                        <View className="mr-3.5 h-14 w-14 items-center justify-center rounded-xl bg-[#F0F7F2]">
+                        <View
+                            className={`mr-3.5 ${
+                                isSmallDevice ? "h-12 w-12" : "h-14 w-14"
+                            } items-center justify-center rounded-xl bg-[#F0F7F2]`}
+                        >
                             <Ionicons
                                 name="mail-outline"
-                                size={26}
+                                size={isSmallDevice ? 22 : 26}
                                 color="#176B2C"
                             />
                         </View>
 
                         {/* Email Text */}
                         <View className="flex-1 pr-2">
-                            <Text className="mb-1 text-xl font-bold text-[#1F2937]">
+                            <Text
+                                className={`mb-1 font-bold text-[#1F2937] ${
+                                    isSmallDevice ? "text-lg" : "text-xl"
+                                }`}
+                            >
                                 Sign up with Email
                             </Text>
-                            <Text className="text-base leading-6 text-[#6B7280]">
+                            <Text
+                                className={`text-[#6B7280] ${
+                                    isSmallDevice ? "text-sm leading-5" : "text-base leading-6"
+                                }`}
+                            >
                                 Create an account with email & password
                             </Text>
                         </View>
@@ -177,7 +211,7 @@ const CreateAccountScreen = ({
                         {/* Arrow */}
                         <Ionicons
                             name="chevron-forward"
-                            size={22}
+                            size={isSmallDevice ? 18 : 22}
                             color="#D1D5DB"
                         />
                     </TouchableOpacity>

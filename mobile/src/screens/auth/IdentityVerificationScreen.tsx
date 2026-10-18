@@ -23,8 +23,8 @@ const IdentityVerificationScreen = ({
     navigation,
     route,
 }: IdentityVerificationScreenProps) => {
-    const { height: screenHeight } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
 
     const role = route?.params?.role ?? "Farmer";
     const fullName = route?.params?.fullName ?? "";
@@ -156,19 +156,19 @@ const IdentityVerificationScreen = ({
                             </Text>
                         </TouchableOpacity>
 
-                        <Text className="mb-1 text-lg font-semibold text-[#C6E6CC]">
+                        <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                             Step 4 of 4
                         </Text>
 
                         <Text
                             className={`font-bold text-white mb-1 ${
-                                isSmallDevice ? "text-[28px]" : "text-[34px]"
+                                isSmallDevice ? "text-2xl" : "text-3xl"
                             }`}
                         >
                             Verify Your Identity
                         </Text>
 
-                        <Text className="text-lg text-[#D9EEDC]">
+                        <Text className={`text-[#D9EEDC] ${isSmallDevice ? "text-base" : "text-lg"}`}>
                             Upload your National ID Card
                         </Text>
                     </View>
@@ -186,22 +186,22 @@ const IdentityVerificationScreen = ({
                                 <View className="flex-row items-center mb-1">
                                     <Ionicons
                                         name="information-circle"
-                                        size={14}
+                                        size={16}
                                         color="#1D4ED8"
                                     />
-                                    <Text className="ml-1.5 text-[11px] font-semibold text-[#1D4ED8]">
+                                    <Text className="ml-1.5 text-[12px] font-semibold text-[#1D4ED8]">
                                         National ID Card Required
                                     </Text>
                                 </View>
 
-                                <Text className="text-[10px] leading-[15px] text-[#2563EB]">
+                                <Text className="text-[11px] leading-[16px] text-[#2563EB]">
                                     Upload a clear photo of your National Identity Card
                                     (front side).
                                 </Text>
                             </View>
 
                             {/* Upload label */}
-                            <Text className="mb-2 text-[11px] font-medium text-[#334155]">
+                            <Text className="mb-2 text-[13px] font-semibold text-[#344054]">
                                 Upload National ID Card
                             </Text>
 
@@ -283,10 +283,10 @@ const IdentityVerificationScreen = ({
                                     onPress={handleBack}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[13px] border border-[#E0E5EB] bg-white ${
-                                        isSmallDevice ? "h-[42px]" : "h-[46px]"
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
                                     }`}
                                 >
-                                    <Text className="text-[12px] font-medium text-[#334155]">
+                                    <Text className="text-[14px] font-medium text-[#334155]">
                                         Back
                                     </Text>
                                 </TouchableOpacity>
@@ -296,14 +296,14 @@ const IdentityVerificationScreen = ({
                                     disabled={!document || uploading}
                                     activeOpacity={0.8}
                                     className={`flex-1 items-center justify-center rounded-[13px] ${
-                                        isSmallDevice ? "h-[42px]" : "h-[46px]"
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
                                     } ${
                                         document && !uploading
-                                            ? "bg-[#00A844]"
+                                            ? "bg-[#176B2C]"
                                             : "bg-[#A8C7AE]"
                                     }`}
                                 >
-                                    <Text className="text-[12px] font-semibold text-white">
+                                    <Text className="text-[14px] font-bold text-white">
                                         {uploading ? "Please wait..." : "Continue"}
                                     </Text>
                                 </TouchableOpacity>

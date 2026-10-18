@@ -15,8 +15,11 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
-    const { height: screenHeight } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
+
+    const logoWidth = Math.min(screenWidth - 48, isSmallDevice ? 270 : 340);
+    const logoHeight = Math.round(logoWidth * (216 / 360));
 
     const handleGetStarted = () => {
         navigation?.navigate("RoleSelection");
@@ -51,27 +54,37 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             >
                 {/* Top Section */}
                 <View
-                    className={`items-center justify-center px-6 ${isSmallDevice ? "py-4" : "py-8 flex-1"
-                        }`}
+                    className={`items-center justify-center px-6 ${
+                        isSmallDevice ? "py-4" : "py-8 flex-1"
+                    }`}
                 >
                     {/* Logo */}
                     <Image
                         source={require("../../assets/logo.png")}
                         style={{
-                            width: isSmallDevice ? 240 : 300,
-                            height: isSmallDevice ? 135 : 180,
+                            width: logoWidth,
+                            height: logoHeight,
+                            maxWidth: "100%",
                         }}
                         resizeMode="contain"
                         className="mb-4"
                     />
 
                     {/* Tagline */}
-                    <Text className="mb-2 text-center text-lg font-extrabold tracking-wider text-white">
+                    <Text
+                        className={`mb-2 text-center font-extrabold tracking-wider text-white ${
+                            isSmallDevice ? "text-base" : "text-lg"
+                        }`}
+                    >
                         CONNECT • TRADE • TRANSPORT • GROW
                     </Text>
 
                     {/* Subtitle */}
-                    <Text className="text-center text-lg font-normal leading-relaxed text-[#d1e7d4] px-2">
+                    <Text
+                        className={`text-center font-normal leading-relaxed text-[#d1e7d4] px-2 ${
+                            isSmallDevice ? "text-base" : "text-lg"
+                        }`}
+                    >
                         Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
                     </Text>
                 </View>
@@ -95,6 +108,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                                     </View>
                                     <Text
                                         numberOfLines={1}
+                                        adjustsFontSizeToFit
                                         className="flex-1 text-[13px] font-bold text-gray-800"
                                     >
                                         Farm Fresh
@@ -107,6 +121,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                                     </View>
                                     <Text
                                         numberOfLines={1}
+                                        adjustsFontSizeToFit
                                         className="flex-1 text-[13px] font-bold text-gray-800"
                                     >
                                         Transport Network
@@ -122,6 +137,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                                     </View>
                                     <Text
                                         numberOfLines={1}
+                                        adjustsFontSizeToFit
                                         className="flex-1 text-[13px] font-bold text-gray-800"
                                     >
                                         Secure Payment
@@ -134,6 +150,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                                     </View>
                                     <Text
                                         numberOfLines={1}
+                                        adjustsFontSizeToFit
                                         className="flex-1 text-[13px] font-bold text-gray-800"
                                     >
                                         Verified Users
@@ -168,18 +185,17 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
                     {/* Quick Demo Section */}
                     <View className="mt-7">
-                        {/* <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
-                            Quick Demo Access
-                        </Text> */}
                         <View className="flex-row justify-between gap-2">
                             {/* Farmer */}
                             <TouchableOpacity
                                 onPress={() => handleQuickDemo("farmer")}
                                 activeOpacity={0.7}
-                                className="flex-1 items-center justify-center rounded-xl border border-[#c8e6c9] bg-[#e8f5e9] py-3"
+                                className="flex-1 items-center justify-center rounded-xl border border-[#c8e6c9] bg-[#e8f5e9] py-3 px-1"
                             >
                                 <Text
-                                    className="text-xs font-bold text-[#1c5d26]"
+                                    className={`font-bold text-[#1c5d26] ${
+                                        isSmallDevice ? "text-[11px]" : "text-xs"
+                                    }`}
                                     numberOfLines={1}
                                 >
                                     🌾 Farmer
@@ -190,10 +206,12 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                             <TouchableOpacity
                                 onPress={() => handleQuickDemo("seller")}
                                 activeOpacity={0.7}
-                                className="flex-1 items-center justify-center rounded-xl border border-[#bfdbfe] bg-[#eff6ff] py-3"
+                                className="flex-1 items-center justify-center rounded-xl border border-[#bfdbfe] bg-[#eff6ff] py-3 px-1"
                             >
                                 <Text
-                                    className="text-xs font-bold text-[#1d4ed8]"
+                                    className={`font-bold text-[#1d4ed8] ${
+                                        isSmallDevice ? "text-[11px]" : "text-xs"
+                                    }`}
                                     numberOfLines={1}
                                 >
                                     🏪 Retail Seller
@@ -204,10 +222,12 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                             <TouchableOpacity
                                 onPress={() => handleQuickDemo("transporter")}
                                 activeOpacity={0.7}
-                                className="flex-1 items-center justify-center rounded-xl border border-[#fde68a] bg-[#fffbeb] py-3"
+                                className="flex-1 items-center justify-center rounded-xl border border-[#fde68a] bg-[#fffbeb] py-3 px-1"
                             >
                                 <Text
-                                    className="text-xs font-bold text-[#b45309]"
+                                    className={`font-bold text-[#b45309] ${
+                                        isSmallDevice ? "text-[11px]" : "text-xs"
+                                    }`}
                                     numberOfLines={1}
                                 >
                                     🚛 Transporter

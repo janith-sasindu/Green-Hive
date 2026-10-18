@@ -23,8 +23,8 @@ interface LoginScreenProps {
 type DemoRole = "Farmer" | "Seller" | "Transporter";
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
-    const { height: screenHeight } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -141,7 +141,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                             <Image
                                 source={require("../../assets/logo.png")}
                                 style={{
-                                    width: isSmallDevice ? 55 : 68,
+                                    width: isSmallDevice ? 56 : 68,
                                     height: isSmallDevice ? 40 : 50,
                                 }}
                                 className="mb-1"
@@ -149,7 +149,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                             />
 
                             {/* Brand tagline */}
-                            <Text className="mb-2 text-[14px] font-extrabold tracking-[1.4px] text-[#D5E8D7]">
+                            <Text
+                                className={`mb-2 font-extrabold text-[#D5E8D7] ${
+                                    isSmallDevice
+                                        ? "text-[11px] tracking-[0.8px]"
+                                        : "text-[13px] tracking-[1.4px]"
+                                }`}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                            >
                                 CONNECT · TRADE · TRANSPORT · GROW
                             </Text>
 
@@ -334,11 +342,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Farmer")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#C7E8CB] bg-[#EAF6EB] ${
-                                        isSmallDevice ? "h-[56px]" : "h-[64px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
                                     <Text className="mb-0.5 text-[18px]">🌾</Text>
-                                    <Text className="text-[13px] font-bold text-[#237D32]">
+                                    <Text
+                                        className="text-[13px] font-bold text-[#237D32]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Farmer
                                     </Text>
                                 </TouchableOpacity>
@@ -348,11 +360,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Seller")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#BFDBFE] bg-[#EFF6FF] ${
-                                        isSmallDevice ? "h-[56px]" : "h-[64px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
                                     <Text className="mb-0.5 text-[18px]">🏪</Text>
-                                    <Text className="text-[13px] font-bold text-[#2563EB]">
+                                    <Text
+                                        className="text-[13px] font-bold text-[#2563EB]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Seller
                                     </Text>
                                 </TouchableOpacity>
@@ -362,11 +378,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Transporter")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#FDE68A] bg-[#FFFBEB] ${
-                                        isSmallDevice ? "h-[56px]" : "h-[64px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
                                     <Text className="mb-0.5 text-[18px]">🚚</Text>
-                                    <Text className="text-[13px] font-bold text-[#D97706]">
+                                    <Text
+                                        className="text-[13px] font-bold text-[#D97706]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Transporter
                                     </Text>
                                 </TouchableOpacity>
