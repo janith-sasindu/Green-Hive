@@ -52,27 +52,27 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                 {/* Top Section */}
                 <View
                     className={`items-center justify-center px-6 ${
-                        isSmallDevice ? "py-6" : "py-10 flex-1"
+                        isSmallDevice ? "py-4" : "py-8 flex-1"
                     }`}
                 >
                     {/* Logo */}
                     <Image
                         source={require("../../assets/logo.png")}
                         style={{
-                            width: isSmallDevice ? 160 : 200,
-                            height: isSmallDevice ? 90 : 120,
+                            width: isSmallDevice ? 240 : 300,
+                            height: isSmallDevice ? 135 : 180,
                         }}
                         resizeMode="contain"
                         className="mb-4"
                     />
 
                     {/* Tagline */}
-                    <Text className="mb-2 text-center text-xs font-extrabold tracking-widest text-white">
+                    <Text className="mb-2 text-center text-lg font-extrabold tracking-wider text-white">
                         CONNECT • TRADE • TRANSPORT • GROW
                     </Text>
 
                     {/* Subtitle */}
-                    <Text className="text-center text-xs font-normal leading-relaxed text-[#d1e7d4] px-2">
+                    <Text className="text-center text-lg font-normal leading-relaxed text-[#d1e7d4] px-2">
                         Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
                     </Text>
                 </View>
