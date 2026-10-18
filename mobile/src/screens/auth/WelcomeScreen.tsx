@@ -71,7 +71,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                     </Text>
 
                     {/* Subtitle */}
-                    <Text className="text-center text-xs font-normal leading-relaxed text-[#d1e7d4] px-2">
+                    <Text className="text-center text-lg font-normal leading-relaxed text-[#d1e7d4] px-2">
                         Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
                     </Text>
                 </View>
@@ -80,71 +80,64 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                 <View className="rounded-t-[36px] bg-white px-6 pt-6 pb-8 shadow-lg">
                     {/* Platform Features Section */}
                     <View
-                        className={`rounded-2xl bg-[#F8FAF8] border border-[#E8F0E8] ${isSmallDevice ? "mb-4 p-3" : "mb-6 p-3.5"
-                            }`}
+                        className={`rounded-2xl bg-[#F8FAF8] border border-[#E8F0E8] ${
+                            isSmallDevice ? "mb-4 px-3 py-2.5" : "mb-6 px-3.5 py-3.5"
+                        }`}
                     >
 
                         {/* Feature Items 2x2 Grid */}
                         <View className="flex-row justify-between">
                             {/* Left Column */}
-                            <View className="flex-1 pr-1.5 gap-2.5">
+                            <View className="flex-1 pr-1 gap-3">
                                 <View className="flex-row items-center">
                                     <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
                                         <Text className="text-sm">🌿</Text>
                                     </View>
-                                    <View className="flex-1">
-                                        <Text className="text-xs font-bold text-gray-800">
-                                            Farm Fresh
-                                        </Text>
-                                        <Text className="text-[10px] text-gray-500">
-                                            Direct from growers
-                                        </Text>
-                                    </View>
+                                    <Text
+                                        numberOfLines={1}
+                                        className="flex-1 text-[13px] font-bold text-gray-800"
+                                    >
+                                        Farm Fresh
+                                    </Text>
                                 </View>
 
                                 <View className="flex-row items-center">
                                     <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
                                         <Text className="text-sm">🚛</Text>
                                     </View>
-                                    <View className="flex-1">
-                                        <Text className="text-xs font-bold text-gray-800">
-                                            Transport Network
-                                        </Text>
-                                        <Text className="text-[10px] text-gray-500">
-                                            Island-wide logistics
-                                        </Text>
-                                    </View>
+                                    <Text
+                                        numberOfLines={1}
+                                        className="flex-1 text-[13px] font-bold text-gray-800"
+                                    >
+                                        Transport Network
+                                    </Text>
                                 </View>
                             </View>
 
                             {/* Right Column */}
-                            <View className="flex-1 pl-1.5 gap-2.5">
+                            <View className="flex-1 pl-1 gap-3">
                                 <View className="flex-row items-center">
                                     <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
                                         <Text className="text-sm">🔒</Text>
                                     </View>
-                                    <View className="flex-1">
-                                        <Text className="text-xs font-bold text-gray-800">
-                                            Secure Payment
-                                        </Text>
-                                        <Text className="text-[10px] text-gray-500">
-                                            Escrow protected
-                                        </Text>
-                                    </View>
+                                    <Text
+                                        numberOfLines={1}
+                                        className="flex-1 text-[13px] font-bold text-gray-800"
+                                    >
+                                        Secure Payment
+                                    </Text>
                                 </View>
 
                                 <View className="flex-row items-center">
                                     <View className="mr-2 h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5E9]">
                                         <Text className="text-sm">✅</Text>
                                     </View>
-                                    <View className="flex-1">
-                                        <Text className="text-xs font-bold text-gray-800">
-                                            Verified Users
-                                        </Text>
-                                        <Text className="text-[10px] text-gray-500">
-                                            Trusted community
-                                        </Text>
-                                    </View>
+                                    <Text
+                                        numberOfLines={1}
+                                        className="flex-1 text-[13px] font-bold text-gray-800"
+                                    >
+                                        Verified Users
+                                    </Text>
                                 </View>
                             </View>
                         </View>
