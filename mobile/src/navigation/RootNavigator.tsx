@@ -7,7 +7,7 @@ import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import IdentityVerificationScreen from '../screens/auth/IdentityVerificationScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
-import { SellerHomeScreen } from '../screens/seller/SellerHomeScreen';
+import SellerNavigator from './SellerNavigator';
 import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
 
 export type RootStackParamList = {
@@ -65,11 +65,7 @@ export default function RootNavigator() {
         component={FarmerHomeScreen}
         options={{ headerShown: true, title: 'Farmer Dashboard' }}
       />
-      <Stack.Screen
-        name="SellerHome"
-        component={SellerHomeScreen}
-        options={{ headerShown: true, title: 'Seller Dashboard' }}
-      />
+      <Stack.Screen name="SellerHome" component={SellerNavigator} />
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}

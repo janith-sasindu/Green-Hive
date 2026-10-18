@@ -1,6 +1,10 @@
 import { Users, ShoppingBag, CreditCard, Truck } from 'lucide-react';
 import StatCard from '../components/dashbord/StatCard';
-import { mockStats } from '../data/mockData';
+import { mockStats, mockRoleCounts} from '../data/mockData';
+import RoleCard from '../components/dashbord/RoleCard';
+import OrdersChart from '../components/dashbord/OrdersChart';
+import UserGrowthChart from '../components/dashbord/UserGrowthChart';
+import TransactionVolumeChart from '../components/dashbord/TransactionVolumeChart';
 
 export default function DashboardPage() {
   return (
@@ -40,6 +44,38 @@ export default function DashboardPage() {
           iconColor="text-purple-600"
         />
       </section>
+
+      {/* Role Breakdown Cards */}
+<section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <RoleCard
+    count={mockRoleCounts.farmers}
+    label="Farmers"
+    emoji="🌱"
+    theme="emerald"
+  />
+  <RoleCard
+    count={mockRoleCounts.sellers}
+    label="Sellers"
+    emoji="🎁"
+    theme="blue"
+  />
+  <RoleCard
+    count={mockRoleCounts.transporters}
+    label="Transporters"
+    emoji="🚚"
+    theme="amber"
+  />
+</section>
+
+ <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OrdersChart />
+        <UserGrowthChart />
+      </section>
+
+     <section>
+        <TransactionVolumeChart />
+     </section>
+
     </div>
   );
 }

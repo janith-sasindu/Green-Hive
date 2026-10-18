@@ -51,9 +51,8 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             >
                 {/* Top Section */}
                 <View
-                    className={`items-center justify-center px-6 ${
-                        isSmallDevice ? "py-4" : "py-8 flex-1"
-                    }`}
+                    className={`items-center justify-center px-6 ${isSmallDevice ? "py-4" : "py-8 flex-1"
+                        }`}
                 >
                     {/* Logo */}
                     <Image
@@ -72,7 +71,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                     </Text>
 
                     {/* Subtitle */}
-                    <Text className="text-center text-lg font-normal leading-relaxed text-[#d1e7d4] px-2">
+                    <Text className="text-center text-xs font-normal leading-relaxed text-[#d1e7d4] px-2">
                         Sri Lanka's agricultural marketplace — connecting farmers, sellers & transporters
                     </Text>
                 </View>
@@ -81,9 +80,8 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
                 <View className="rounded-t-[36px] bg-white px-6 pt-6 pb-8 shadow-lg">
                     {/* Platform Features Section */}
                     <View
-                        className={`rounded-2xl bg-[#F8FAF8] border border-[#E8F0E8] ${
-                            isSmallDevice ? "mb-4 p-3" : "mb-6 p-3.5"
-                        }`}
+                        className={`rounded-2xl bg-[#F8FAF8] border border-[#E8F0E8] ${isSmallDevice ? "mb-4 p-3" : "mb-6 p-3.5"
+                            }`}
                     >
 
                         {/* Feature Items 2x2 Grid */}
@@ -177,9 +175,9 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
                     {/* Quick Demo Section */}
                     <View className="mt-7">
-                        <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                        {/* <Text className="mb-3 text-center text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
                             Quick Demo Access
-                        </Text>
+                        </Text> */}
                         <View className="flex-row justify-between gap-2">
                             {/* Farmer */}
                             <TouchableOpacity
@@ -228,4 +226,4 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             </ScrollView>
         </SafeAreaView>
     );
-}
+}

@@ -3,6 +3,8 @@ module.exports = {
   // NOTE: Update this to include the paths to all files that contain Nativewind classes.
   content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  // "class" lets the in-app Light/Dark toggle override the device setting (required on web).
+  darkMode: "class",
   theme: {
     extend: {},
   },
