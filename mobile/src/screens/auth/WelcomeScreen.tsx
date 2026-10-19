@@ -22,7 +22,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
     const logoHeight = Math.round(logoWidth * (216 / 360));
 
     const handleGetStarted = () => {
-        navigation?.navigate("RoleSelection");
+        navigation?.navigate("FarmerHome");
     };
 
     const handleSignIn = () => {
