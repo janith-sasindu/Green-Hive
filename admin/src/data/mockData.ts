@@ -295,3 +295,172 @@ export const mockAdmins: AdminAccount[] = [
     isSuperAdmin: true,
   },
 ];
+export interface SellingAd {
+  id: string;
+  title: string;
+  postedBy: string;
+  category: string;
+  price: string;
+  quantity: string;
+  location: string;
+  validUntil: string;
+  status: 'active' | 'sold';
+  image: string;
+}
+
+export interface RequirementAd {
+  id: string;
+  title: string;
+  postedBy: string;
+  category: string;
+  offeredPrice: string;
+  quantityNeeded: string;
+  location: string;
+  deadline: string;
+  description: string;
+  responsesCount: number;
+  status: 'open' | 'closed';
+}
+
+// 8 Selling Ads matching screenshot
+export const mockSellingAds: SellingAd[] = [
+  {
+    id: '1',
+    title: 'Fresh Cabbage',
+    postedBy: 'Sunil Perera',
+    category: 'Vegetables',
+    price: 'Rs. 80/kg',
+    quantity: '500 kg available',
+    location: 'Nuwara Eliya',
+    validUntil: 'Until 2026-09-15',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '2',
+    title: 'Organic Carrots',
+    postedBy: 'Sunil Perera',
+    category: 'Vegetables',
+    price: 'Rs. 120/kg',
+    quantity: '300 kg available',
+    location: 'Nuwara Eliya',
+    validUntil: 'Until 2026-09-20',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '3',
+    title: 'Red Onions',
+    postedBy: 'Kamal Jayasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 150/kg',
+    quantity: '1000 kg available',
+    location: 'Dambulla',
+    validUntil: 'Until 2026-10-01',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '4',
+    title: 'Green Beans',
+    postedBy: 'Priya Kumarasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 180/kg',
+    quantity: '200 kg available',
+    location: 'Kandy',
+    validUntil: 'Until 2026-09-10',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '5',
+    title: 'Ripe Bananas (Ambul)',
+    postedBy: 'Sunil Perera',
+    category: 'Fruits',
+    price: 'Rs. 140/kg',
+    quantity: '400 kg available',
+    location: 'Kurunegala',
+    validUntil: 'Until 2026-09-18',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '6',
+    title: 'Fresh Potatoes',
+    postedBy: 'Kamal Jayasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 220/kg',
+    quantity: '800 kg available',
+    location: 'Badulla',
+    validUntil: 'Until 2026-09-28',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '7',
+    title: 'Green Papaya',
+    postedBy: 'Sanduni Wickrama',
+    category: 'Fruits',
+    price: 'Rs. 90/kg',
+    quantity: '350 kg available',
+    location: 'Anuradhapura',
+    validUntil: 'Until 2026-09-22',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '8',
+    title: 'Fresh Ginger',
+    postedBy: 'Sunil Perera',
+    category: 'Spices',
+    price: 'Rs. 450/kg',
+    quantity: '150 kg available',
+    location: 'Gampaha',
+    validUntil: 'Until 2026-10-15',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=300&q=80',
+  },
+];
+
+// 3 Requirement Ads matching screenshot
+export const mockRequirementAds: RequirementAd[] = [
+  {
+    id: '1',
+    title: 'Fresh Cabbage',
+    postedBy: 'Colombo Fresh Market',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 85/kg offered',
+    quantityNeeded: '100 kg needed',
+    location: 'Colombo 07',
+    deadline: 'By 2026-09-01',
+    description: 'Need fresh cabbage weekly. Quality grade A preferred.',
+    responsesCount: 3,
+    status: 'open',
+  },
+  {
+    id: '2',
+    title: 'Red Onions',
+    postedBy: 'Kandy Supermart',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 145/kg offered',
+    quantityNeeded: '250 kg needed',
+    location: 'Kandy City',
+    deadline: 'By 2026-09-05',
+    description: 'Bulk red onions for supermarket. Regular supply needed.',
+    responsesCount: 5,
+    status: 'open',
+  },
+  {
+    id: '3',
+    title: 'Ripe Tomatoes',
+    postedBy: 'Colombo Fresh Market',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 160/kg offered',
+    quantityNeeded: '180 kg needed',
+    location: 'Colombo 07',
+    deadline: 'By 2026-09-08',
+    description: 'Fresh salad tomatoes required for immediate retail delivery.',
+    responsesCount: 4,
+    status: 'open',
+  },
+];

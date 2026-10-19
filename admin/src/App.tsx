@@ -4,15 +4,23 @@ import Header from "./components/layout/Header";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
+import ManageAdminsPage from "./pages/ManageAdminsPage";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("Dashboard");
 
   // Dynamic Header Title
   const getPageTitle = () => {
-    if (currentPage === "All Users") return "User Management";
-    if (currentPage === "Approvals") return "Account Approvals";
-    return "Admin Dashboard";
+    switch (currentPage) {
+      case "All Users":
+        return "User Management";
+      case "Approvals":
+        return "Account Approvals";
+      case "Manage Admins":
+        return "Manage Admins";
+      default:
+        return "Admin Dashboard";
+    }
   };
 
   return (
@@ -31,6 +39,7 @@ export default function App() {
         <main className="flex-1 p-8 overflow-y-auto">
           {currentPage === "All Users" && <UsersPage />}
           {currentPage === "Approvals" && <ApprovalsPage />}
+          {currentPage === "Manage Admins" && <ManageAdminsPage />}
           {currentPage === "Dashboard" && <DashboardPage />}
         </main>
       </div>
