@@ -19,7 +19,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
     const isSmallDevice = screenHeight < 700;
 
     const handleGetStarted = () => {
-        navigation?.navigate("RoleSelection");
+        navigation?.navigate("FarmerHome");
     };
 
     const handleSignIn = () => {
