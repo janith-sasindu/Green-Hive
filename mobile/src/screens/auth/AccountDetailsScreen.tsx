@@ -8,10 +8,14 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    Alert,
     useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface AccountDetailsScreenProps {
     navigation: any;
@@ -33,6 +37,42 @@ const AccountDetailsScreen = ({
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [document, setDocument] =
+        useState<DocumentPicker.DocumentPickerAsset | null>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleUploadDocument = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: [
+                    "image/jpeg",
+                    "image/png",
+                    "application/pdf",
+                ],
+                copyToCacheDirectory: true,
+                multiple: false,
+            });
+
+            if (result.canceled) return;
+
+            const selectedFile = result.assets[0];
+
+            if (selectedFile.size != null && selectedFile.size > MAX_FILE_SIZE) {
+                Alert.alert(
+                    "File too large",
+                    "Please select a JPG, PNG, or PDF file up to 10 MB."
+                );
+                return;
+            }
+
+            setDocument(selectedFile);
+        } catch {
+            Alert.alert(
+                "Upload error",
+                "Unable to select your document. Please try again."
+            );
+        }
+    };
 
     const handleContinue = () => {
         setError("");
@@ -206,6 +246,16 @@ const AccountDetailsScreen = ({
                                             />
                                         </TouchableOpacity>
                                     </View>
+                                </View>
+
+                                {/* National ID Card Required Info Box */}
+                                <View className="mb-4 rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] p-3.5">
+                                    <Text className="mb-1 text-[13px] font-bold text-[#1D4ED8]">
+                                        National ID Card Required
+                                    </Text>
+                                    <Text className="text-[11px] leading-[16px] text-[#2563EB]">
+                                        Upload a clear photo of your National Identity Card (front side).
+                                    </Text>
                                 </View>
 
                                 {/* Validation message */}
