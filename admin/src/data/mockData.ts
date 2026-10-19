@@ -276,3 +276,22 @@ export const mockApprovals: ApprovalItem[] = [
     documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
   },
 ];
+export interface AdminAccount {
+  id: string;
+  name: string;
+  username: string;
+  role: 'Super Admin' | 'Admin' | 'Moderator';
+  addedDate: string;
+  isSuperAdmin: boolean;
+}
+
+export const mockAdmins: AdminAccount[] = [
+  {
+    id: '1',
+    name: 'Admin User',
+    username: 'admin',
+    role: 'Super Admin',
+    addedDate: '1/1/2024',
+    isSuperAdmin: true,
+  },
+];
