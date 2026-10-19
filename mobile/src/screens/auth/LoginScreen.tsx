@@ -23,8 +23,8 @@ interface LoginScreenProps {
 type DemoRole = "Farmer" | "Seller" | "Transporter";
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
-    const { height: screenHeight } = useWindowDimensions();
-    const isSmallDevice = screenHeight < 700;
+    const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+    const isSmallDevice = screenHeight < 700 || screenWidth < 380;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -129,10 +129,10 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                             >
                                 <Ionicons
                                     name="arrow-back"
-                                    size={16}
+                                    size={20}
                                     color="#FFFFFF"
                                 />
-                                <Text className="ml-1.5 text-xs text-white">
+                                <Text className="ml-1.5 text-base text-white">
                                     Back
                                 </Text>
                             </TouchableOpacity>
@@ -141,28 +141,36 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                             <Image
                                 source={require("../../assets/logo.png")}
                                 style={{
-                                    width: isSmallDevice ? 40 : 46,
-                                    height: isSmallDevice ? 30 : 36,
+                                    width: isSmallDevice ? 56 : 68,
+                                    height: isSmallDevice ? 40 : 50,
                                 }}
                                 className="mb-1"
                                 resizeMode="contain"
                             />
 
                             {/* Brand tagline */}
-                            <Text className="mb-2 text-[9px] font-extrabold tracking-[1.4px] text-[#D5E8D7]">
+                            <Text
+                                className={`mb-2 font-extrabold text-[#D5E8D7] ${
+                                    isSmallDevice
+                                        ? "text-[11px] tracking-[0.8px]"
+                                        : "text-[13px] tracking-[1.4px]"
+                                }`}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                            >
                                 CONNECT · TRADE · TRANSPORT · GROW
                             </Text>
 
                             {/* Header title */}
                             <Text
                                 className={`font-bold text-white ${
-                                    isSmallDevice ? "text-[16px]" : "text-[18px]"
+                                    isSmallDevice ? "text-[24px]" : "text-[27px]"
                                 }`}
                             >
                                 Welcome back
                             </Text>
 
-                            <Text className="mt-0.5 text-xs text-[#D9EEDC]">
+                            <Text className="mt-0.5 text-base text-[#D9EEDC]">
                                 Sign in to your account
                             </Text>
                         </View>
@@ -176,24 +184,24 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                 style={{ maxWidth: 440 }}
                             >
                                 {/* Email label */}
-                                <Text className="mb-1.5 text-[11px] font-bold text-[#344054]">
+                                <Text className="mb-1.5 text-[15px] font-bold text-[#344054]">
                                     Username / Email
                                 </Text>
 
                                 {/* Email input */}
                                 <View
-                                    className={`mb-3 flex-row items-center rounded-[11px] border border-[#E0E5EB] px-2.5 bg-white ${
-                                        isSmallDevice ? "h-[38px]" : "h-[42px]"
+                                    className={`mb-3.5 flex-row items-center rounded-[11px] border border-[#E0E5EB] px-3 bg-white ${
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
                                     }`}
                                 >
                                     <Ionicons
                                         name="mail-outline"
-                                        size={15}
+                                        size={18}
                                         color="#94A3B8"
                                     />
 
                                     <TextInput
-                                        className="ml-2 flex-1 h-full text-[12px] text-[#344054]"
+                                        className="ml-2.5 flex-1 h-full text-[15px] text-[#344054]"
                                         style={{ height: "100%" }}
                                         placeholder="your@email.com"
                                         placeholderTextColor="#9AA39D"
@@ -208,24 +216,24 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                 </View>
 
                                 {/* Password label */}
-                                <Text className="mb-1.5 text-[11px] font-bold text-[#344054]">
+                                <Text className="mb-1.5 text-[15px] font-bold text-[#344054]">
                                     Password
                                 </Text>
 
                                 {/* Password input */}
                                 <View
-                                    className={`flex-row items-center rounded-[11px] border border-[#E0E5EB] px-2.5 bg-white ${
-                                        isSmallDevice ? "h-[38px]" : "h-[42px]"
+                                    className={`flex-row items-center rounded-[11px] border border-[#E0E5EB] px-3 bg-white ${
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
                                     }`}
                                 >
                                     <Ionicons
                                         name="lock-closed-outline"
-                                        size={15}
+                                        size={18}
                                         color="#94A3B8"
                                     />
 
                                     <TextInput
-                                        className="ml-2 flex-1 h-full text-[12px] text-[#344054]"
+                                        className="ml-2.5 flex-1 h-full text-[15px] text-[#344054]"
                                         style={{ height: "100%" }}
                                         placeholder="Enter your password"
                                         placeholderTextColor="#9AA39D"
@@ -250,7 +258,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                                     ? "eye-off-outline"
                                                     : "eye-outline"
                                             }
-                                            size={15}
+                                            size={18}
                                             color="#94A3B8"
                                         />
                                     </TouchableOpacity>
@@ -263,7 +271,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                     className="mb-3.5 mt-2.5 self-end"
                                 >
-                                    <Text className="text-[11px] font-bold text-[#237D32]">
+                                    <Text className="text-[15px] font-bold text-[#237D32]">
                                         Forgot Password?
                                     </Text>
                                 </TouchableOpacity>
@@ -274,7 +282,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     disabled={loading}
                                     activeOpacity={0.85}
                                     className={`items-center justify-center rounded-[13px] ${
-                                        isSmallDevice ? "h-[42px]" : "h-[46px]"
+                                        isSmallDevice ? "h-[46px]" : "h-[52px]"
                                     } ${
                                         loading ? "bg-[#78A981]" : "bg-[#176B2C]"
                                     }`}
@@ -286,7 +294,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                         shadowRadius: 3,
                                     }}
                                 >
-                                    <Text className="text-[13px] font-bold text-white">
+                                    <Text className="text-[18px] font-bold text-white">
                                         {loading ? "Signing In..." : "Sign In"}
                                     </Text>
                                 </TouchableOpacity>
@@ -294,7 +302,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                 {/* OR divider */}
                                 <View className="my-3 flex-row items-center justify-center">
                                     <View className="h-[1px] flex-1 bg-gray-200" />
-                                    <Text className="mx-3 text-[10px] uppercase font-semibold text-[#98A2B3]">
+                                    <Text className="mx-3 text-[14px] uppercase font-semibold text-[#98A2B3]">
                                         or
                                     </Text>
                                     <View className="h-[1px] flex-1 bg-gray-200" />
@@ -305,14 +313,14 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={handleGoogleSignIn}
                                     activeOpacity={0.7}
                                     className={`flex-row items-center justify-center rounded-[12px] border border-[#E0E5EB] bg-white ${
-                                        isSmallDevice ? "h-[40px]" : "h-[44px]"
+                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
                                     }`}
                                 >
-                                    <Text className="mr-2 text-[18px] font-bold text-[#4285F4]">
+                                    <Text className="mr-2.5 text-[22px] font-bold text-[#4285F4]">
                                         G
                                     </Text>
 
-                                    <Text className="text-[11px] font-medium text-[#475467]">
+                                    <Text className="text-[15px] font-medium text-[#475467]">
                                         Continue with Google
                                     </Text>
                                 </TouchableOpacity>
@@ -324,7 +332,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                             className="mt-4 px-4 w-full self-center"
                             style={{ maxWidth: 440 }}
                         >
-                            <Text className="mb-2 text-center text-[10px] font-extrabold tracking-[0.5px] text-[#98A2B3]">
+                            <Text className="mb-2 text-center text-[14px] font-extrabold tracking-[0.5px] text-[#98A2B3]">
                                 QUICK DEMO ACCESS
                             </Text>
 
@@ -334,11 +342,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Farmer")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#C7E8CB] bg-[#EAF6EB] ${
-                                        isSmallDevice ? "h-[50px]" : "h-[56px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
-                                    <Text className="mb-0.5 text-[14px]">🌾</Text>
-                                    <Text className="text-[9px] font-bold text-[#237D32]">
+                                    <Text className="mb-0.5 text-[18px]">🌾</Text>
+                                    <Text
+                                        className="text-[13px] font-bold text-[#237D32]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Farmer
                                     </Text>
                                 </TouchableOpacity>
@@ -348,11 +360,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Seller")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#BFDBFE] bg-[#EFF6FF] ${
-                                        isSmallDevice ? "h-[50px]" : "h-[56px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
-                                    <Text className="mb-0.5 text-[14px]">🏪</Text>
-                                    <Text className="text-[9px] font-bold text-[#2563EB]">
+                                    <Text className="mb-0.5 text-[18px]">🏪</Text>
+                                    <Text
+                                        className="text-[13px] font-bold text-[#2563EB]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Seller
                                     </Text>
                                 </TouchableOpacity>
@@ -362,25 +378,29 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                     onPress={() => handleDemoAccess("Transporter")}
                                     activeOpacity={0.7}
                                     className={`flex-1 items-center justify-center rounded-[11px] border border-[#FDE68A] bg-[#FFFBEB] ${
-                                        isSmallDevice ? "h-[50px]" : "h-[56px]"
+                                        isSmallDevice ? "h-[54px]" : "h-[64px]"
                                     }`}
                                 >
-                                    <Text className="mb-0.5 text-[14px]">🚚</Text>
-                                    <Text className="text-[9px] font-bold text-[#D97706]">
+                                    <Text className="mb-0.5 text-[18px]">🚚</Text>
+                                    <Text
+                                        className="text-[13px] font-bold text-[#D97706]"
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
                                         Transporter
                                     </Text>
                                 </TouchableOpacity>
                             </View>
 
                             {/* Demo information */}
-                            <Text className="mt-2 text-center text-[9px] text-[#98A2B3]">
+                            <Text className="mt-2 text-center text-[13px] text-[#98A2B3]">
                                 No signup needed — tap to explore
                             </Text>
                         </View>
 
                         {/* ================= SIGN UP ================= */}
                         <View className="mt-4 mb-2 flex-row items-center justify-center">
-                            <Text className="text-[11px] text-[#667085]">
+                            <Text className="text-[15px] text-[#667085]">
                                 Don't have an account?{" "}
                             </Text>
 
@@ -389,7 +409,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                                 activeOpacity={0.7}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Text className="text-[11px] font-bold text-[#237D32]">
+                                <Text className="text-[15px] font-bold text-[#237D32]">
                                     Sign Up
                                 </Text>
                             </TouchableOpacity>

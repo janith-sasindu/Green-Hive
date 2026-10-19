@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
-import IdentityVerificationScreen from '../screens/auth/IdentityVerificationScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import SellerNavigator from './SellerNavigator';
@@ -15,20 +14,8 @@ export type RootStackParamList = {
   LoginScreen: undefined;
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
-  IdentityVerificationScreen: {
-    role?: string;
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-  };
-  IdentityVerification: {
-    role?: string;
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-  };
+  IdentityVerificationScreen: { role?: string } | undefined;
+  IdentityVerification: { role?: string } | undefined;
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
@@ -50,11 +37,11 @@ export default function RootNavigator() {
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
       <Stack.Screen
         name="IdentityVerificationScreen"
-        component={IdentityVerificationScreen}
+        component={AccountDetailsScreen}
       />
       <Stack.Screen
         name="IdentityVerification"
-        component={IdentityVerificationScreen}
+        component={AccountDetailsScreen}
       />
       <Stack.Screen
         name="FarmerHome"

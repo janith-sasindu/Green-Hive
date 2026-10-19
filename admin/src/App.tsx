@@ -1,12 +1,12 @@
-import React, {useState} from "react";
+import { useState } from "react";
 import Sidebar from "./components/layout/slidebar";
 import Header from "./components/layout/Header";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 
 export default function App() {
-    const [currentPage, setCurrentPage] = useState("Dashboard");
-  return(
+  const [currentPage, setCurrentPage] = useState("Dashboard");
+  return (
     <div className="flex h-screen overflow-hidden bg-slate-50/50">
       {/* 2. Sidebar with navigation callback */}
       <Sidebar
