@@ -258,6 +258,82 @@ const AccountDetailsScreen = ({
                                     </Text>
                                 </View>
 
+                                {/* Upload National ID Card Label */}
+                                <Text className="mb-2 text-[13px] font-semibold text-[#344054]">
+                                    Upload National ID Card
+                                </Text>
+
+                                {/* Dashed Upload Box */}
+                                <TouchableOpacity
+                                    onPress={handleUploadDocument}
+                                    activeOpacity={0.7}
+                                    className={`mb-4 items-center justify-center rounded-[14px] border border-dashed px-3 ${
+                                        isSmallDevice ? "min-h-[135px] py-3.5" : "min-h-[155px] py-4"
+                                    } ${
+                                        document
+                                            ? "border-[#86C99A] bg-[#F4FBF5]"
+                                            : "border-[#DCE2E8] bg-white"
+                                    }`}
+                                >
+                                    {document ? (
+                                        <>
+                                            <View className="mb-2.5 h-11 w-11 items-center justify-center rounded-full bg-[#E1F4E5]">
+                                                <Ionicons
+                                                    name="document-text-outline"
+                                                    size={23}
+                                                    color="#16853A"
+                                                />
+                                            </View>
+
+                                            <Text
+                                                className="mb-1 max-w-full text-center text-[12px] font-semibold text-[#334155]"
+                                                numberOfLines={2}
+                                            >
+                                                {document.name}
+                                            </Text>
+
+                                            <Text className="mb-2 text-[10px] text-[#8A96A5]">
+                                                {document.size != null
+                                                    ? `${(document.size / (1024 * 1024)).toFixed(2)} MB`
+                                                    : "File selected"}
+                                            </Text>
+
+                                            <View className="flex-row items-center">
+                                                <Ionicons
+                                                    name="checkmark-circle"
+                                                    size={14}
+                                                    color="#16853A"
+                                                />
+                                                <Text className="ml-1 text-[11px] font-medium text-[#16853A]">
+                                                    Document selected
+                                                </Text>
+                                            </View>
+
+                                            <Text className="mt-1.5 text-[10px] text-[#64748B]">
+                                                Tap to choose another file
+                                            </Text>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <View className="mb-2.5 h-[44px] w-[44px] items-center justify-center rounded-full bg-[#F3F4F6]">
+                                                <Ionicons
+                                                    name="document-attach-outline"
+                                                    size={22}
+                                                    color="#94A3B8"
+                                                />
+                                            </View>
+
+                                            <Text className="mb-1 text-center text-[12px] font-medium text-[#475569]">
+                                                Tap to upload National ID Card
+                                            </Text>
+
+                                            <Text className="text-center text-[10px] text-[#94A3B8]">
+                                                JPG, PNG or PDF up to 10 MB
+                                            </Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+
                                 {/* Validation message */}
                                 {error ? (
                                     <Text className="mb-3 text-[12px] text-red-600">
