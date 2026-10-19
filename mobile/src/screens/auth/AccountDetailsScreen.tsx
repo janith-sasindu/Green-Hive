@@ -77,8 +77,13 @@ const AccountDetailsScreen = ({
     const handleContinue = () => {
         setError("");
 
-        if (!fullName.trim() || !email.trim() || !phone.trim() || !password) {
-            setError("Please complete all fields.");
+        if (!fullName.trim()) {
+            setError("Please enter your full name.");
+            return;
+        }
+
+        if (!email.trim()) {
+            setError("Please enter your email address.");
             return;
         }
 
@@ -87,18 +92,31 @@ const AccountDetailsScreen = ({
             return;
         }
 
+        if (!phone.trim()) {
+            setError("Please enter your phone number.");
+            return;
+        }
+
+        if (!password) {
+            setError("Please enter a password.");
+            return;
+        }
+
         if (password.length < 8) {
             setError("Password must contain at least 8 characters.");
             return;
         }
 
-        navigation.navigate("IdentityVerificationScreen", {
-            role,
-            fullName: fullName.trim(),
-            email: email.trim(),
-            phone: phone.trim(),
-            password,
-        });
+        if (!document) {
+            setError("Please upload your National ID Card to continue.");
+            Alert.alert(
+                "National ID required",
+                "Please upload a clear photo or scan of your National Identity Card."
+            );
+            return;
+        }
+
+        // Ready for submission in subsequent step
     };
 
     return (
@@ -336,9 +354,16 @@ const AccountDetailsScreen = ({
 
                                 {/* Validation message */}
                                 {error ? (
-                                    <Text className="mb-3 text-[12px] text-red-600">
-                                        {error}
-                                    </Text>
+                                    <View className="mb-3.5 flex-row items-center rounded-lg border border-red-200 bg-red-50 p-2.5">
+                                        <Ionicons
+                                            name="alert-circle-outline"
+                                            size={16}
+                                            color="#DC2626"
+                                        />
+                                        <Text className="ml-2 flex-1 text-[12px] font-medium text-red-600">
+                                            {error}
+                                        </Text>
+                                    </View>
                                 ) : null}
 
                                 {/* Continue */}
