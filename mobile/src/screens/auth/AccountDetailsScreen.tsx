@@ -9,6 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
+    ActivityIndicator,
     useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -133,6 +134,7 @@ const AccountDetailsScreen = ({
             >
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
                     className="flex-1"
                 >
                     <ScrollView
@@ -142,7 +144,7 @@ const AccountDetailsScreen = ({
                         bounces={false}
                         contentContainerStyle={{
                             flexGrow: 1,
-                            paddingBottom: isSmallDevice ? 20 : 32,
+                            paddingBottom: isSmallDevice ? 32 : 48,
                         }}
                     >
                         {/* Green header banner */}
@@ -366,17 +368,29 @@ const AccountDetailsScreen = ({
                                     </View>
                                 ) : null}
 
-                                {/* Continue */}
+                                {/* Continue Button */}
                                 <TouchableOpacity
                                     onPress={handleContinue}
+                                    disabled={uploading}
                                     activeOpacity={0.8}
                                     className={`${
-                                        isSmallDevice ? "h-[44px]" : "h-[48px]"
-                                    } items-center justify-center rounded-[12px] bg-[#176B2C] shadow-sm`}
+                                        isSmallDevice ? "h-[46px]" : "h-[50px]"
+                                    } flex-row items-center justify-center rounded-[14px] bg-[#176B2C] shadow-sm ${
+                                        uploading ? "opacity-75" : ""
+                                    }`}
                                 >
-                                    <Text className="text-[15px] font-bold text-white">
-                                        Continue
-                                    </Text>
+                                    {uploading ? (
+                                        <>
+                                            <ActivityIndicator size="small" color="#FFFFFF" />
+                                            <Text className="ml-2 text-[15px] font-bold text-white">
+                                                Please wait...
+                                            </Text>
+                                        </>
+                                    ) : (
+                                        <Text className="text-[16px] font-bold text-white">
+                                            Continue
+                                        </Text>
+                                    )}
                                 </TouchableOpacity>
                             </View>
                         </View>
