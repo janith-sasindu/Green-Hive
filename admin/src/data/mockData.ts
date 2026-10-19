@@ -189,3 +189,90 @@ export const mockUsers: UserItem[] = [
     joined: '2026-06-01',
   },
 ];
+
+export interface ApprovalItem{
+  id: string;
+  name: string;
+  role: 'farmer'|'seller'|'transporter';
+  location: string;
+  email: string;
+  phone: string;
+  docType: string;
+  idNumber: string;
+  submittedAt: string;
+  submittedFull: string;
+  status: 'pending' | 'approved' | 'rejected';
+  documentImage: string;
+}
+export const mockApprovals: ApprovalItem[] = [
+  {
+    id: '1',
+    name: 'Priya Kumarasinghe',
+    role: 'farmer',
+    location: 'Kandy',
+    email: 'priya@farm.lk',
+    phone: '+94 76 345 6789',
+    docType: 'National ID Card',
+    idNumber: 'NIC-890432198V',
+    submittedAt: '8/28/2026',
+    submittedFull: '8/28/2026, 9:14:00 AM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '2',
+    name: 'Chathura Senanayake',
+    role: 'seller',
+    location: 'Galle',
+    email: 'chathura@market.lk',
+    phone: '+94 71 889 1234',
+    docType: 'National ID Card',
+    idNumber: 'NIC-940112456V',
+    submittedAt: '8/27/2026',
+    submittedFull: '8/27/2026, 2:30:00 PM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '3',
+    name: 'Kasun Wickramasinghe',
+    role: 'transporter',
+    location: 'Kurunegala',
+    email: 'kasun@express.lk',
+    phone: '+94 77 445 9821',
+    docType: "Driver's License",
+    idNumber: 'DL-B8923419',
+    submittedAt: '8/27/2026',
+    submittedFull: '8/27/2026, 11:10:00 AM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '4',
+    name: 'Sanduni Wickrama',
+    role: 'farmer',
+    location: 'Nuwara Eliya',
+    email: 'sanduni@eco.lk',
+    phone: '+94 77 123 9988',
+    docType: 'National ID Card',
+    idNumber: 'NIC-970821312V',
+    submittedAt: '8/26/2026',
+    submittedFull: '8/26/2026, 10:05:00 AM',
+    status: 'approved',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '5',
+    name: 'Dilhan Perera',
+    role: 'seller',
+    location: 'Colombo 05',
+    email: 'dilhan@mart.lk',
+    phone: '+94 71 556 7788',
+    docType: 'National ID Card',
+    idNumber: 'NIC-880930711V',
+    submittedAt: '8/25/2026',
+    submittedFull: '8/25/2026, 4:45:00 PM',
+    status: 'rejected',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+];
