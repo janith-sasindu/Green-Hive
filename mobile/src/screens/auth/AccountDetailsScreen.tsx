@@ -75,7 +75,7 @@ const AccountDetailsScreen = ({
         }
     };
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         setError("");
 
         if (!fullName.trim()) {
@@ -117,7 +117,36 @@ const AccountDetailsScreen = ({
             return;
         }
 
-        // Ready for submission in subsequent step
+        setUploading(true);
+
+        try {
+            // Determine role-based home screen destination
+            const roleKey = role.toLowerCase();
+            let destination = "FarmerHome";
+            if (roleKey.includes("seller")) {
+                destination = "SellerHome";
+            } else if (roleKey.includes("transporter")) {
+                destination = "TransporterHome";
+            }
+
+            Alert.alert(
+                "Account Created Successfully!",
+                `Welcome to Green-Hive! Your registration as a ${role} is complete.`,
+                [
+                    {
+                        text: "Get Started",
+                        onPress: () => navigation.navigate(destination),
+                    },
+                ]
+            );
+        } catch {
+            Alert.alert(
+                "Registration failed",
+                "Unable to create your account. Please try again."
+            );
+        } finally {
+            setUploading(false);
+        }
     };
 
     return (
