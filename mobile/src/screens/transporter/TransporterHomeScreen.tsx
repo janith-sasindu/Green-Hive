@@ -13,19 +13,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
+// Mock Data imported from dedicated transporter data folder
+import {
+  MOCK_TRANSPORTER_PROFILE,
+  MOCK_TRANSPORTER_STATS,
+  MOCK_ACTIVE_JOB,
+  MOCK_AVAILABLE_JOBS,
+  MOCK_MY_OFFERS,
+  MOCK_PAYMENT_SUMMARY,
+  MOCK_NOTIFICATIONS,
+  AvailableTransportJob,
+  ActiveTransportJob,
+  TransportOffer,
+  TransporterProfile,
+  TransporterStats,
+  PaymentSummaryData,
+  TransporterNotificationItem,
+} from "./data";
+
 interface TransporterHomeScreenProps {
   navigation?: any;
-}
-
-interface AvailableJobItem {
-  id: string;
-  cropName: string;
-  weight: string;
-  pickup: string;
-  dropoff: string;
-  pickupTime: string;
-  status: "Open" | "Assigned";
-  price?: string;
 }
 
 export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps) => {
@@ -42,43 +49,25 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
 
-  // Active Job State
-  const [jobStatus, setJobStatus] = useState<string>("In Progress");
-
-  // Available Jobs (matching the exact screenshot)
-  const availableJobsList: AvailableJobItem[] = [
-    {
-      id: "#GH-T1025",
-      cropName: "Ripe Tomatoes",
-      weight: "150 kg",
-      pickup: "Dambulla Agricultural Zone, Plot 14",
-      dropoff: "Colombo Fresh Market, Colombo 03",
-      pickupTime: "2026-08-31 · 06:00 AM",
-      status: "Open",
-      price: "Rs. 15,500",
-    },
-    {
-      id: "#GH-T1020",
-      cropName: "Organic Carrots",
-      weight: "200 kg",
-      pickup: "Nuwara Eliya Highlands Farm",
-      dropoff: "Kandy Supermart, City Center",
-      pickupTime: "2026-08-29 · 07:00 AM",
-      status: "Open",
-      price: "Rs. 14,000",
-    },
-  ];
+  // Dynamic state loaded from mock data
+  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [stats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
+  const [activeJob, setActiveJob] = useState<ActiveTransportJob>(MOCK_ACTIVE_JOB);
+  const [availableJobsList] = useState<AvailableTransportJob[]>(MOCK_AVAILABLE_JOBS);
+  const [myOffersList] = useState<TransportOffer[]>(MOCK_MY_OFFERS);
+  const [paymentSummary] = useState<PaymentSummaryData>(MOCK_PAYMENT_SUMMARY);
+  const [notificationsList] = useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
 
   const handleConfirmPickup = () => {
     Alert.alert(
       "Confirm Pickup",
-      "Are you currently at Nuwara Eliya Farm, Hanguranketha Road to confirm loading of 100 kg Fresh Cabbage?",
+      `Are you currently at ${activeJob.pickup} to confirm loading of ${activeJob.cropName} · ${activeJob.weight}?`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm",
           onPress: () => {
-            setJobStatus("In Transit");
+            setActiveJob((prev) => ({ ...prev, status: "In Transit" }));
             Alert.alert("Pickup Confirmed!", "Cargo is loaded. Trip status updated to 'In Transit'.");
           },
         },
@@ -89,16 +78,28 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const handleUpdateStatus = () => {
     Alert.alert(
       "Update Delivery Status",
-      "Select current status for job #GH-T1024:",
+      `Select current status for job ${activeJob.id}:`,
       [
-        { text: "In Progress", onPress: () => setJobStatus("In Progress") },
-        { text: "At Pickup Location", onPress: () => setJobStatus("At Pickup") },
-        { text: "In Transit on Highway", onPress: () => setJobStatus("In Transit") },
         {
-          text: "Delivered to Colombo 07",
+          text: "In Progress",
+          onPress: () => setActiveJob((prev) => ({ ...prev, status: "In Progress" })),
+        },
+        {
+          text: "At Pickup Location",
+          onPress: () => setActiveJob((prev) => ({ ...prev, status: "At Pickup" })),
+        },
+        {
+          text: "In Transit on Highway",
+          onPress: () => setActiveJob((prev) => ({ ...prev, status: "In Transit" })),
+        },
+        {
+          text: `Delivered to Destination`,
           onPress: () => {
-            setJobStatus("Delivered");
-            Alert.alert("Delivery Completed!", "Fresh Cabbage delivered. Payment of Rs. 18,500 has been added to your earnings.");
+            setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
+            Alert.alert(
+              "Delivery Completed!",
+              `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
+            );
           },
         },
         { text: "Cancel", style: "cancel" },
@@ -115,7 +116,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         {
           text: "Submit Offer",
           onPress: () => {
-            Alert.alert("Offer Sent!", `Your quote for ${jobId} has been sent to the farmer. You will receive an alert once accepted.`);
+            Alert.alert(
+              "Offer Sent!",
+              `Your quote for ${jobId} has been sent to the farmer. You will receive an alert once accepted.`
+            );
           },
         },
       ]
@@ -180,18 +184,25 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               onPress={() => setShowProfileModal(true)}
               className="h-9 w-9 rounded-full bg-[#E68A00] items-center justify-center shadow-xs"
             >
-              <Text className="text-base font-bold text-white">R</Text>
+              <Text className="text-base font-bold text-white">
+                {profile.avatarLetter}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
 
-      {/* Scrollable Dashboard Body */}
+      {/* Scrollable Dashboard Body with Smooth Scrolling Physics */}
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 90 }}
         showsVerticalScrollIndicator={false}
         bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ================= 1. DRIVER PROFILE BANNER CARD ================= */}
         <View className="px-4 mt-2">
@@ -213,29 +224,33 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <View className="flex-row items-center">
               {/* Avatar Square */}
               <View className="h-14 w-14 items-center justify-center rounded-2xl bg-white/25 shadow-xs">
-                <Text className="text-2xl font-black text-white">R</Text>
+                <Text className="text-2xl font-black text-white">
+                  {profile.avatarLetter}
+                </Text>
               </View>
 
               {/* Driver Info */}
               <View className="ml-3.5 flex-1">
                 <Text className="text-[13px] font-medium text-[#FEF3C7]">
-                  Good morning,
+                  {profile.greeting}
                 </Text>
                 <Text
                   className="text-[21px] font-extrabold text-white leading-tight mt-0.5"
                   numberOfLines={1}
                 >
-                  Ruwan Bandara
+                  {profile.name}
                 </Text>
                 <Text className="text-[13px] font-medium text-[#FEF3C7] mt-0.5">
-                  Lorry - 3 Ton
+                  {profile.vehicleType}
                 </Text>
-                <View className="flex-row items-center mt-0.5">
-                  <Ionicons name="checkmark-circle-outline" size={13} color="#FEF3C7" />
-                  <Text className="ml-1 text-[12px] font-medium text-[#FEF3C7]">
-                    Verified Driver
-                  </Text>
-                </View>
+                {profile.isVerified && (
+                  <View className="flex-row items-center mt-0.5">
+                    <Ionicons name="checkmark-circle-outline" size={13} color="#FEF3C7" />
+                    <Text className="ml-1 text-[12px] font-medium text-[#FEF3C7]">
+                      Verified Driver
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -243,10 +258,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <View className="mt-4 flex-row items-center justify-center self-center rounded-full bg-white/20 px-4 py-1.5">
               <Text className="text-sm">⭐</Text>
               <Text className="ml-1 text-[13px] font-extrabold text-white">
-                4.8
+                {profile.rating.toFixed(1)}
               </Text>
               <Text className="ml-1 text-[12px] font-medium text-white/90">
-                · 47 completed jobs
+                · {profile.completedJobs} completed jobs
               </Text>
             </View>
           </View>
@@ -267,7 +282,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   Open Jobs
                 </Text>
                 <Text className="text-[24px] font-black text-[#111827] mt-0.5">
-                  2
+                  {stats.openJobsCount}
                 </Text>
               </View>
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#FFFBEB]">
@@ -286,7 +301,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   My Offers
                 </Text>
                 <Text className="text-[24px] font-black text-[#111827] mt-0.5">
-                  1
+                  {stats.myOffersCount}
                 </Text>
               </View>
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF]">
@@ -308,7 +323,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   Active Jobs
                 </Text>
                 <Text className="text-[24px] font-black text-[#111827] mt-0.5">
-                  1
+                  {stats.activeJobsCount}
                 </Text>
               </View>
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#ECFDF5]">
@@ -323,7 +338,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   This Month
                 </Text>
                 <Text className="text-[21px] font-black text-[#111827] mt-0.5">
-                  Rs. 42k
+                  {stats.thisMonthEarnings}
                 </Text>
               </View>
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5FF]">
@@ -410,17 +425,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               <View className="flex-row items-center rounded-full bg-[#FEF3C7] px-2.5 py-1">
                 <View className="h-2 w-2 rounded-full bg-[#D97706] mr-1.5" />
                 <Text className="text-[11px] font-bold text-[#B45309]">
-                  {jobStatus}
+                  {activeJob.status}
                 </Text>
               </View>
               <Text className="text-[12px] font-semibold text-[#9CA3AF]">
-                #GH-T1024
+                {activeJob.id}
               </Text>
             </View>
 
             {/* Title: Fresh Cabbage · 100 kg */}
             <Text className="mt-2 text-[17px] font-extrabold text-[#111827]">
-              Fresh Cabbage · 100 kg
+              {activeJob.cropName} · {activeJob.weight}
             </Text>
 
             {/* Route Waypoints */}
@@ -429,14 +444,14 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               <View className="flex-row items-center">
                 <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
                 <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Nuwara Eliya Farm, Hanguranketha Road
+                  {activeJob.pickup}
                 </Text>
               </View>
               {/* Dropoff */}
               <View className="flex-row items-center">
                 <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
                 <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Colombo Fresh Market, Colombo 07
+                  {activeJob.dropoff}
                 </Text>
               </View>
             </View>
@@ -486,107 +501,61 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </TouchableOpacity>
           </View>
 
-          {/* Job Card 1: #GH-T1025 */}
-          <View className="mb-3 rounded-2xl bg-white p-4 border border-gray-100/90 shadow-2xs">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-[12px] font-semibold text-[#9CA3AF]">
-                #GH-T1025
+          {/* Render Available Jobs from Mock Data */}
+          {availableJobsList.slice(0, 2).map((job) => (
+            <View
+              key={job.id}
+              className="mb-3 rounded-2xl bg-white p-4 border border-gray-100/90 shadow-2xs"
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[12px] font-semibold text-[#9CA3AF]">
+                  {job.id}
+                </Text>
+                <View className="rounded-full bg-[#FEF3C7] px-2.5 py-0.5">
+                  <Text className="text-[11px] font-bold text-[#B45309]">
+                    {job.status}
+                  </Text>
+                </View>
+              </View>
+
+              <Text className="mt-1.5 text-[16px] font-extrabold text-[#111827]">
+                {job.cropName} · {job.weight}
               </Text>
-              <View className="rounded-full bg-[#FEF3C7] px-2.5 py-0.5">
-                <Text className="text-[11px] font-bold text-[#B45309]">
-                  Open
-                </Text>
+
+              <View className="mt-2 space-y-1.5">
+                <View className="flex-row items-center">
+                  <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
+                  <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                    {job.pickup}
+                  </Text>
+                </View>
+                <View className="flex-row items-center">
+                  <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
+                  <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                    {job.dropoff}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="mt-3 flex-row items-center justify-between pt-2 border-t border-gray-100">
+                <View className="flex-row items-center">
+                  <Ionicons name="time-outline" size={14} color="#6B7280" />
+                  <Text className="ml-1 text-[11.5px] font-medium text-[#6B7280]">
+                    {job.pickupTime}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleMakeOffer(job.id, `${job.cropName} · ${job.weight}`)}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text className="text-[12.5px] font-bold text-[#E68A00]">
+                    Submit Offer →
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            <Text className="mt-1.5 text-[16px] font-extrabold text-[#111827]">
-              Ripe Tomatoes · 150 kg
-            </Text>
-
-            <View className="mt-2 space-y-1.5">
-              <View className="flex-row items-center">
-                <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Dambulla Agricultural Zone, Plot 14
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Colombo Fresh Market, Colombo 03
-                </Text>
-              </View>
-            </View>
-
-            <View className="mt-3 flex-row items-center justify-between pt-2 border-t border-gray-100">
-              <View className="flex-row items-center">
-                <Ionicons name="time-outline" size={14} color="#6B7280" />
-                <Text className="ml-1 text-[11.5px] font-medium text-[#6B7280]">
-                  2026-08-31 · 06:00 AM
-                </Text>
-              </View>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => handleMakeOffer("#GH-T1025", "Ripe Tomatoes · 150 kg")}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Text className="text-[12.5px] font-bold text-[#E68A00]">
-                  Submit Offer →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Job Card 2: #GH-T1020 */}
-          <View className="mb-3 rounded-2xl bg-white p-4 border border-gray-100/90 shadow-2xs">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-[12px] font-semibold text-[#9CA3AF]">
-                #GH-T1020
-              </Text>
-              <View className="rounded-full bg-[#FEF3C7] px-2.5 py-0.5">
-                <Text className="text-[11px] font-bold text-[#B45309]">
-                  Open
-                </Text>
-              </View>
-            </View>
-
-            <Text className="mt-1.5 text-[16px] font-extrabold text-[#111827]">
-              Organic Carrots · 200 kg
-            </Text>
-
-            <View className="mt-2 space-y-1.5">
-              <View className="flex-row items-center">
-                <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Nuwara Eliya Highlands Farm
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
-                  Kandy Supermart, City Center
-                </Text>
-              </View>
-            </View>
-
-            <View className="mt-3 flex-row items-center justify-between pt-2 border-t border-gray-100">
-              <View className="flex-row items-center">
-                <Ionicons name="time-outline" size={14} color="#6B7280" />
-                <Text className="ml-1 text-[11.5px] font-medium text-[#6B7280]">
-                  2026-08-29 · 07:00 AM
-                </Text>
-              </View>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => handleMakeOffer("#GH-T1020", "Organic Carrots · 200 kg")}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Text className="text-[12.5px] font-bold text-[#E68A00]">
-                  Submit Offer →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          ))}
         </View>
 
         {/* ================= 6. PAYMENT SUMMARY CARD ================= */}
@@ -603,7 +572,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   Pending Release
                 </Text>
                 <Text className="text-[22px] font-black text-[#065F46] mt-0.5">
-                  Rs. 1,500
+                  {paymentSummary.pendingRelease}
                 </Text>
               </View>
 
@@ -616,7 +585,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   This Month
                 </Text>
                 <Text className="text-[22px] font-black text-[#065F46] mt-0.5">
-                  Rs. 42,000
+                  {paymentSummary.thisMonth}
                 </Text>
               </View>
             </View>
@@ -639,10 +608,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               color={activeTab === "home" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${activeTab === "home"
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "home"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
-                }`}
+              }`}
             >
               Home
             </Text>
@@ -667,10 +637,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               color={activeTab === "jobs" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${activeTab === "jobs"
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "jobs"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
-                }`}
+              }`}
             >
               Jobs
             </Text>
@@ -694,10 +665,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               color={activeTab === "active" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${activeTab === "active"
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "active"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
-                }`}
+              }`}
             >
               Active
             </Text>
@@ -721,10 +693,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               color={activeTab === "profile" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${activeTab === "profile"
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "profile"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
-                }`}
+              }`}
             >
               Profile
             </Text>
@@ -766,7 +739,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="p-4"
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            scrollEventThrottle={16}
+            decelerationRate="normal"
+            overScrollMode="never"
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+          >
             {availableJobsList.map((job) => (
               <View
                 key={job.id}
@@ -833,7 +815,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 📋 My Transport Offers
               </Text>
               <Text className="text-xs text-gray-500">
-                1 submitted quote under review
+                {myOffersList.length} submitted quotes under review
               </Text>
             </View>
             <TouchableOpacity
@@ -845,32 +827,37 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           </View>
 
           <View className="p-4">
-            <View className="rounded-2xl bg-white p-4 border border-gray-200/80 shadow-2xs">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-xs font-semibold text-gray-500">
-                  #GH-T1019
+            {myOffersList.map((offer) => (
+              <View
+                key={offer.id}
+                className="mb-3 rounded-2xl bg-white p-4 border border-gray-200/80 shadow-2xs"
+              >
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-xs font-semibold text-gray-500">
+                    {offer.id}
+                  </Text>
+                  <View className="rounded-md bg-amber-50 px-2 py-0.5">
+                    <Text className="text-[11px] font-bold text-amber-700">
+                      {offer.status}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text className="text-base font-bold text-gray-900 mt-2">
+                  {offer.cropName} · {offer.weight}
                 </Text>
-                <View className="rounded-md bg-amber-50 px-2 py-0.5">
-                  <Text className="text-[11px] font-bold text-amber-700">
-                    Pending Farmer Approval
+                <Text className="text-xs text-gray-600 mt-1">
+                  {offer.route}
+                </Text>
+
+                <View className="mt-3 flex-row justify-between items-center pt-2.5 border-t border-gray-100">
+                  <Text className="text-xs text-gray-500">Your Quote:</Text>
+                  <Text className="text-sm font-extrabold text-[#16A34A]">
+                    {offer.quotePrice}
                   </Text>
                 </View>
               </View>
-
-              <Text className="text-base font-bold text-gray-900 mt-2">
-                Red Potatoes · 500 kg
-              </Text>
-              <Text className="text-xs text-gray-600 mt-1">
-                Nuwara Eliya → Colombo Wholesale Market
-              </Text>
-
-              <View className="mt-3 flex-row justify-between items-center pt-2.5 border-t border-gray-100">
-                <Text className="text-xs text-gray-500">Your Quote:</Text>
-                <Text className="text-sm font-extrabold text-[#16A34A]">
-                  Rs. 22,000
-                </Text>
-              </View>
-            </View>
+            ))}
           </View>
         </SafeAreaView>
       </Modal>
@@ -894,32 +881,41 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </View>
 
             <View className="py-3 space-y-3">
-              <View className="p-3 bg-green-50 rounded-xl">
-                <Text className="text-xs font-bold text-green-800">
-                  Cargo Ready for Pickup
-                </Text>
-                <Text className="text-[12px] text-green-700 mt-0.5">
-                  Farmer Sunil loaded 100 kg Cabbage in Nuwara Eliya.
-                </Text>
-              </View>
-
-              <View className="p-3 bg-amber-50 rounded-xl">
-                <Text className="text-xs font-bold text-amber-800">
-                  New Transport Request
-                </Text>
-                <Text className="text-[12px] text-amber-700 mt-0.5">
-                  150 kg Ripe Tomatoes available in Dambulla Zone.
-                </Text>
-              </View>
-
-              <View className="p-3 bg-blue-50 rounded-xl">
-                <Text className="text-xs font-bold text-blue-800">
-                  Payment Received
-                </Text>
-                <Text className="text-[12px] text-blue-700 mt-0.5">
-                  Rs. 18,500 transferred to your bank account for trip #GH-T1015.
-                </Text>
-              </View>
+              {notificationsList.map((notif) => (
+                <View
+                  key={notif.id}
+                  className={`p-3 rounded-xl ${
+                    notif.type === "pickup"
+                      ? "bg-green-50"
+                      : notif.type === "request"
+                      ? "bg-amber-50"
+                      : "bg-blue-50"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${
+                      notif.type === "pickup"
+                        ? "text-green-800"
+                        : notif.type === "request"
+                        ? "text-amber-800"
+                        : "text-blue-800"
+                    }`}
+                  >
+                    {notif.title}
+                  </Text>
+                  <Text
+                    className={`text-[12px] mt-0.5 ${
+                      notif.type === "pickup"
+                        ? "text-green-700"
+                        : notif.type === "request"
+                        ? "text-amber-700"
+                        : "text-blue-700"
+                    }`}
+                  >
+                    {notif.message}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
         </View>
@@ -942,7 +938,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 Active Job Details
               </Text>
               <Text className="text-xs text-gray-500">
-                #GH-T1024 · Fresh Cabbage
+                {activeJob.id} · {activeJob.cropName}
               </Text>
             </View>
             <TouchableOpacity
@@ -956,30 +952,39 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="p-4"
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            scrollEventThrottle={16}
+            decelerationRate="normal"
+            overScrollMode="never"
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+          >
             <View className="rounded-2xl bg-white p-4 border border-gray-100 shadow-2xs mb-4">
               <Text className="text-xs font-semibold text-gray-500 uppercase">
                 Cargo Summary
               </Text>
               <Text className="text-xl font-extrabold text-gray-900 mt-1">
-                Fresh Cabbage · 100 kg
+                {activeJob.cropName} · {activeJob.weight}
               </Text>
               <Text className="text-xs text-green-700 font-bold mt-1">
-                Status: {jobStatus}
+                Status: {activeJob.status}
               </Text>
 
               <View className="mt-4 pt-3 border-t border-gray-100 space-y-2">
                 <Text className="text-xs text-gray-600">
-                  📍 <Text className="font-bold">Pickup:</Text> Nuwara Eliya Farm, Hanguranketha Road
+                  📍 <Text className="font-bold">Pickup:</Text> {activeJob.pickup}
                 </Text>
                 <Text className="text-xs text-gray-600">
-                  🏁 <Text className="font-bold">Dropoff:</Text> Colombo Fresh Market, Colombo 07
+                  🏁 <Text className="font-bold">Dropoff:</Text> {activeJob.dropoff}
                 </Text>
                 <Text className="text-xs text-gray-600">
-                  💰 <Text className="font-bold">Fare:</Text> Rs. 18,500
+                  💰 <Text className="font-bold">Fare:</Text> {activeJob.price}
                 </Text>
                 <Text className="text-xs text-gray-600">
-                  🛣️ <Text className="font-bold">Distance:</Text> 142 km
+                  🛣️ <Text className="font-bold">Distance:</Text> {activeJob.distance}
                 </Text>
               </View>
             </View>
@@ -1036,20 +1041,31 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="p-4"
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            scrollEventThrottle={16}
+            decelerationRate="normal"
+            overScrollMode="never"
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* Driver Card */}
             <View className="rounded-2xl bg-white p-5 border border-gray-100 shadow-2xs items-center mb-4">
               <View className="h-16 w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
-                <Text className="text-2xl font-black text-white">R</Text>
+                <Text className="text-2xl font-black text-white">
+                  {profile.avatarLetter}
+                </Text>
               </View>
               <Text className="text-lg font-extrabold text-gray-900">
-                Ruwan Bandara
+                {profile.name}
               </Text>
               <Text className="text-xs font-semibold text-gray-500">
-                transporter@greenhive.com
+                {profile.email}
               </Text>
               <Text className="text-xs text-amber-700 font-bold mt-1">
-                ⭐ 4.8 Rating (47 Completed Trips)
+                ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs} Completed Trips)
               </Text>
             </View>
 
@@ -1060,10 +1076,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               </Text>
               <View className="space-y-1.5">
                 <Text className="text-xs text-gray-700">
-                  🚚 <Text className="font-semibold">Type:</Text> Lorry (3 Ton Capacity)
+                  🚚 <Text className="font-semibold">Type:</Text> {profile.vehicleType}
                 </Text>
                 <Text className="text-xs text-gray-700">
-                  🔢 <Text className="font-semibold">Plate:</Text> WP-LH-4821
+                  🔢 <Text className="font-semibold">Plate:</Text> {profile.vehiclePlate}
                 </Text>
                 <Text className="text-xs text-gray-700">
                   🛡️ <Text className="font-semibold">Status:</Text> Green-Hive Verified
