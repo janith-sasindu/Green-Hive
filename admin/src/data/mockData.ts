@@ -189,3 +189,278 @@ export const mockUsers: UserItem[] = [
     joined: '2026-06-01',
   },
 ];
+
+export interface ApprovalItem{
+  id: string;
+  name: string;
+  role: 'farmer'|'seller'|'transporter';
+  location: string;
+  email: string;
+  phone: string;
+  docType: string;
+  idNumber: string;
+  submittedAt: string;
+  submittedFull: string;
+  status: 'pending' | 'approved' | 'rejected';
+  documentImage: string;
+}
+export const mockApprovals: ApprovalItem[] = [
+  {
+    id: '1',
+    name: 'Priya Kumarasinghe',
+    role: 'farmer',
+    location: 'Kandy',
+    email: 'priya@farm.lk',
+    phone: '+94 76 345 6789',
+    docType: 'National ID Card',
+    idNumber: 'NIC-890432198V',
+    submittedAt: '8/28/2026',
+    submittedFull: '8/28/2026, 9:14:00 AM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '2',
+    name: 'Chathura Senanayake',
+    role: 'seller',
+    location: 'Galle',
+    email: 'chathura@market.lk',
+    phone: '+94 71 889 1234',
+    docType: 'National ID Card',
+    idNumber: 'NIC-940112456V',
+    submittedAt: '8/27/2026',
+    submittedFull: '8/27/2026, 2:30:00 PM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '3',
+    name: 'Kasun Wickramasinghe',
+    role: 'transporter',
+    location: 'Kurunegala',
+    email: 'kasun@express.lk',
+    phone: '+94 77 445 9821',
+    docType: "Driver's License",
+    idNumber: 'DL-B8923419',
+    submittedAt: '8/27/2026',
+    submittedFull: '8/27/2026, 11:10:00 AM',
+    status: 'pending',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '4',
+    name: 'Sanduni Wickrama',
+    role: 'farmer',
+    location: 'Nuwara Eliya',
+    email: 'sanduni@eco.lk',
+    phone: '+94 77 123 9988',
+    docType: 'National ID Card',
+    idNumber: 'NIC-970821312V',
+    submittedAt: '8/26/2026',
+    submittedFull: '8/26/2026, 10:05:00 AM',
+    status: 'approved',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: '5',
+    name: 'Dilhan Perera',
+    role: 'seller',
+    location: 'Colombo 05',
+    email: 'dilhan@mart.lk',
+    phone: '+94 71 556 7788',
+    docType: 'National ID Card',
+    idNumber: 'NIC-880930711V',
+    submittedAt: '8/25/2026',
+    submittedFull: '8/25/2026, 4:45:00 PM',
+    status: 'rejected',
+    documentImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+  },
+];
+export interface AdminAccount {
+  id: string;
+  name: string;
+  username: string;
+  role: 'Super Admin' | 'Admin' | 'Moderator';
+  addedDate: string;
+  isSuperAdmin: boolean;
+}
+
+export const mockAdmins: AdminAccount[] = [
+  {
+    id: '1',
+    name: 'Admin User',
+    username: 'admin',
+    role: 'Super Admin',
+    addedDate: '1/1/2024',
+    isSuperAdmin: true,
+  },
+];
+export interface SellingAd {
+  id: string;
+  title: string;
+  postedBy: string;
+  category: string;
+  price: string;
+  quantity: string;
+  location: string;
+  validUntil: string;
+  status: 'active' | 'sold';
+  image: string;
+}
+
+export interface RequirementAd {
+  id: string;
+  title: string;
+  postedBy: string;
+  category: string;
+  offeredPrice: string;
+  quantityNeeded: string;
+  location: string;
+  deadline: string;
+  description: string;
+  responsesCount: number;
+  status: 'open' | 'closed';
+}
+
+// 8 Selling Ads matching screenshot
+export const mockSellingAds: SellingAd[] = [
+  {
+    id: '1',
+    title: 'Fresh Cabbage',
+    postedBy: 'Sunil Perera',
+    category: 'Vegetables',
+    price: 'Rs. 80/kg',
+    quantity: '500 kg available',
+    location: 'Nuwara Eliya',
+    validUntil: 'Until 2026-09-15',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '2',
+    title: 'Organic Carrots',
+    postedBy: 'Sunil Perera',
+    category: 'Vegetables',
+    price: 'Rs. 120/kg',
+    quantity: '300 kg available',
+    location: 'Nuwara Eliya',
+    validUntil: 'Until 2026-09-20',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '3',
+    title: 'Red Onions',
+    postedBy: 'Kamal Jayasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 150/kg',
+    quantity: '1000 kg available',
+    location: 'Dambulla',
+    validUntil: 'Until 2026-10-01',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '4',
+    title: 'Green Beans',
+    postedBy: 'Priya Kumarasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 180/kg',
+    quantity: '200 kg available',
+    location: 'Kandy',
+    validUntil: 'Until 2026-09-10',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '5',
+    title: 'Ripe Bananas (Ambul)',
+    postedBy: 'Sunil Perera',
+    category: 'Fruits',
+    price: 'Rs. 140/kg',
+    quantity: '400 kg available',
+    location: 'Kurunegala',
+    validUntil: 'Until 2026-09-18',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '6',
+    title: 'Fresh Potatoes',
+    postedBy: 'Kamal Jayasinghe',
+    category: 'Vegetables',
+    price: 'Rs. 220/kg',
+    quantity: '800 kg available',
+    location: 'Badulla',
+    validUntil: 'Until 2026-09-28',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '7',
+    title: 'Green Papaya',
+    postedBy: 'Sanduni Wickrama',
+    category: 'Fruits',
+    price: 'Rs. 90/kg',
+    quantity: '350 kg available',
+    location: 'Anuradhapura',
+    validUntil: 'Until 2026-09-22',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: '8',
+    title: 'Fresh Ginger',
+    postedBy: 'Sunil Perera',
+    category: 'Spices',
+    price: 'Rs. 450/kg',
+    quantity: '150 kg available',
+    location: 'Gampaha',
+    validUntil: 'Until 2026-10-15',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=300&q=80',
+  },
+];
+
+// 3 Requirement Ads matching screenshot
+export const mockRequirementAds: RequirementAd[] = [
+  {
+    id: '1',
+    title: 'Fresh Cabbage',
+    postedBy: 'Colombo Fresh Market',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 85/kg offered',
+    quantityNeeded: '100 kg needed',
+    location: 'Colombo 07',
+    deadline: 'By 2026-09-01',
+    description: 'Need fresh cabbage weekly. Quality grade A preferred.',
+    responsesCount: 3,
+    status: 'open',
+  },
+  {
+    id: '2',
+    title: 'Red Onions',
+    postedBy: 'Kandy Supermart',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 145/kg offered',
+    quantityNeeded: '250 kg needed',
+    location: 'Kandy City',
+    deadline: 'By 2026-09-05',
+    description: 'Bulk red onions for supermarket. Regular supply needed.',
+    responsesCount: 5,
+    status: 'open',
+  },
+  {
+    id: '3',
+    title: 'Ripe Tomatoes',
+    postedBy: 'Colombo Fresh Market',
+    category: 'Vegetables',
+    offeredPrice: 'Rs. 160/kg offered',
+    quantityNeeded: '180 kg needed',
+    location: 'Colombo 07',
+    deadline: 'By 2026-09-08',
+    description: 'Fresh salad tomatoes required for immediate retail delivery.',
+    responsesCount: 4,
+    status: 'open',
+  },
+];
