@@ -11,7 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import {
+  SmoothScrollView,
+  SMOOTH_SCROLL_PROPS,
+} from "../../components/common/SmoothScrollView";
 
 // Mock Data imported from dedicated transporter data folder
 import {
@@ -244,12 +247,14 @@ export const TransporterNotificationsScreen = ({
       {/* ================= MAIN SCROLLABLE BODY ================= */}
       <SmoothScrollView
         className="flex-1"
+        {...SMOOTH_SCROLL_PROPS}
         contentContainerStyle={{
           maxWidth: 640,
           width: "100%",
           alignSelf: "center",
           paddingBottom: isSmallDevice ? 24 : 36,
           paddingTop: isSmallDevice ? 4 : 8,
+          flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
@@ -260,6 +265,7 @@ export const TransporterNotificationsScreen = ({
         overScrollMode="never"
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
+        directionalLockEnabled={true}
         removeClippedSubviews={Platform.OS === "android"}
       >
         <View className="px-4 sm:px-5 space-y-3 gap-3">
@@ -484,11 +490,13 @@ export const TransporterNotificationsScreen = ({
 
           <SmoothScrollView
             className="p-4 flex-1"
+            {...SMOOTH_SCROLL_PROPS}
             contentContainerStyle={{
               maxWidth: 640,
               width: "100%",
               alignSelf: "center",
               paddingBottom: 40,
+              flexGrow: 1,
             }}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
@@ -499,6 +507,7 @@ export const TransporterNotificationsScreen = ({
             overScrollMode="never"
             nestedScrollEnabled={true}
             keyboardShouldPersistTaps="handled"
+            directionalLockEnabled={true}
             removeClippedSubviews={Platform.OS === "android"}
           >
             {/* Driver Card */}
