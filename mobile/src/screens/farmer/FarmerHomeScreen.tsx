@@ -136,6 +136,12 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 24 }}
+            bounces={true}
+            scrollEventThrottle={16}
+            decelerationRate="normal"
+            overScrollMode="never"
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
           >
             {/* 1. Farmer Hero Profile Banner */}
             <View

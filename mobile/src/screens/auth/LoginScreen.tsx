@@ -115,7 +115,11 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                         className="flex-1"
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
-                        bounces={false}
+                        bounces={true}
+                        scrollEventThrottle={16}
+                        decelerationRate="normal"
+                        overScrollMode="never"
+                        nestedScrollEnabled={true}
                         contentContainerStyle={{
                             flexGrow: 1,
                             paddingBottom: isSmallDevice ? 20 : 32,

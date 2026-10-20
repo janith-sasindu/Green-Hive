@@ -141,7 +141,12 @@ const RoleSelectionScreen = ({
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}
-                    bounces={false}
+                    bounces={true}
+                    scrollEventThrottle={16}
+                    decelerationRate="normal"
+                    overScrollMode="never"
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
                     className="px-5 pt-6"
                 >
                     {/* Farmer */}

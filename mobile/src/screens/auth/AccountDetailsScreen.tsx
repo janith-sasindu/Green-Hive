@@ -180,7 +180,11 @@ const AccountDetailsScreen = ({
                         className="flex-1"
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
-                        bounces={false}
+                        bounces={true}
+                        scrollEventThrottle={16}
+                        decelerationRate="normal"
+                        overScrollMode="never"
+                        nestedScrollEnabled={true}
                         contentContainerStyle={{
                             flexGrow: 1,
                             paddingBottom: isSmallDevice ? 32 : 48,

@@ -49,8 +49,13 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
-                bounces={false}
+                bounces={true}
                 showsVerticalScrollIndicator={false}
+                scrollEventThrottle={16}
+                decelerationRate="normal"
+                overScrollMode="never"
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
             >
                 {/* Top Section */}
                 <View

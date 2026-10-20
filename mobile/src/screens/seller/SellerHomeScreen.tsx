@@ -113,6 +113,11 @@ export const SellerHomeScreen = () => {
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
       >
         <LinearGradient
           colors={SellerGradients.seller}
