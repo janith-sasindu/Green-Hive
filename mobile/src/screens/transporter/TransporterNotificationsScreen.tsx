@@ -61,7 +61,10 @@ export const TransporterNotificationsScreen = ({
 
   const handleMarkAllRead = () => {
     if (unreadCount === 0) {
-      Alert.alert("All Caught Up", "All notifications are already marked as read.");
+      Alert.alert(
+        "All Caught Up",
+        "All notifications are already marked as read."
+      );
       return;
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -136,7 +139,7 @@ export const TransporterNotificationsScreen = ({
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
-            isSmallDevice ? "pt-1.5 pb-2" : "pt-2 pb-2.5"
+            isSmallDevice ? "pt-1 pb-1.5" : "pt-2 pb-2.5"
           }`}
         >
           {/* Back button & Screen Title */}
@@ -149,7 +152,7 @@ export const TransporterNotificationsScreen = ({
             >
               <Ionicons
                 name="arrow-back"
-                size={isSmallDevice ? 22 : 24}
+                size={isSmallDevice ? 22 : isTablet ? 26 : 24}
                 color="#1F2937"
               />
             </TouchableOpacity>
@@ -158,7 +161,11 @@ export const TransporterNotificationsScreen = ({
               numberOfLines={1}
               adjustsFontSizeToFit
               className={`font-black text-gray-900 tracking-tight flex-1 ${
-                isSmallDevice ? "text-[18px]" : "text-[20px]"
+                isSmallDevice
+                  ? "text-[18px]"
+                  : isTablet
+                  ? "text-[22px]"
+                  : "text-[20px]"
               }`}
             >
               Notifications
@@ -171,7 +178,7 @@ export const TransporterNotificationsScreen = ({
             <View className="relative p-1.5 rounded-full">
               <Ionicons
                 name="notifications-outline"
-                size={isSmallDevice ? 21 : 23}
+                size={isSmallDevice ? 21 : isTablet ? 25 : 23}
                 color="#4B5563"
               />
               {unreadCount > 0 && (
@@ -184,12 +191,12 @@ export const TransporterNotificationsScreen = ({
               activeOpacity={0.8}
               onPress={() => setShowProfileModal(true)}
               className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
-                isSmallDevice ? "h-8 w-8" : "h-9 w-9"
+                isSmallDevice ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-9 w-9"
               }`}
             >
               <Text
                 className={`font-extrabold text-white ${
-                  isSmallDevice ? "text-xs" : "text-sm"
+                  isSmallDevice ? "text-xs" : isTablet ? "text-base" : "text-sm"
                 }`}
               >
                 {profile.avatarLetter}
@@ -201,11 +208,12 @@ export const TransporterNotificationsScreen = ({
         {/* Sub-header row: unread count and "Mark all read" */}
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-          className="px-4 sm:px-5 pt-1.5 pb-2.5 flex-row items-center justify-between"
+          className="px-4 sm:px-5 pt-1 pb-2 flex-row items-center justify-between"
         >
           <Text
+            numberOfLines={1}
             className={`font-medium text-gray-500 ${
-              isSmallDevice ? "text-[12.5px]" : "text-[13.5px]"
+              isSmallDevice ? "text-[12px]" : "text-[13.5px]"
             }`}
           >
             {unreadCount} unread
@@ -217,8 +225,16 @@ export const TransporterNotificationsScreen = ({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="flex-row items-center"
           >
-            <Ionicons name="checkmark" size={15} color="#16A34A" />
-            <Text className="text-[12.5px] sm:text-[13.5px] font-bold text-[#16A34A] ml-1">
+            <Ionicons
+              name="checkmark"
+              size={isSmallDevice ? 14 : 15}
+              color="#16A34A"
+            />
+            <Text
+              className={`font-bold text-[#16A34A] ml-1 ${
+                isSmallDevice ? "text-[12px]" : "text-[13.5px]"
+              }`}
+            >
               Mark all read
             </Text>
           </TouchableOpacity>
@@ -232,8 +248,8 @@ export const TransporterNotificationsScreen = ({
           maxWidth: 640,
           width: "100%",
           alignSelf: "center",
-          paddingBottom: isSmallDevice ? 28 : 36,
-          paddingTop: 8,
+          paddingBottom: isSmallDevice ? 24 : 36,
+          paddingTop: isSmallDevice ? 4 : 8,
         }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
@@ -266,32 +282,56 @@ export const TransporterNotificationsScreen = ({
               {/* Left icon badge container */}
               <View
                 className={`rounded-2xl bg-[#FEF3C7] items-center justify-center mr-3 sm:mr-3.5 ${
-                  isSmallDevice ? "h-11 w-11" : "h-12 w-12"
+                  isSmallDevice
+                    ? "h-10 w-10"
+                    : isTablet
+                    ? "h-14 w-14"
+                    : "h-12 w-12"
                 }`}
               >
-                <Text className={isSmallDevice ? "text-xl" : "text-2xl"}>
+                <Text
+                  className={
+                    isSmallDevice
+                      ? "text-lg"
+                      : isTablet
+                      ? "text-3xl"
+                      : "text-2xl"
+                  }
+                >
                   {item.iconEmoji || "🚚"}
                 </Text>
               </View>
 
               {/* Notification text content */}
-              <View className="flex-1 pr-2">
+              <View className="flex-1 pr-1.5 sm:pr-2">
                 <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
                   className={`font-extrabold text-gray-900 mb-0.5 ${
-                    isSmallDevice ? "text-[14.5px]" : "text-[15.5px]"
+                    isSmallDevice
+                      ? "text-[14px]"
+                      : isTablet
+                      ? "text-[17px]"
+                      : "text-[15.5px]"
                   }`}
                 >
                   {item.title}
                 </Text>
                 <Text
-                  className={`text-gray-600 font-medium leading-5 ${
-                    isSmallDevice ? "text-[12px]" : "text-[13px]"
+                  className={`text-gray-600 font-medium ${
+                    isSmallDevice
+                      ? "text-[11.5px] leading-[17px]"
+                      : "text-[13px] leading-5"
                   }`}
                 >
                   {item.message}
                 </Text>
                 {item.timestamp && (
-                  <Text className="text-[11px] sm:text-[11.5px] font-medium text-gray-400 mt-2">
+                  <Text
+                    className={`font-medium text-gray-400 mt-1.5 sm:mt-2 ${
+                      isSmallDevice ? "text-[10.5px]" : "text-[11.5px]"
+                    }`}
+                  >
                     {item.timestamp}
                   </Text>
                 )}
@@ -299,10 +339,29 @@ export const TransporterNotificationsScreen = ({
 
               {/* Unread indicator dot */}
               {!item.isRead && (
-                <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mt-1.5" />
+                <View
+                  className={`rounded-full bg-[#16A34A] ${
+                    isSmallDevice
+                      ? "h-2 w-2 mt-1"
+                      : "h-2.5 w-2.5 mt-1.5"
+                  }`}
+                />
               )}
             </TouchableOpacity>
           ))}
+
+          {/* Empty state fallback if notifications cleared */}
+          {notifications.length === 0 && (
+            <View className="py-16 items-center justify-center">
+              <View className="h-16 w-16 rounded-full bg-gray-100 items-center justify-center mb-3">
+                <Ionicons name="notifications-off-outline" size={28} color="#9CA3AF" />
+              </View>
+              <Text className="text-base font-bold text-gray-700">No Notifications</Text>
+              <Text className="text-xs text-gray-400 text-center max-w-[240px] mt-1">
+                You have caught up with all your transport alerts and updates.
+              </Text>
+            </View>
+          )}
         </View>
       </SmoothScrollView>
 
@@ -444,8 +503,16 @@ export const TransporterNotificationsScreen = ({
           >
             {/* Driver Card */}
             <View className="rounded-2xl bg-white p-5 border border-gray-100 shadow-2xs items-center mb-4">
-              <View className="h-16 w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
-                <Text className="text-2xl font-black text-white">
+              <View
+                className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
+                  isSmallDevice ? "h-14 w-14" : "h-16 w-16"
+                }`}
+              >
+                <Text
+                  className={`font-black text-white ${
+                    isSmallDevice ? "text-xl" : "text-2xl"
+                  }`}
+                >
                   {profile.avatarLetter}
                 </Text>
               </View>
