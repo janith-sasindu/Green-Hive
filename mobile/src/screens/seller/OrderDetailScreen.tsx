@@ -139,7 +139,7 @@ export const OrderDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const theme = useSellerTheme();
   const { params } = useRoute<RouteProp<SellerStackParamList, 'OrderDetail'>>();
-  const { orders, transportJobs, confirmReceipt } = useSeller();
+  const { orders, products, transportJobs, confirmReceipt } = useSeller();
   const [notice, setNotice] = useState<string | null>(
     params.justPlaced ? 'Order placed. Your payment is held securely by Green Hive.' : null,
   );
@@ -156,6 +156,14 @@ export const OrderDetailScreen = () => {
   }
 
   const transported = order.deliveryMethod === 'TRANSPORTATION';
+  // After a completed order, offer to buy the same product again if the farmer still lists it
+  const reorderProduct =
+    order.status === 'COMPLETED'
+      ? products.find(
+          (item) =>
+            item.status === 'ACTIVE' && item.farmerId === order.farmerId && item.productName === order.productName,
+        )
+      : undefined;
   const job = transportJobs.find((item) => item.id === order.transportJobId);
   const transporterName = job ? getAssignedTransporterName(job) : undefined;
   // What confirming receipt releases: the transporter's payment, or the farmer's for self pickup
@@ -294,6 +302,18 @@ export const OrderDetailScreen = () => {
           className="border-t border-gray-100 bg-white px-4 pt-3 dark:border-slate-700 dark:bg-slate-800"
         >
           <PrimaryButton label="Confirm Receipt of Goods" onPress={() => setConfirmVisible(true)} />
+        </View>
+      )}
+
+      {reorderProduct && (
+        <View
+          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+          className="border-t border-gray-100 bg-white px-4 pt-3 dark:border-slate-700 dark:bg-slate-800"
+        >
+          <PrimaryButton
+            label={`Buy Again · ${formatLkr(reorderProduct.unitPriceLkr)}/kg`}
+            onPress={() => navigation.navigate('ProductDetail', { productId: reorderProduct.id })}
+          />
         </View>
       )}
 

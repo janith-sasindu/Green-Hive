@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, ScrollView } from 'react-native';
+import { FlatList, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { AppHeader } from '../../components/seller/AppHeader';
 import { OrderCard } from '../../components/seller/OrderCard';
-import { Chip, EmptyState, PrimaryButton, Screen } from '../../components/seller/ui';
+import { useSellerTheme } from '../../components/seller/theme';
+import { Chip, EmptyState, PrimaryButton, Screen, ink } from '../../components/seller/ui';
 import { useSeller } from '../../context/SellerContext';
 import { useSellerNavigation } from '../../hooks/useSellerNavigation';
 import type { Order } from '../../types/seller';
@@ -17,19 +19,46 @@ const FILTERS: { value: OrderFilter; label: string; matches: (order: Order) => b
   { value: 'completed', label: 'Completed', matches: (order) => order.status === 'COMPLETED' },
 ];
 
+/** Matches an order by its number, product name or farmer name. */
+const matchesSearch = (order: Order, term: string): boolean =>
+  [order.orderNumber, order.productName, order.farmer.name].some((value) => value.toLowerCase().includes(term));
+
 export const OrdersScreen = () => {
   const navigation = useSellerNavigation();
+  const theme = useSellerTheme();
   const { orders } = useSeller();
   const [filter, setFilter] = useState<OrderFilter>('all');
+  const [search, setSearch] = useState('');
 
   const visibleOrders = useMemo(() => {
     const active = FILTERS.find((item) => item.value === filter) ?? FILTERS[0];
-    return orders.filter(active.matches);
-  }, [orders, filter]);
+    const term = search.trim().toLowerCase();
+    return orders.filter((order) => active.matches(order) && (term === '' || matchesSearch(order, term)));
+  }, [orders, filter, search]);
 
   return (
     <Screen>
       <AppHeader title="My Orders" />
+      <View className="px-4 pt-4">
+        <View className="flex-row items-center rounded-2xl border border-gray-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-800">
+          <Feather name="search" size={18} color={theme.iconMuted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+            autoCorrect={false}
+            placeholder="Search by order number, product or farmer"
+            placeholderTextColor={theme.placeholder}
+            accessibilityLabel="Search orders"
+            className={`ml-3 flex-1 py-3.5 text-sm ${ink.strong}`}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} accessibilityLabel="Clear order search">
+              <Feather name="x" size={18} color={theme.iconMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -71,7 +100,7 @@ export const OrdersScreen = () => {
           />
         )}
         ListEmptyComponent={
-          filter === 'all' ? (
+          filter === 'all' && search.trim() === '' ? (
             <EmptyState
               emoji="📦"
               title="No orders yet"
@@ -83,7 +112,11 @@ export const OrdersScreen = () => {
               />
             </EmptyState>
           ) : (
-            <EmptyState emoji="📦" title="Nothing here" message="No orders match this filter right now." />
+            <EmptyState
+              emoji="📦"
+              title="Nothing here"
+              message={search.trim() === '' ? 'No orders match this filter right now.' : 'No orders match your search.'}
+            />
           )
         }
       />
