@@ -30,6 +30,7 @@ import {
   PaymentSummaryData,
   TransporterNotificationItem,
 } from "./data";
+import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen";
 
 interface TransporterHomeScreenProps {
   navigation?: any;
@@ -146,6 +147,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
       },
     ]);
   };
+
+  if (activeTab === "jobs") {
+    return (
+      <TransporterAvailableJobsScreen
+        navigation={navigation}
+        onSelectTab={setActiveTab}
+        activeTab={activeTab}
+      />
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#F4F7F5]">
@@ -325,7 +336,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Open Jobs */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowAvailableJobsModal(true)}
+              onPress={() => setActiveTab("jobs")}
               className={`flex-1 rounded-2xl bg-white border border-gray-100/90 shadow-2xs flex-row items-center justify-between ${
                 isSmallDevice ? "p-3" : "p-3.5"
               }`}
@@ -472,7 +483,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Available Jobs (Primary Highlighted Card) */}
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => setShowAvailableJobsModal(true)}
+              onPress={() => setActiveTab("jobs")}
               className={`flex-1 items-center justify-center rounded-2xl bg-[#E68A00] shadow-sm ${
                 isSmallDevice ? "h-[74px]" : "h-[88px]"
               }`}
@@ -668,7 +679,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </Text>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => setShowAvailableJobsModal(true)}
+              onPress={() => setActiveTab("jobs")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text className="text-[12.5px] font-bold text-[#E68A00]">
@@ -853,29 +864,21 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             activeOpacity={0.7}
             onPress={() => {
               setActiveTab("jobs");
-              setShowAvailableJobsModal(true);
             }}
             className="items-center px-4"
           >
             <Ionicons
-              name={activeTab === "jobs" ? "location" : "location-outline"}
+              name="location-outline"
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "jobs" ? "#E68A00" : "#9CA3AF"}
+              color="#9CA3AF"
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } ${
-                activeTab === "jobs"
-                  ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              } font-medium text-[#9CA3AF]`}
             >
               Jobs
             </Text>
-            {activeTab === "jobs" && (
-              <View className="h-[2px] w-6 rounded-full bg-[#E68A00] mt-1" />
-            )}
           </TouchableOpacity>
 
           {/* Active Tab */}

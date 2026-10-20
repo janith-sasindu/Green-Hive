@@ -6,7 +6,10 @@ import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import SellerNavigator from './SellerNavigator';
-import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
+import {
+  TransporterHomeScreen,
+  TransporterAvailableJobsScreen,
+} from '../screens/transporter';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -21,6 +24,7 @@ export type RootStackParamList = {
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
+  TransporterAvailableJobs: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -57,6 +61,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterAvailableJobs"
+        component={TransporterAvailableJobsScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
