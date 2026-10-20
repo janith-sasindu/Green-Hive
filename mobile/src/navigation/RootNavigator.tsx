@@ -57,7 +57,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}
-        options={{ headerShown: true, title: 'Transporter Dashboard' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
