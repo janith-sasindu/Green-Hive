@@ -19,6 +19,7 @@ interface RoleCardProps {
     icon: string;
     title: string;
     description: string;
+    badge?: string;
     onPress: () => void;
 }
 
@@ -26,13 +27,14 @@ const RoleCard = ({
     icon,
     title,
     description,
+    badge,
     onPress,
 }: RoleCardProps) => {
     return (
         <TouchableOpacity
             activeOpacity={0.8}
             onPress={onPress}
-            className="mb-3.5 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/60"
+            className="mb-3.5 flex-row items-center rounded-2xl bg-white p-4 shadow-sm border border-gray-100/80"
         >
             {/* Icon Container */}
             <View className="mr-3.5 h-12 w-12 items-center justify-center rounded-xl bg-[#F0F7F2]">
@@ -41,9 +43,18 @@ const RoleCard = ({
 
             {/* Text Content */}
             <View className="flex-1 pr-2">
-                <Text className="mb-0.5 text-base font-bold text-[#1F2937]">
-                    {title}
-                </Text>
+                <View className="flex-row items-center justify-between mb-0.5">
+                    <Text className="text-base font-bold text-[#1F2937]">
+                        {title}
+                    </Text>
+                    {badge ? (
+                        <View className="rounded-md bg-[#E8F5E9] px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-[#176B2C]">
+                                {badge}
+                            </Text>
+                        </View>
+                    ) : null}
+                </View>
 
                 <Text className="text-xs leading-5 text-[#6B7280]">
                     {description}
@@ -54,7 +65,7 @@ const RoleCard = ({
             <Ionicons
                 name="chevron-forward"
                 size={18}
-                color="#D1D5DB"
+                color="#9CA3AF"
             />
         </TouchableOpacity>
     );
@@ -67,7 +78,7 @@ const RoleSelectionScreen = ({
     const isSmallDevice = screenHeight < 700;
 
     const handleRoleSelect = (role: string) => {
-        navigation.navigate("CreateAccount", {
+        navigation.navigate("AccountDetailsScreen", {
             role: role,
         });
     };
@@ -82,12 +93,19 @@ const RoleSelectionScreen = ({
                 <View className={`px-5 items-start ${isSmallDevice ? "pt-2 pb-4" : "pt-3 pb-6"}`}>
                     {/* Back Button */}
                     <TouchableOpacity
-                        onPress={() => navigation.navigate("Welcome")}
+                        onPress={() => {
+                            if (navigation.canGoBack && navigation.canGoBack()) {
+                                navigation.goBack();
+                            } else {
+                                navigation.navigate("Welcome");
+                            }
+                        }}
                         activeOpacity={0.7}
-                        className="mb-2 -ml-1 p-1"
+                        className="mb-2 -ml-1 flex-row items-center p-1"
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                        <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+                        <Text className="ml-1 text-sm font-semibold text-white">Back</Text>
                     </TouchableOpacity>
 
                     {/* Logo under Back Button */}
@@ -101,9 +119,9 @@ const RoleSelectionScreen = ({
                         resizeMode="contain"
                     />
 
-                    {/* Step */}
+                    {/* Step Indicator */}
                     <Text className="mb-0.5 text-xs font-semibold text-[#B9E2C1]">
-                        Step 1 of 4
+                        Step 1 of 2
                     </Text>
 
                     {/* Title */}
@@ -113,7 +131,7 @@ const RoleSelectionScreen = ({
 
                     {/* Subtitle */}
                     <Text className="text-xs text-[#D9EEDC]">
-                        How will you use Green Hive?
+                        Select how you will participate in Green Hive
                     </Text>
                 </View>
             </SafeAreaView>
@@ -123,14 +141,20 @@ const RoleSelectionScreen = ({
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}
-                    bounces={false}
+                    bounces={true}
+                    scrollEventThrottle={16}
+                    decelerationRate="normal"
+                    overScrollMode="never"
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
                     className="px-5 pt-6"
                 >
                     {/* Farmer */}
                     <RoleCard
                         icon="🌾"
                         title="Farmer"
-                        description="List and sell your farm produce directly to buyers"
+                        badge="Producer"
+                        description="List and sell your fresh harvest directly to retail buyers"
                         onPress={() => handleRoleSelect("Farmer")}
                     />
 
@@ -138,7 +162,8 @@ const RoleSelectionScreen = ({
                     <RoleCard
                         icon="🏪"
                         title="Retail Seller"
-                        description="Browse and purchase farm products for your business"
+                        badge="Buyer"
+                        description="Browse marketplace, post purchase requirements, and buy farm produce"
                         onPress={() => handleRoleSelect("Retail Seller")}
                     />
 
@@ -146,7 +171,8 @@ const RoleSelectionScreen = ({
                     <RoleCard
                         icon="🚚"
                         title="Transporter"
-                        description="Offer transport services for agricultural goods"
+                        badge="Logistics"
+                        description="Offer logistics and transport services for agricultural goods"
                         onPress={() => handleRoleSelect("Transporter")}
                     />
 
@@ -159,6 +185,7 @@ const RoleSelectionScreen = ({
                         <TouchableOpacity
                             onPress={() => navigation.navigate("Login")}
                             activeOpacity={0.7}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                             <Text className="text-xs font-bold text-[#176B2C]">
                                 Sign In

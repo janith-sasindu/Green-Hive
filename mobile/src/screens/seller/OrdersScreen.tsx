@@ -35,6 +35,10 @@ export const OrdersScreen = () => {
         showsHorizontalScrollIndicator={false}
         style={{ flexGrow: 0, flexShrink: 0 }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 14, gap: 8 }}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
       >
         {FILTERS.map((item) => (
           <Chip
@@ -51,6 +55,14 @@ export const OrdersScreen = () => {
         keyExtractor={(order) => String(order.id)}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 12 }}
         showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         renderItem={({ item }) => (
           <OrderCard
             order={item}

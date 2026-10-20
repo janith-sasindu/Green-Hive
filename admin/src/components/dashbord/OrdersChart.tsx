@@ -28,12 +28,12 @@ export default function OrdersChart() {
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
             <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                interval={0}
-                tick={{ fill: '#64748b', fontSize: 11 }}
-/>
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              interval={0}
+              tick={{ fill: '#64748b', fontSize: 11 }}
+            />
 
             <YAxis
               axisLine={false}

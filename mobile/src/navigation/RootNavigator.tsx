@@ -2,39 +2,31 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
-import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
-import IdentityVerificationScreen from '../screens/auth/IdentityVerificationScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import SellerNavigator from './SellerNavigator';
-import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
+import {
+  TransporterHomeScreen,
+  TransporterAvailableJobsScreen,
+  TransporterNotificationsScreen,
+} from '../screens/transporter';
 
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   LoginScreen: undefined;
   RoleSelection: undefined;
-  CreateAccount: { role: string };
+  RoleSelectionScreen: undefined;
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
-  IdentityVerificationScreen: {
-    role?: string;
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-  };
-  IdentityVerification: {
-    role?: string;
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-  };
+  IdentityVerificationScreen: { role?: string } | undefined;
+  IdentityVerification: { role?: string } | undefined;
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
+  TransporterAvailableJobs: undefined;
+  TransporterNotifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -48,28 +40,40 @@ export default function RootNavigator() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
+
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
-      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
+
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
       <Stack.Screen
         name="IdentityVerificationScreen"
-        component={IdentityVerificationScreen}
+        component={AccountDetailsScreen}
       />
       <Stack.Screen
         name="IdentityVerification"
-        component={IdentityVerificationScreen}
+        component={AccountDetailsScreen}
       />
       <Stack.Screen
         name="FarmerHome"
         component={FarmerHomeScreen}
-        options={{ headerShown: true, title: 'Farmer Dashboard' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen name="SellerHome" component={SellerNavigator} />
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}
-        options={{ headerShown: true, title: 'Transporter Dashboard' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterAvailableJobs"
+        component={TransporterAvailableJobsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterNotifications"
+        component={TransporterNotificationsScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

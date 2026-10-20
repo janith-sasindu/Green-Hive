@@ -184,6 +184,10 @@ export const MarketplaceScreen = () => {
         showsHorizontalScrollIndicator={false}
         style={{ flexGrow: 0, flexShrink: 0 }}
         contentContainerStyle={{ paddingHorizontal: SCREEN_PADDING, paddingVertical: 12, gap: 8 }}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
       >
         <Chip label="All" active={category === 'All'} onPress={() => setCategory('All')} />
         {PRODUCT_CATEGORIES.map((item) => (
@@ -199,6 +203,14 @@ export const MarketplaceScreen = () => {
         contentContainerStyle={{ paddingHorizontal: SCREEN_PADDING, paddingBottom: 24, gap: GRID_GAP }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         ListHeaderComponent={
           <Text className={`text-xs ${ink.faint}`}>
             {visibleProducts.length} {visibleProducts.length === 1 ? 'product' : 'products'} available
