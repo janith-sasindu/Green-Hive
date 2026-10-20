@@ -79,7 +79,7 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
     if (navigation?.canGoBack && navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      navigation?.navigate("RoleSelection");
+      navigation?.navigate("Welcome");
     }
   };
 

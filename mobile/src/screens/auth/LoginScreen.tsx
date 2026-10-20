@@ -47,7 +47,14 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
             const result = verifyMockLogin(email, password);
 
             if (result.success && result.data) {
-                navigation.navigate("FarmerHome");
+                const userRole = (result.data.user.role || "").toUpperCase();
+                if (userRole === "SELLER") {
+                    navigation.navigate("SellerHome");
+                } else if (userRole === "TRANSPORTER") {
+                    navigation.navigate("TransporterHome");
+                } else {
+                    navigation.navigate("FarmerHome");
+                }
             } else {
                 Alert.alert(
                     "Login failed",

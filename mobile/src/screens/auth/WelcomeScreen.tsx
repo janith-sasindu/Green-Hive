@@ -22,7 +22,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
     const logoHeight = Math.round(logoWidth * (216 / 360));
 
     const handleGetStarted = () => {
-        navigation?.navigate("FarmerHome");
+        navigation?.navigate("RoleSelection");
     };
 
     const handleSignIn = () => {
@@ -185,6 +185,18 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
                     {/* Quick Demo Section */}
                     <View className="mt-7">
+                        <View className="mb-2.5 flex-row items-center">
+                            <View className="h-[1px] flex-1 bg-gray-200" />
+                            <Text className="mx-2.5 text-[11px] font-bold tracking-wider text-gray-500 uppercase">
+                                ⚡ Quick Demo Access
+                            </Text>
+                            <View className="h-[1px] flex-1 bg-gray-200" />
+                        </View>
+
+                        <Text className="mb-3 text-center text-xs text-gray-500">
+                            Direct module access without login or signup:
+                        </Text>
+
                         <View className="flex-row justify-between gap-2">
                             {/* Farmer */}
                             <TouchableOpacity
