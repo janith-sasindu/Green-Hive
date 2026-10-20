@@ -41,7 +41,15 @@ export const ProductDetailScreen = () => {
   return (
     <Screen>
       <AppHeader title="Product Details" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
+      >
         <ProductImage uri={product.imageUrl} emoji={product.emoji} emojiSize={84} className="h-60 w-full" />
 
         <View className="p-4">

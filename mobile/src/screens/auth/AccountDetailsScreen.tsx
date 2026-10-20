@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { registerMockUser } from "../../data/mockAuth";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -129,6 +130,15 @@ const AccountDetailsScreen = ({
                 destination = "TransporterHome";
             }
 
+            // Register user in mock auth storage so they can sign in later
+            registerMockUser({
+                fullName,
+                email,
+                phone,
+                password,
+                role,
+            });
+
             Alert.alert(
                 "Account Created Successfully!",
                 `Welcome to Green-Hive! Your registration as a ${role} is complete.`,
@@ -170,7 +180,11 @@ const AccountDetailsScreen = ({
                         className="flex-1"
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
-                        bounces={false}
+                        bounces={true}
+                        scrollEventThrottle={16}
+                        decelerationRate="normal"
+                        overScrollMode="never"
+                        nestedScrollEnabled={true}
                         contentContainerStyle={{
                             flexGrow: 1,
                             paddingBottom: isSmallDevice ? 32 : 48,
@@ -193,7 +207,7 @@ const AccountDetailsScreen = ({
                             </TouchableOpacity>
 
                             <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
-                                Step 3 of 4
+                                Step 2 of 2
                             </Text>
 
                             <Text

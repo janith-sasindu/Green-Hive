@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
-
+import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
@@ -12,6 +12,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   LoginScreen: undefined;
+  RoleSelection: undefined;
+  RoleSelectionScreen: undefined;
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
   IdentityVerificationScreen: { role?: string } | undefined;
@@ -33,6 +35,9 @@ export default function RootNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
 
+      <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+      <Stack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
+
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
       <Stack.Screen
@@ -52,7 +57,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}
-        options={{ headerShown: true, title: 'Transporter Dashboard' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
