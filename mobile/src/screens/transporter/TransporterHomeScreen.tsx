@@ -1170,6 +1170,35 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 </View>
               ))}
             </View>
+
+            {/* See More Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                Alert.alert(
+                  "See More Notifications",
+                  "More notification history will be available here."
+                );
+              }}
+              className="mt-2.5 py-2.5 rounded-xl border border-amber-200 bg-amber-50/70 items-center justify-center flex-row"
+            >
+              <Text className="text-xs font-bold text-[#D97706]">See More</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color="#D97706"
+                style={{ marginLeft: 4 }}
+              />
+            </TouchableOpacity>
+
+            {/* Dismiss Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setShowNotifications(false)}
+              className="mt-2 py-3 rounded-xl bg-[#E68A00] items-center justify-center shadow-xs"
+            >
+              <Text className="text-xs font-bold text-white">Dismiss</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

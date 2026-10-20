@@ -28,12 +28,14 @@ export interface TransporterAvailableJobsScreenProps {
   navigation?: any;
   onSelectTab?: (tab: "home" | "jobs" | "active" | "profile") => void;
   activeTab?: "home" | "jobs" | "active" | "profile";
+  onPressSeeMoreNotifications?: () => void;
 }
 
 export const TransporterAvailableJobsScreen = ({
   navigation,
   onSelectTab,
   activeTab = "jobs",
+  onPressSeeMoreNotifications,
 }: TransporterAvailableJobsScreenProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -61,6 +63,17 @@ export const TransporterAvailableJobsScreen = ({
       onSelectTab(tab);
     } else if (tab === "home") {
       navigation?.navigate?.("TransporterHome");
+    }
+  };
+
+  const handleSeeMoreNotifications = () => {
+    if (onPressSeeMoreNotifications) {
+      onPressSeeMoreNotifications();
+    } else {
+      Alert.alert(
+        "See More Notifications",
+        "More notification history will be available here."
+      );
     }
   };
 
@@ -733,9 +746,26 @@ export const TransporterAvailableJobsScreen = ({
               ))}
             </View>
 
+            {/* See More Button */}
             <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleSeeMoreNotifications}
+              className="mt-2.5 py-2.5 rounded-xl border border-amber-200 bg-amber-50/70 items-center justify-center flex-row"
+            >
+              <Text className="text-xs font-bold text-[#D97706]">See More</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color="#D97706"
+                style={{ marginLeft: 4 }}
+              />
+            </TouchableOpacity>
+
+            {/* Dismiss Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
               onPress={() => setShowNotificationsModal(false)}
-              className="mt-2 py-3 rounded-xl bg-[#E68A00] items-center justify-center"
+              className="mt-2 py-3 rounded-xl bg-[#E68A00] items-center justify-center shadow-xs"
             >
               <Text className="text-xs font-bold text-white">Dismiss</Text>
             </TouchableOpacity>
