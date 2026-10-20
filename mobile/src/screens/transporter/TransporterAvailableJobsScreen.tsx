@@ -4,14 +4,15 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
   Modal,
   Alert,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 
 // Mock Data imported from dedicated transporter data folder
 import {
@@ -188,7 +189,7 @@ export const TransporterAvailableJobsScreen = ({
       </SafeAreaView>
 
       {/* ================= MAIN SCROLLABLE BODY ================= */}
-      <ScrollView
+      <SmoothScrollView
         className="flex-1"
         contentContainerStyle={{
           maxWidth: 640,
@@ -197,12 +198,15 @@ export const TransporterAvailableJobsScreen = ({
           paddingBottom: isSmallDevice ? 28 : 36,
         }}
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         bounces={true}
+        alwaysBounceVertical={true}
         scrollEventThrottle={16}
         decelerationRate="normal"
         overScrollMode="never"
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={Platform.OS === "android"}
       >
         {/* Subtitle count banner */}
         <View className="px-4 sm:px-5 pt-2.5 pb-2.5">
@@ -350,7 +354,7 @@ export const TransporterAvailableJobsScreen = ({
             </View>
           ))}
         </View>
-      </ScrollView>
+      </SmoothScrollView>
 
       {/* ================= BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
@@ -529,10 +533,17 @@ export const TransporterAvailableJobsScreen = ({
               </TouchableOpacity>
             </View>
 
-            <ScrollView
+            <SmoothScrollView
               showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
               className="py-3"
               bounces={true}
+              alwaysBounceVertical={true}
+              scrollEventThrottle={16}
+              decelerationRate="normal"
+              overScrollMode="never"
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
             >
               {/* Crop & Quantity */}
               <Text
@@ -659,7 +670,7 @@ export const TransporterAvailableJobsScreen = ({
               >
                 <Text className="text-xs font-bold text-gray-600">Close</Text>
               </TouchableOpacity>
-            </ScrollView>
+            </SmoothScrollView>
           </View>
         </View>
       </Modal>
@@ -756,7 +767,7 @@ export const TransporterAvailableJobsScreen = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView
+          <SmoothScrollView
             className="p-4 flex-1"
             contentContainerStyle={{
               maxWidth: 640,
@@ -765,6 +776,15 @@ export const TransporterAvailableJobsScreen = ({
               paddingBottom: 40,
             }}
             showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            bounces={true}
+            alwaysBounceVertical={true}
+            scrollEventThrottle={16}
+            decelerationRate="normal"
+            overScrollMode="never"
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={Platform.OS === "android"}
           >
             {/* Driver Card */}
             <View className="rounded-2xl bg-white p-5 border border-gray-100 shadow-2xs items-center mb-4">
@@ -816,7 +836,7 @@ export const TransporterAvailableJobsScreen = ({
                 Log Out of Transporter Account
               </Text>
             </TouchableOpacity>
-          </ScrollView>
+          </SmoothScrollView>
         </SafeAreaView>
       </Modal>
     </View>
