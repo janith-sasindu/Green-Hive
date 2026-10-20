@@ -23,6 +23,7 @@ import {
   TransporterProfile,
   TransporterNotificationItem,
 } from "./data";
+import { TransporterNotificationsScreen } from "./TransporterNotificationsScreen";
 
 export interface TransporterAvailableJobsScreenProps {
   navigation?: any;
@@ -56,6 +57,7 @@ export const TransporterAvailableJobsScreen = ({
   );
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showNotificationsPage, setShowNotificationsPage] = useState(false);
 
   // Tab change handler
   const handleTabPress = (tab: "home" | "jobs" | "active" | "profile") => {
@@ -67,13 +69,13 @@ export const TransporterAvailableJobsScreen = ({
   };
 
   const handleSeeMoreNotifications = () => {
+    setShowNotificationsModal(false);
     if (onPressSeeMoreNotifications) {
       onPressSeeMoreNotifications();
+    } else if (navigation?.navigate) {
+      navigation.navigate("TransporterNotifications");
     } else {
-      Alert.alert(
-        "See More Notifications",
-        "More notification history will be available here."
-      );
+      setShowNotificationsPage(true);
     }
   };
 
@@ -127,6 +129,16 @@ export const TransporterAvailableJobsScreen = ({
       },
     ]);
   };
+
+  if (showNotificationsPage) {
+    return (
+      <TransporterNotificationsScreen
+        navigation={navigation}
+        onBack={() => setShowNotificationsPage(false)}
+        onSelectTab={onSelectTab}
+      />
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#F5F8F6]">

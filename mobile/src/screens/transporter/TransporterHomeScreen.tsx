@@ -1175,10 +1175,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                Alert.alert(
-                  "See More Notifications",
-                  "More notification history will be available here."
-                );
+                setShowNotifications(false);
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterNotifications");
+                }
               }}
               className="mt-2.5 py-2.5 rounded-xl border border-amber-200 bg-amber-50/70 items-center justify-center flex-row"
             >

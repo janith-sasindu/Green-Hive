@@ -69,7 +69,11 @@ export interface TransporterNotificationItem {
     id: string;
     title: string;
     message: string;
-    type: "pickup" | "request" | "payment";
+    type: "pickup" | "request" | "payment" | "assignment";
+    timestamp?: string;
+    isRead?: boolean;
+    iconEmoji?: string;
+    jobId?: string;
 }
 
 /**
@@ -198,5 +202,21 @@ export const MOCK_NOTIFICATIONS: TransporterNotificationItem[] = [
         title: "Payment Received",
         message: "Rs. 18,500 transferred to your bank account for trip #GH-T1015.",
         type: "payment",
+    },
+];
+
+/**
+ * Full Notification Page Data
+ */
+export const MOCK_DETAILED_NOTIFICATIONS: TransporterNotificationItem[] = [
+    {
+        id: "notif-assigned-1",
+        title: "Job Assigned",
+        message: "You have been selected for Transport Job #GH-T1024. Please confirm pickup.",
+        timestamp: "8/26/2026, 9:00:00 AM",
+        isRead: false,
+        type: "assignment",
+        iconEmoji: "🚚",
+        jobId: "#GH-T1024",
     },
 ];
