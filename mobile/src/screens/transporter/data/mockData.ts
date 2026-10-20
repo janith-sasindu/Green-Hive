@@ -48,6 +48,7 @@ export interface AvailableTransportJob {
     price: string;
     distance?: string;
     farmerName?: string;
+    farmerPhone?: string;
 }
 
 export interface TransportOffer {
@@ -68,7 +69,11 @@ export interface TransporterNotificationItem {
     id: string;
     title: string;
     message: string;
-    type: "pickup" | "request" | "payment";
+    type: "pickup" | "request" | "payment" | "assignment";
+    timestamp?: string;
+    isRead?: boolean;
+    iconEmoji?: string;
+    jobId?: string;
 }
 
 /**
@@ -122,37 +127,27 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
         id: "#GH-T1025",
         cropName: "Ripe Tomatoes",
         weight: "150 kg",
-        pickup: "Dambulla Agricultural Zone, Plot 14",
-        dropoff: "Colombo Fresh Market, Colombo 03",
+        pickup: "Dambulla Agricultural Zone",
+        dropoff: "Colombo Fresh Market",
         pickupTime: "2026-08-31 · 06:00 AM",
         status: "Open",
         price: "Rs. 15,500",
         distance: "148 km",
         farmerName: "Jagath Samarasinghe",
+        farmerPhone: "+94 77 234 5678",
     },
     {
         id: "#GH-T1020",
         cropName: "Organic Carrots",
         weight: "200 kg",
         pickup: "Nuwara Eliya Highlands Farm",
-        dropoff: "Kandy Supermart, City Center",
+        dropoff: "Kandy Supermart",
         pickupTime: "2026-08-29 · 07:00 AM",
         status: "Open",
         price: "Rs. 14,000",
         distance: "78 km",
         farmerName: "Wasantha Kumara",
-    },
-    {
-        id: "#GH-T1032",
-        cropName: "Green Beans",
-        weight: "180 kg",
-        pickup: "Welivita Agricultural Cooperative",
-        dropoff: "Negombo Wholesale Market",
-        pickupTime: "2026-09-02 · 05:30 AM",
-        status: "Open",
-        price: "Rs. 16,800",
-        distance: "112 km",
-        farmerName: "Anura Jayasinghe",
+        farmerPhone: "+94 71 876 5432",
     },
 ];
 
@@ -207,5 +202,21 @@ export const MOCK_NOTIFICATIONS: TransporterNotificationItem[] = [
         title: "Payment Received",
         message: "Rs. 18,500 transferred to your bank account for trip #GH-T1015.",
         type: "payment",
+    },
+];
+
+/**
+ * Full Notification Page Data
+ */
+export const MOCK_DETAILED_NOTIFICATIONS: TransporterNotificationItem[] = [
+    {
+        id: "notif-assigned-1",
+        title: "Job Assigned",
+        message: "You have been selected for Transport Job #GH-T1024. Please confirm pickup.",
+        timestamp: "8/26/2026, 9:00:00 AM",
+        isRead: false,
+        type: "assignment",
+        iconEmoji: "🚚",
+        jobId: "#GH-T1024",
     },
 ];
