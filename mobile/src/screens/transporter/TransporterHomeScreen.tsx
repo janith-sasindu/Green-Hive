@@ -36,8 +36,11 @@ interface TransporterHomeScreenProps {
 }
 
 export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps) => {
-  const { width: screenWidth } = useWindowDimensions();
-  const isSmallDevice = screenWidth < 380;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
+  // Responsive Breakpoints
+  const isSmallDevice = screenWidth < 380 || screenHeight < 700;
+  const isTablet = screenWidth >= 600;
 
   // Active bottom navigation tab
   const [activeTab, setActiveTab] = useState<"home" | "jobs" | "active" | "profile">("home");
@@ -150,17 +153,28 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
       {/* Top SafeArea Header */}
       <SafeAreaView edges={["top"]} className="bg-[#F4F7F5]">
-        <View className="px-5 pt-1.5 pb-2.5 flex-row items-center justify-between">
+        <View
+          style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          className="px-5 pt-1.5 pb-2.5 flex-row items-center justify-between"
+        >
           {/* Left: App Logo & Dashboard Title */}
           <View className="flex-row items-center">
-            <View className="h-9 w-9 rounded-xl bg-[#135228] items-center justify-center mr-2.5 shadow-xs overflow-hidden">
+            <View
+              className={`rounded-xl bg-[#135228] items-center justify-center mr-2.5 shadow-xs overflow-hidden ${
+                isSmallDevice ? "h-8 w-8" : "h-9 w-9"
+              }`}
+            >
               <Image
                 source={require("../../assets/logo.png")}
-                className="h-8 w-8"
+                className={isSmallDevice ? "h-7 w-7" : "h-8 w-8"}
                 resizeMode="contain"
               />
             </View>
-            <Text className="text-[20px] font-bold text-[#111827]">
+            <Text
+              className={`font-bold text-[#111827] ${
+                isSmallDevice ? "text-[18px]" : "text-[20px]"
+              }`}
+            >
               Dashboard
             </Text>
           </View>
@@ -171,9 +185,15 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => setShowNotifications(true)}
-              className="relative h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-100/90 shadow-xs mr-2"
+              className={`relative items-center justify-center rounded-full bg-white border border-gray-100/90 shadow-xs mr-2 ${
+                isSmallDevice ? "h-9 w-9" : "h-10 w-10"
+              }`}
             >
-              <Ionicons name="notifications-outline" size={20} color="#4B5563" />
+              <Ionicons
+                name="notifications-outline"
+                size={isSmallDevice ? 18 : 20}
+                color="#4B5563"
+              />
               {/* Unread Alert Dot */}
               <View className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-[#EF4444] border border-white" />
             </TouchableOpacity>
@@ -182,9 +202,15 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowProfileModal(true)}
-              className="h-9 w-9 rounded-full bg-[#E68A00] items-center justify-center shadow-xs"
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
+                isSmallDevice ? "h-8 w-8" : "h-9 w-9"
+              }`}
             >
-              <Text className="text-base font-bold text-white">
+              <Text
+                className={`font-bold text-white ${
+                  isSmallDevice ? "text-sm" : "text-base"
+                }`}
+              >
                 {profile.avatarLetter}
               </Text>
             </TouchableOpacity>
@@ -195,7 +221,12 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
       {/* Scrollable Dashboard Body with Smooth Scrolling Physics */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 90 }}
+        contentContainerStyle={{
+          paddingBottom: 90,
+          maxWidth: 640,
+          width: "100%",
+          alignSelf: "center",
+        }}
         showsVerticalScrollIndicator={false}
         bounces={true}
         scrollEventThrottle={16}
@@ -207,7 +238,9 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         {/* ================= 1. DRIVER PROFILE BANNER CARD ================= */}
         <View className="px-4 mt-2">
           <View
-            className="relative overflow-hidden rounded-[26px] bg-[#E68A00] p-5 shadow-sm"
+            className={`relative overflow-hidden rounded-[26px] bg-[#E68A00] shadow-sm ${
+              isSmallDevice ? "p-4" : "p-5"
+            }`}
             style={{
               elevation: 4,
               shadowColor: "#E68A00",
@@ -223,30 +256,44 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Driver Profile Row */}
             <View className="flex-row items-center">
               {/* Avatar Square */}
-              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-white/25 shadow-xs">
-                <Text className="text-2xl font-black text-white">
+              <View
+                className={`items-center justify-center rounded-2xl bg-white/25 shadow-xs ${
+                  isSmallDevice ? "h-12 w-12" : "h-14 w-14"
+                }`}
+              >
+                <Text
+                  className={`font-black text-white ${
+                    isSmallDevice ? "text-xl" : "text-2xl"
+                  }`}
+                >
                   {profile.avatarLetter}
                 </Text>
               </View>
 
               {/* Driver Info */}
-              <View className="ml-3.5 flex-1">
-                <Text className="text-[13px] font-medium text-[#FEF3C7]">
+              <View className="ml-3 flex-1 pr-1">
+                <Text className="text-[12px] font-medium text-[#FEF3C7]">
                   {profile.greeting}
                 </Text>
                 <Text
-                  className="text-[21px] font-extrabold text-white leading-tight mt-0.5"
+                  className={`font-extrabold text-white leading-tight mt-0.5 ${
+                    isSmallDevice ? "text-[18px]" : "text-[21px]"
+                  }`}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
                 >
                   {profile.name}
                 </Text>
-                <Text className="text-[13px] font-medium text-[#FEF3C7] mt-0.5">
+                <Text
+                  className="text-[12px] font-medium text-[#FEF3C7] mt-0.5"
+                  numberOfLines={1}
+                >
                   {profile.vehicleType}
                 </Text>
                 {profile.isVerified && (
                   <View className="flex-row items-center mt-0.5">
                     <Ionicons name="checkmark-circle-outline" size={13} color="#FEF3C7" />
-                    <Text className="ml-1 text-[12px] font-medium text-[#FEF3C7]">
+                    <Text className="ml-1 text-[11.5px] font-medium text-[#FEF3C7]">
                       Verified Driver
                     </Text>
                   </View>
@@ -255,12 +302,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </View>
 
             {/* Centered Rating Pill */}
-            <View className="mt-4 flex-row items-center justify-center self-center rounded-full bg-white/20 px-4 py-1.5">
+            <View
+              className={`flex-row items-center justify-center self-center rounded-full bg-white/20 ${
+                isSmallDevice ? "mt-3 px-3 py-1" : "mt-4 px-4 py-1.5"
+              }`}
+            >
               <Text className="text-sm">⭐</Text>
-              <Text className="ml-1 text-[13px] font-extrabold text-white">
+              <Text className="ml-1 text-[12.5px] font-extrabold text-white">
                 {profile.rating.toFixed(1)}
               </Text>
-              <Text className="ml-1 text-[12px] font-medium text-white/90">
+              <Text className="ml-1 text-[11.5px] font-medium text-white/90">
                 · {profile.completedJobs} completed jobs
               </Text>
             </View>
@@ -268,25 +319,41 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         </View>
 
         {/* ================= 2. STATS GRID (2x2) ================= */}
-        <View className="px-4 mt-3.5">
+        <View className="px-4 mt-3">
           {/* Row 1 */}
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-2.5">
             {/* Open Jobs */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowAvailableJobsModal(true)}
-              className="flex-1 rounded-2xl bg-white p-3.5 border border-gray-100/90 shadow-2xs flex-row items-center justify-between"
+              className={`flex-1 rounded-2xl bg-white border border-gray-100/90 shadow-2xs flex-row items-center justify-between ${
+                isSmallDevice ? "p-3" : "p-3.5"
+              }`}
             >
-              <View>
-                <Text className="text-[12px] font-semibold text-[#6B7280]">
+              <View className="flex-1 pr-1">
+                <Text className="text-[11.5px] font-semibold text-[#6B7280]">
                   Open Jobs
                 </Text>
-                <Text className="text-[24px] font-black text-[#111827] mt-0.5">
+                <Text
+                  className={`font-black text-[#111827] mt-0.5 ${
+                    isSmallDevice ? "text-[20px]" : "text-[24px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {stats.openJobsCount}
                 </Text>
               </View>
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#FFFBEB]">
-                <Ionicons name="location-outline" size={20} color="#D97706" />
+              <View
+                className={`items-center justify-center rounded-xl bg-[#FFFBEB] ${
+                  isSmallDevice ? "h-9 w-9" : "h-11 w-11"
+                }`}
+              >
+                <Ionicons
+                  name="location-outline"
+                  size={isSmallDevice ? 18 : 20}
+                  color="#D97706"
+                />
               </View>
             </TouchableOpacity>
 
@@ -294,69 +361,121 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowOffersModal(true)}
-              className="flex-1 rounded-2xl bg-white p-3.5 border border-gray-100/90 shadow-2xs flex-row items-center justify-between"
+              className={`flex-1 rounded-2xl bg-white border border-gray-100/90 shadow-2xs flex-row items-center justify-between ${
+                isSmallDevice ? "p-3" : "p-3.5"
+              }`}
             >
-              <View>
-                <Text className="text-[12px] font-semibold text-[#6B7280]">
+              <View className="flex-1 pr-1">
+                <Text className="text-[11.5px] font-semibold text-[#6B7280]">
                   My Offers
                 </Text>
-                <Text className="text-[24px] font-black text-[#111827] mt-0.5">
+                <Text
+                  className={`font-black text-[#111827] mt-0.5 ${
+                    isSmallDevice ? "text-[20px]" : "text-[24px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {stats.myOffersCount}
                 </Text>
               </View>
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF]">
-                <Ionicons name="time-outline" size={20} color="#2563EB" />
+              <View
+                className={`items-center justify-center rounded-xl bg-[#EFF6FF] ${
+                  isSmallDevice ? "h-9 w-9" : "h-11 w-11"
+                }`}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={isSmallDevice ? 18 : 20}
+                  color="#2563EB"
+                />
               </View>
             </TouchableOpacity>
           </View>
 
           {/* Row 2 */}
-          <View className="flex-row gap-3 mt-3">
+          <View className="flex-row gap-2.5 mt-2.5">
             {/* Active Jobs */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowJobDetailsModal(true)}
-              className="flex-1 rounded-2xl bg-white p-3.5 border border-gray-100/90 shadow-2xs flex-row items-center justify-between"
+              className={`flex-1 rounded-2xl bg-white border border-gray-100/90 shadow-2xs flex-row items-center justify-between ${
+                isSmallDevice ? "p-3" : "p-3.5"
+              }`}
             >
-              <View>
-                <Text className="text-[12px] font-semibold text-[#6B7280]">
+              <View className="flex-1 pr-1">
+                <Text className="text-[11.5px] font-semibold text-[#6B7280]">
                   Active Jobs
                 </Text>
-                <Text className="text-[24px] font-black text-[#111827] mt-0.5">
+                <Text
+                  className={`font-black text-[#111827] mt-0.5 ${
+                    isSmallDevice ? "text-[20px]" : "text-[24px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {stats.activeJobsCount}
                 </Text>
               </View>
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#ECFDF5]">
-                <Ionicons name="bus-outline" size={20} color="#059669" />
+              <View
+                className={`items-center justify-center rounded-xl bg-[#ECFDF5] ${
+                  isSmallDevice ? "h-9 w-9" : "h-11 w-11"
+                }`}
+              >
+                <Ionicons
+                  name="bus-outline"
+                  size={isSmallDevice ? 18 : 20}
+                  color="#059669"
+                />
               </View>
             </TouchableOpacity>
 
             {/* This Month */}
-            <View className="flex-1 rounded-2xl bg-white p-3.5 border border-gray-100/90 shadow-2xs flex-row items-center justify-between">
-              <View>
-                <Text className="text-[12px] font-semibold text-[#6B7280]">
+            <View
+              className={`flex-1 rounded-2xl bg-white border border-gray-100/90 shadow-2xs flex-row items-center justify-between ${
+                isSmallDevice ? "p-3" : "p-3.5"
+              }`}
+            >
+              <View className="flex-1 pr-1">
+                <Text className="text-[11.5px] font-semibold text-[#6B7280]">
                   This Month
                 </Text>
-                <Text className="text-[21px] font-black text-[#111827] mt-0.5">
+                <Text
+                  className={`font-black text-[#111827] mt-0.5 ${
+                    isSmallDevice ? "text-[18px]" : "text-[21px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {stats.thisMonthEarnings}
                 </Text>
               </View>
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5FF]">
-                <Ionicons name="trending-up" size={20} color="#9333EA" />
+              <View
+                className={`items-center justify-center rounded-xl bg-[#FAF5FF] ${
+                  isSmallDevice ? "h-9 w-9" : "h-11 w-11"
+                }`}
+              >
+                <Ionicons
+                  name="trending-up"
+                  size={isSmallDevice ? 18 : 20}
+                  color="#9333EA"
+                />
               </View>
             </View>
           </View>
         </View>
 
         {/* ================= 3. QUICK ACTIONS GRID (2x2) ================= */}
-        <View className="px-4 mt-4">
+        <View className="px-4 mt-3.5">
           {/* Action Row 1 */}
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-2.5">
             {/* Available Jobs (Primary Highlighted Card) */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => setShowAvailableJobsModal(true)}
-              className="flex-1 h-[88px] items-center justify-center rounded-2xl bg-[#E68A00] shadow-sm"
+              className={`flex-1 items-center justify-center rounded-2xl bg-[#E68A00] shadow-sm ${
+                isSmallDevice ? "h-[74px]" : "h-[88px]"
+              }`}
               style={{
                 elevation: 3,
                 shadowColor: "#E68A00",
@@ -365,8 +484,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 shadowOffset: { width: 0, height: 2 },
               }}
             >
-              <Text className="text-2xl mb-0.5">🗺️</Text>
-              <Text className="text-[13px] font-bold text-white">
+              <Text className={isSmallDevice ? "text-xl mb-0" : "text-2xl mb-0.5"}>🗺️</Text>
+              <Text
+                className={`font-bold text-white ${
+                  isSmallDevice ? "text-[11.5px]" : "text-[13px]"
+                }`}
+                numberOfLines={1}
+              >
                 Available Jobs
               </Text>
             </TouchableOpacity>
@@ -375,25 +499,39 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowJobDetailsModal(true)}
-              className="flex-1 h-[88px] items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs"
+              className={`flex-1 items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs ${
+                isSmallDevice ? "h-[74px]" : "h-[88px]"
+              }`}
             >
-              <Text className="text-2xl mb-0.5">🚚</Text>
-              <Text className="text-[13px] font-bold text-[#1F2937]">
+              <Text className={isSmallDevice ? "text-xl mb-0" : "text-2xl mb-0.5"}>🚚</Text>
+              <Text
+                className={`font-bold text-[#1F2937] ${
+                  isSmallDevice ? "text-[11.5px]" : "text-[13px]"
+                }`}
+                numberOfLines={1}
+              >
                 Active Jobs
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Action Row 2 */}
-          <View className="flex-row gap-3 mt-3">
+          <View className="flex-row gap-2.5 mt-2.5">
             {/* My Offers */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowOffersModal(true)}
-              className="flex-1 h-[88px] items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs"
+              className={`flex-1 items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs ${
+                isSmallDevice ? "h-[74px]" : "h-[88px]"
+              }`}
             >
-              <Text className="text-2xl mb-0.5">📋</Text>
-              <Text className="text-[13px] font-bold text-[#1F2937]">
+              <Text className={isSmallDevice ? "text-xl mb-0" : "text-2xl mb-0.5"}>📋</Text>
+              <Text
+                className={`font-bold text-[#1F2937] ${
+                  isSmallDevice ? "text-[11.5px]" : "text-[13px]"
+                }`}
+                numberOfLines={1}
+              >
                 My Offers
               </Text>
             </TouchableOpacity>
@@ -402,10 +540,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowProfileModal(true)}
-              className="flex-1 h-[88px] items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs"
+              className={`flex-1 items-center justify-center rounded-2xl bg-white border border-gray-100/80 shadow-2xs ${
+                isSmallDevice ? "h-[74px]" : "h-[88px]"
+              }`}
             >
-              <Text className="text-2xl mb-0.5">👤</Text>
-              <Text className="text-[13px] font-bold text-[#1F2937]">
+              <Text className={isSmallDevice ? "text-xl mb-0" : "text-2xl mb-0.5"}>👤</Text>
+              <Text
+                className={`font-bold text-[#1F2937] ${
+                  isSmallDevice ? "text-[11.5px]" : "text-[13px]"
+                }`}
+                numberOfLines={1}
+              >
                 Profile
               </Text>
             </TouchableOpacity>
@@ -413,13 +558,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         </View>
 
         {/* ================= 4. ACTIVE JOB SECTION ================= */}
-        <View className="mt-5 px-4">
+        <View className="mt-4 px-4">
           <Text className="text-[12px] font-bold uppercase tracking-wider text-[#6B7280] mb-2.5">
             ACTIVE JOB
           </Text>
 
           {/* Active Job Card */}
-          <View className="rounded-2xl bg-white p-4 border border-gray-100/90 shadow-2xs">
+          <View className="rounded-2xl bg-white p-3.5 border border-gray-100/90 shadow-2xs">
             {/* Top row: Status pill & Ref code */}
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center rounded-full bg-[#FEF3C7] px-2.5 py-1">
@@ -434,7 +579,12 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </View>
 
             {/* Title: Fresh Cabbage · 100 kg */}
-            <Text className="mt-2 text-[17px] font-extrabold text-[#111827]">
+            <Text
+              className={`font-extrabold text-[#111827] mt-2 ${
+                isSmallDevice ? "text-[15px]" : "text-[17px]"
+              }`}
+              numberOfLines={1}
+            >
               {activeJob.cropName} · {activeJob.weight}
             </Text>
 
@@ -443,28 +593,46 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               {/* Pickup */}
               <View className="flex-row items-center">
                 <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                <Text
+                  className={`font-medium text-[#4B5563] flex-1 ${
+                    isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
+                  }`}
+                  numberOfLines={1}
+                >
                   {activeJob.pickup}
                 </Text>
               </View>
               {/* Dropoff */}
               <View className="flex-row items-center">
                 <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
-                <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                <Text
+                  className={`font-medium text-[#4B5563] flex-1 ${
+                    isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
+                  }`}
+                  numberOfLines={1}
+                >
                   {activeJob.dropoff}
                 </Text>
               </View>
             </View>
 
             {/* Action Buttons Row */}
-            <View className="mt-4 flex-row gap-2.5">
+            <View className="mt-3.5 flex-row gap-2">
               {/* Confirm Pickup Button */}
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleConfirmPickup}
-                className="flex-1 h-11 items-center justify-center rounded-xl bg-[#059669] shadow-xs"
+                className={`flex-1 items-center justify-center rounded-xl bg-[#059669] shadow-xs px-2 ${
+                  isSmallDevice ? "h-10" : "h-11"
+                }`}
               >
-                <Text className="text-[13px] font-bold text-white">
+                <Text
+                  className={`font-bold text-white ${
+                    isSmallDevice ? "text-[12px]" : "text-[13px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   Confirm Pickup
                 </Text>
               </TouchableOpacity>
@@ -473,9 +641,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleUpdateStatus}
-                className="flex-1 h-11 items-center justify-center rounded-xl bg-[#F59E0B] shadow-xs"
+                className={`flex-1 items-center justify-center rounded-xl bg-[#F59E0B] shadow-xs px-2 ${
+                  isSmallDevice ? "h-10" : "h-11"
+                }`}
               >
-                <Text className="text-[13px] font-bold text-white">
+                <Text
+                  className={`font-bold text-white ${
+                    isSmallDevice ? "text-[12px]" : "text-[13px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   Update Status
                 </Text>
               </TouchableOpacity>
@@ -505,7 +681,9 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           {availableJobsList.slice(0, 2).map((job) => (
             <View
               key={job.id}
-              className="mb-3 rounded-2xl bg-white p-4 border border-gray-100/90 shadow-2xs"
+              className={`mb-3 rounded-2xl bg-white border border-gray-100/90 shadow-2xs ${
+                isSmallDevice ? "p-3" : "p-4"
+              }`}
             >
               <View className="flex-row items-center justify-between">
                 <Text className="text-[12px] font-semibold text-[#9CA3AF]">
@@ -518,29 +696,49 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 </View>
               </View>
 
-              <Text className="mt-1.5 text-[16px] font-extrabold text-[#111827]">
+              <Text
+                className={`font-extrabold text-[#111827] mt-1.5 ${
+                  isSmallDevice ? "text-[15px]" : "text-[16px]"
+                }`}
+                numberOfLines={1}
+              >
                 {job.cropName} · {job.weight}
               </Text>
 
               <View className="mt-2 space-y-1.5">
                 <View className="flex-row items-center">
                   <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2" />
-                  <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                  <Text
+                    className={`font-medium text-[#4B5563] flex-1 ${
+                      isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
+                    }`}
+                    numberOfLines={1}
+                  >
                     {job.pickup}
                   </Text>
                 </View>
                 <View className="flex-row items-center">
                   <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2" />
-                  <Text className="text-[12.5px] font-medium text-[#4B5563]" numberOfLines={1}>
+                  <Text
+                    className={`font-medium text-[#4B5563] flex-1 ${
+                      isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
+                    }`}
+                    numberOfLines={1}
+                  >
                     {job.dropoff}
                   </Text>
                 </View>
               </View>
 
               <View className="mt-3 flex-row items-center justify-between pt-2 border-t border-gray-100">
-                <View className="flex-row items-center">
+                <View className="flex-row items-center flex-1 pr-2">
                   <Ionicons name="time-outline" size={14} color="#6B7280" />
-                  <Text className="ml-1 text-[11.5px] font-medium text-[#6B7280]">
+                  <Text
+                    className={`ml-1 font-medium text-[#6B7280] ${
+                      isSmallDevice ? "text-[11px]" : "text-[11.5px]"
+                    }`}
+                    numberOfLines={1}
+                  >
                     {job.pickupTime}
                   </Text>
                 </View>
@@ -549,7 +747,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   onPress={() => handleMakeOffer(job.id, `${job.cropName} · ${job.weight}`)}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 >
-                  <Text className="text-[12.5px] font-bold text-[#E68A00]">
+                  <Text
+                    className={`font-bold text-[#E68A00] ${
+                      isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
+                    }`}
+                  >
                     Submit Offer →
                   </Text>
                 </TouchableOpacity>
@@ -560,18 +762,28 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
         {/* ================= 6. PAYMENT SUMMARY CARD ================= */}
         <View className="mt-2 mb-4 px-4">
-          <View className="rounded-2xl bg-[#F0FDF4] p-4 border border-[#A7F3D0]">
-            <Text className="text-[13.5px] font-bold text-[#14532D] mb-3">
+          <View
+            className={`rounded-2xl bg-[#F0FDF4] border border-[#A7F3D0] ${
+              isSmallDevice ? "p-3" : "p-4"
+            }`}
+          >
+            <Text className="text-[13px] font-bold text-[#14532D] mb-2.5">
               Payment Summary
             </Text>
 
             <View className="flex-row items-center justify-between">
               {/* Pending Release */}
-              <View className="flex-1 pr-3">
-                <Text className="text-[12px] font-semibold text-[#059669]">
+              <View className="flex-1 pr-2">
+                <Text className="text-[11.5px] font-semibold text-[#059669]">
                   Pending Release
                 </Text>
-                <Text className="text-[22px] font-black text-[#065F46] mt-0.5">
+                <Text
+                  className={`font-black text-[#065F46] mt-0.5 ${
+                    isSmallDevice ? "text-[19px]" : "text-[22px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {paymentSummary.pendingRelease}
                 </Text>
               </View>
@@ -580,11 +792,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               <View className="h-9 w-[1px] bg-[#A7F3D0]" />
 
               {/* This Month */}
-              <View className="flex-1 pl-4">
-                <Text className="text-[12px] font-semibold text-[#059669]">
+              <View className="flex-1 pl-3">
+                <Text className="text-[11.5px] font-semibold text-[#059669]">
                   This Month
                 </Text>
-                <Text className="text-[22px] font-black text-[#065F46] mt-0.5">
+                <Text
+                  className={`font-black text-[#065F46] mt-0.5 ${
+                    isSmallDevice ? "text-[19px]" : "text-[22px]"
+                  }`}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {paymentSummary.thisMonth}
                 </Text>
               </View>
@@ -594,8 +812,14 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
       </ScrollView>
 
       {/* ================= 7. BOTTOM TAB BAR ================= */}
-      <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200/80">
-        <View className="flex-row items-center justify-around py-1.5">
+      <SafeAreaView
+        edges={["bottom"]}
+        className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200/80"
+      >
+        <View
+          style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          className="flex-row items-center justify-around py-1.5"
+        >
           {/* Home Tab */}
           <TouchableOpacity
             activeOpacity={0.7}
@@ -604,11 +828,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <Ionicons
               name={activeTab === "home" ? "home" : "home-outline"}
-              size={22}
+              size={isSmallDevice ? 20 : 22}
               color={activeTab === "home" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } ${
                 activeTab === "home"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
@@ -633,11 +859,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <Ionicons
               name={activeTab === "jobs" ? "location" : "location-outline"}
-              size={22}
+              size={isSmallDevice ? 20 : 22}
               color={activeTab === "jobs" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } ${
                 activeTab === "jobs"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
@@ -661,11 +889,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <Ionicons
               name={activeTab === "active" ? "bus" : "bus-outline"}
-              size={22}
+              size={isSmallDevice ? 20 : 22}
               color={activeTab === "active" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } ${
                 activeTab === "active"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
@@ -689,11 +919,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <Ionicons
               name={activeTab === "profile" ? "person" : "person-outline"}
-              size={22}
+              size={isSmallDevice ? 20 : 22}
               color={activeTab === "profile" ? "#E68A00" : "#9CA3AF"}
             />
             <Text
-              className={`text-[11px] mt-0.5 ${
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } ${
                 activeTab === "profile"
                   ? "font-bold text-[#E68A00]"
                   : "font-medium text-[#9CA3AF]"
@@ -719,7 +951,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         }}
       >
         <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-          <View className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white">
+          <View
+            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+          >
             <View>
               <Text className="text-lg font-bold text-gray-900">
                 🗺️ Available Transport Jobs
@@ -740,7 +975,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           </View>
 
           <ScrollView
-            className="p-4"
+            className="p-4 flex-1"
+            contentContainerStyle={{
+              maxWidth: 640,
+              width: "100%",
+              alignSelf: "center",
+              paddingBottom: 40,
+            }}
             showsVerticalScrollIndicator={false}
             bounces={true}
             scrollEventThrottle={16}
@@ -770,10 +1011,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 </Text>
 
                 <View className="my-2.5 space-y-1">
-                  <Text className="text-xs text-gray-600">
+                  <Text className="text-xs text-gray-600" numberOfLines={1}>
                     📍 <Text className="font-semibold">From:</Text> {job.pickup}
                   </Text>
-                  <Text className="text-xs text-gray-600">
+                  <Text className="text-xs text-gray-600" numberOfLines={1}>
                     🏁 <Text className="font-semibold">To:</Text> {job.dropoff}
                   </Text>
                   <Text className="text-xs text-gray-500 mt-1">
@@ -809,7 +1050,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         onRequestClose={() => setShowOffersModal(false)}
       >
         <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-          <View className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white">
+          <View
+            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+          >
             <View>
               <Text className="text-lg font-bold text-gray-900">
                 📋 My Transport Offers
@@ -826,7 +1070,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </TouchableOpacity>
           </View>
 
-          <View className="p-4">
+          <View
+            className="p-4"
+            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          >
             {myOffersList.map((offer) => (
               <View
                 key={offer.id}
@@ -870,7 +1117,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         onRequestClose={() => setShowNotifications(false)}
       >
         <View className="flex-1 bg-black/40 justify-center px-4">
-          <View className="bg-white rounded-3xl p-5 shadow-lg max-h-[80%]">
+          <View
+            className="bg-white rounded-3xl p-5 shadow-lg max-h-[80%]"
+            style={{ maxWidth: 480, width: "100%", alignSelf: "center" }}
+          >
             <View className="flex-row justify-between items-center pb-3 border-b border-gray-100">
               <Text className="text-base font-bold text-gray-900">
                 🔔 Recent Notifications
@@ -932,7 +1182,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         }}
       >
         <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-          <View className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white">
+          <View
+            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+          >
             <View>
               <Text className="text-lg font-bold text-gray-900">
                 Active Job Details
@@ -953,7 +1206,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           </View>
 
           <ScrollView
-            className="p-4"
+            className="p-4 flex-1"
+            contentContainerStyle={{
+              maxWidth: 640,
+              width: "100%",
+              alignSelf: "center",
+              paddingBottom: 40,
+            }}
             showsVerticalScrollIndicator={false}
             bounces={true}
             scrollEventThrottle={16}
@@ -1026,7 +1285,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         }}
       >
         <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-          <View className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white">
+          <View
+            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+          >
             <Text className="text-lg font-bold text-gray-900">
               Driver Profile
             </Text>
@@ -1042,7 +1304,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           </View>
 
           <ScrollView
-            className="p-4"
+            className="p-4 flex-1"
+            contentContainerStyle={{
+              maxWidth: 640,
+              width: "100%",
+              alignSelf: "center",
+              paddingBottom: 40,
+            }}
             showsVerticalScrollIndicator={false}
             bounces={true}
             scrollEventThrottle={16}
