@@ -79,23 +79,77 @@ export const TransporterAvailableJobsScreen = ({
     }
   };
 
-  const handleMakeOffer = (job: AvailableTransportJob) => {
+  const handleSubmitOffer = (job: AvailableTransportJob) => {
     Alert.alert(
       "Submit Transport Offer",
-      `Submit standard bid for ${job.cropName} · ${job.weight}?\nRoute: ${job.pickup} → ${job.dropoff}\nEstimated Payout: ${job.price}`,
+      `Submit your transport offer for ${job.cropName} (${job.weight})?\n\nRoute: ${job.pickup} → ${job.dropoff}\nEstimated Rate: ${job.price}`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Confirm Bid",
+          text: "Submit Offer",
           onPress: () => {
             setSelectedJob(null);
             Alert.alert(
               "Offer Submitted!",
-              `Your bid for ${job.id} (${job.cropName}) was sent to the farmer.`
+              `Your transport offer for ${job.id} (${job.cropName}) has been sent to ${
+                job.farmerName || "the farmer"
+              }. You will be notified once accepted.`
             );
           },
         },
       ]
+    );
+  };
+
+  const handleMakeOffer = (job: AvailableTransportJob) => {
+    handleSubmitOffer(job);
+  };
+
+  const getJobIdDisplay = (id?: string) => {
+    if (!id) return "JOB #GH-T1025";
+    const trimmed = id.trim();
+    if (trimmed.toUpperCase().startsWith("JOB")) return trimmed;
+    return `JOB ${trimmed}`;
+  };
+
+  const getJobDate = (job?: AvailableTransportJob | null) => {
+    if (!job) return "2026-08-31";
+    if (job.pickupDate) return job.pickupDate;
+    if (job.pickupTime && job.pickupTime.includes("·")) {
+      return job.pickupTime.split("·")[0].trim();
+    }
+    return "2026-08-31";
+  };
+
+  const getJobTime = (job?: AvailableTransportJob | null) => {
+    if (!job) return "06:00 AM";
+    if (job.pickupRequiredTime) return job.pickupRequiredTime;
+    if (job.pickupTime && job.pickupTime.includes("·")) {
+      return job.pickupTime.split("·")[1].trim();
+    }
+    return "06:00 AM";
+  };
+
+  const getSpecialInstructions = (job?: AvailableTransportJob | null) => {
+    return (
+      job?.specialInstructions ||
+      "Fragile. Use padded transport. Early morning delivery required."
+    );
+  };
+
+  const getPickupAddress = (job?: AvailableTransportJob | null) => {
+    return (
+      job?.pickupLocationDetail ||
+      job?.pickup ||
+      "Dambulla Agricultural Zone, Plot 14"
+    );
+  };
+
+  const getDeliveryAddress = (job?: AvailableTransportJob | null) => {
+    return (
+      job?.dropoffLocationDetail ||
+      job?.dropoff ||
+      "Colombo Fresh Market, Colombo 03"
     );
   };
 
@@ -249,8 +303,10 @@ export const TransporterAvailableJobsScreen = ({
         {/* Job Cards List */}
         <View className="px-4 sm:px-5 space-y-3.5 sm:space-y-4 gap-3.5 sm:gap-4">
           {availableJobs.map((job) => (
-            <View
+            <TouchableOpacity
               key={job.id}
+              activeOpacity={0.88}
+              onPress={() => setSelectedJob(job)}
               className={`rounded-3xl bg-white border border-gray-100 shadow-xs ${
                 isSmallDevice ? "p-4" : "p-5"
               }`}
@@ -376,7 +432,7 @@ export const TransporterAvailableJobsScreen = ({
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </SmoothScrollView>
@@ -518,185 +574,181 @@ export const TransporterAvailableJobsScreen = ({
         </View>
       </SafeAreaView>
 
-      {/* ================= MODAL: JOB DETAILS & BIDDING ================= */}
+      {/* ================= MODAL: AVAILABLE JOB DETAILS POPUP ================= */}
       <Modal
         visible={!!selectedJob}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setSelectedJob(null)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View
-            style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className={`bg-white rounded-t-3xl shadow-2xl ${
-              isSmallDevice ? "p-4 max-h-[90%]" : "p-6 max-h-[85%]"
-            }`}
-          >
-            {/* Modal Drag handle */}
-            <View className="items-center mb-2.5">
-              <View className="h-1.5 w-12 rounded-full bg-gray-300" />
-            </View>
+        <View className="flex-1 bg-black/45 justify-center items-center px-4 sm:px-5">
+          {/* Backdrop Dismiss Area */}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setSelectedJob(null)}
+            className="absolute inset-0"
+          />
 
-            {/* Modal Header */}
-            <View className="flex-row items-center justify-between pb-3 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <Text className="text-sm font-bold text-gray-500 mr-2">
-                  {selectedJob?.id}
-                </Text>
-                <View className="rounded-full bg-amber-100 px-2.5 py-0.5">
-                  <Text className="text-[11px] font-bold text-amber-800">
-                    Open for Bids
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() => setSelectedJob(null)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                className="h-8 w-8 rounded-full bg-gray-100 items-center justify-center"
-              >
-                <Ionicons name="close" size={18} color="#4B5563" />
-              </TouchableOpacity>
-            </View>
-
-            <SmoothScrollView
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-              className="py-3"
-              bounces={true}
-              alwaysBounceVertical={true}
-              scrollEventThrottle={16}
-              decelerationRate="normal"
-              overScrollMode="never"
-              nestedScrollEnabled={true}
-              keyboardShouldPersistTaps="handled"
+          {selectedJob && (
+            <View
+              style={{
+                maxWidth: 430,
+                width: "100%",
+                maxHeight: "92%",
+              }}
             >
-              {/* Crop & Quantity */}
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                className={`font-extrabold text-gray-900 ${
-                  isSmallDevice ? "text-lg" : "text-xl"
-                }`}
+              <SmoothScrollView
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingVertical: 10 }}
+                bounces={false}
               >
-                {selectedJob?.cropName}
-              </Text>
-              <Text className="text-xs sm:text-sm font-semibold text-gray-500 mb-3 sm:mb-4">
-                Total Cargo Weight: {selectedJob?.weight}
-              </Text>
-
-              {/* Route Card */}
-              <View className="rounded-2xl bg-gray-50 p-3.5 sm:p-4 border border-gray-200/70 mb-3.5 sm:mb-4">
-                <Text className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Trip Route & Schedule
-                </Text>
-
-                <View className="flex-row items-start mb-2.5">
-                  <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mt-1 mr-2.5" />
-                  <View className="flex-1">
-                    <Text className="text-[10px] font-bold text-gray-400">
-                      PICKUP LOCATION
-                    </Text>
-                    <Text
-                      numberOfLines={2}
-                      className="text-xs sm:text-sm font-semibold text-gray-800"
-                    >
-                      {selectedJob?.pickup}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="flex-row items-start mb-2.5">
-                  <View className="h-2.5 w-2.5 rounded-full bg-[#EF4444] mt-1 mr-2.5" />
-                  <View className="flex-1">
-                    <Text className="text-[10px] font-bold text-gray-400">
-                      DROPOFF DESTINATION
-                    </Text>
-                    <Text
-                      numberOfLines={2}
-                      className="text-xs sm:text-sm font-semibold text-gray-800"
-                    >
-                      {selectedJob?.dropoff}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="flex-row items-center justify-between pt-2 border-t border-gray-200/60 mt-1">
-                  <Text className="text-[11px] sm:text-xs text-gray-500">
-                    🕒 {selectedJob?.pickupTime}
-                  </Text>
-                  <Text className="text-[11px] sm:text-xs font-bold text-gray-700">
-                    🛣️ {selectedJob?.distance || "Approx. 120 km"}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Farmer & Payout summary */}
-              <View className="flex-row items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#F0FDF4] border border-[#DCFCE7] mb-3.5 sm:mb-4">
-                <View className="flex-1 pr-2">
-                  <Text className="text-[11px] text-gray-500">Farmer Contact</Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    className="text-xs sm:text-sm font-bold text-gray-900"
+                <TouchableOpacity activeOpacity={1}>
+                  {/* Main White Details Card */}
+                  <View
+                    className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xl"
+                    style={{
+                      elevation: 8,
+                      shadowColor: "#000",
+                      shadowOpacity: 0.1,
+                      shadowRadius: 18,
+                      shadowOffset: { width: 0, height: 6 },
+                    }}
                   >
-                    {selectedJob?.farmerName || "Registered Farmer"}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => selectedJob && handleCallFarmer(selectedJob)}
-                  className="rounded-xl bg-white border border-[#86EFAC] px-3 py-1.5 flex-row items-center shadow-2xs"
-                >
-                  <Ionicons name="call" size={13} color="#16A34A" />
-                  <Text className="text-xs font-bold text-[#16A34A] ml-1.5">
-                    Call
-                  </Text>
+                    {/* Header Row: JOB #GH-T1025 & Open badge */}
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xs sm:text-[13px] font-bold text-gray-400 tracking-wider">
+                        {getJobIdDisplay(selectedJob.id)}
+                      </Text>
+                      <View className="flex-row items-center bg-[#FEF3C7] px-2.5 py-1 rounded-full">
+                        <View className="h-2 w-2 rounded-full bg-[#E68A00] mr-1.5" />
+                        <Text className="text-[11px] sm:text-xs font-bold text-[#B45309]">
+                          {selectedJob.status || "Open"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Title & Weight */}
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      className="text-[22px] sm:text-[24px] font-black text-[#0F172A] tracking-tight mt-2.5"
+                    >
+                      {selectedJob.cropName}
+                    </Text>
+                    <Text className="text-sm font-medium text-gray-500 mt-0.5">
+                      {selectedJob.weight}
+                    </Text>
+
+                    {/* ROUTE Section */}
+                    <Text className="text-[11px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mt-5 mb-2.5">
+                      ROUTE
+                    </Text>
+
+                    {/* Pickup Card */}
+                    <View className="rounded-2xl bg-[#F0FDF4] p-3.5 sm:p-4">
+                      <View className="flex-row items-center">
+                        <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mr-2" />
+                        <Text className="text-xs sm:text-[13px] font-bold text-[#16A34A]">
+                          Pickup
+                        </Text>
+                      </View>
+                      <Text className="text-sm font-bold text-[#0F172A] mt-1.5 leading-snug">
+                        {getPickupAddress(selectedJob)}
+                      </Text>
+                      <Text className="text-xs text-gray-500 font-medium mt-0.5">
+                        Farmer: {selectedJob.farmerName || "Kamal Jayasinghe"}
+                      </Text>
+                    </View>
+
+                    {/* Delivery Card */}
+                    <View className="rounded-2xl bg-[#FEF2F2] p-3.5 sm:p-4 mt-2.5">
+                      <View className="flex-row items-center">
+                        <View className="h-2.5 w-2.5 rounded-full bg-[#EF4444] mr-2" />
+                        <Text className="text-xs sm:text-[13px] font-bold text-[#DC2626]">
+                          Delivery
+                        </Text>
+                      </View>
+                      <Text className="text-sm font-bold text-[#0F172A] mt-1.5 leading-snug">
+                        {getDeliveryAddress(selectedJob)}
+                      </Text>
+                      <Text className="text-xs text-gray-500 font-medium mt-0.5">
+                        Seller: {selectedJob.sellerName || "Colombo Fresh Market"}
+                      </Text>
+                    </View>
+
+                    {/* Required Date & Required Time (Two Columns) */}
+                    <View className="flex-row items-center gap-2.5 sm:gap-3 mt-3">
+                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] p-3 sm:p-3.5 border border-slate-100">
+                        <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                          Required Date
+                        </Text>
+                        <Text className="text-sm sm:text-[15px] font-bold text-[#0F172A] mt-1">
+                          {getJobDate(selectedJob)}
+                        </Text>
+                      </View>
+
+                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] p-3 sm:p-3.5 border border-slate-100">
+                        <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                          Required Time
+                        </Text>
+                        <Text className="text-sm sm:text-[15px] font-bold text-[#0F172A] mt-1">
+                          {getJobTime(selectedJob)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Special Instructions Card */}
+                    <View className="rounded-2xl bg-[#FFFDF0] p-3 sm:p-3.5 mt-3 border border-[#FDE68A]">
+                      <Text className="text-xs sm:text-[12.5px] font-bold text-[#D97706]">
+                        Special Instructions
+                      </Text>
+                      <Text className="text-xs sm:text-[12.5px] text-[#92400E] font-medium mt-1 leading-relaxed">
+                        {getSpecialInstructions(selectedJob)}
+                      </Text>
+                    </View>
+
+                    {/* Payment Protected Card */}
+                    <View className="rounded-2xl bg-[#F0FDF4] p-3 sm:p-3.5 mt-3 border border-[#BBF7D0]">
+                      <View className="flex-row items-center">
+                        <Text className="text-xs mr-1.5">🔒</Text>
+                        <Text className="text-xs sm:text-[12.5px] font-bold text-[#16A34A]">
+                          Payment Protected
+                        </Text>
+                      </View>
+                      <Text className="text-xs text-[#16A34A] font-medium mt-1 leading-relaxed">
+                        Transportation payment is held by Green Hive and released upon
+                        successful delivery confirmation.
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Bottom Action Buttons Row */}
+                  <View className="flex-row items-center gap-3 mt-3.5 w-full">
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setSelectedJob(null)}
+                      className="flex-[0.4] py-3.5 sm:py-4 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
+                    >
+                      <Text className="text-sm sm:text-base font-bold text-gray-800">
+                        Back
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => handleSubmitOffer(selectedJob)}
+                      className="flex-[0.6] py-3.5 sm:py-4 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
+                    >
+                      <Text className="text-sm sm:text-base font-bold text-white">
+                        Submit Offer
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
-              </View>
-
-              {/* Est. Payout Banner */}
-              <View className="flex-row items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 mb-4 sm:mb-5">
-                <View>
-                  <Text className="text-[10.5px] sm:text-xs font-bold text-amber-700 uppercase">
-                    Estimated Trip Payout
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    className={`font-black text-amber-900 ${
-                      isSmallDevice ? "text-lg" : "text-xl"
-                    }`}
-                  >
-                    {selectedJob?.price}
-                  </Text>
-                </View>
-                <Text className="text-[11px] sm:text-xs text-amber-700 font-medium max-w-[120px] text-right">
-                  Protected by Green-Hive Escrow
-                </Text>
-              </View>
-
-              {/* Action Buttons */}
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => selectedJob && handleMakeOffer(selectedJob)}
-                className={`w-full rounded-2xl bg-[#E68A00] items-center justify-center shadow-xs mb-2.5 ${
-                  isSmallDevice ? "py-3" : "py-3.5"
-                }`}
-              >
-                <Text className="text-sm font-bold text-white">
-                  Submit Bid / Offer
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setSelectedJob(null)}
-                className="w-full rounded-2xl bg-gray-100 py-2.5 sm:py-3 items-center justify-center"
-              >
-                <Text className="text-xs font-bold text-gray-600">Close</Text>
-              </TouchableOpacity>
-            </SmoothScrollView>
-          </View>
+              </SmoothScrollView>
+            </View>
+          )}
         </View>
       </Modal>
 

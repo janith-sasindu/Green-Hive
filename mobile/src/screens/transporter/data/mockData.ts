@@ -43,12 +43,18 @@ export interface AvailableTransportJob {
     weight: string;
     status: "Open" | "Assigned";
     pickup: string;
+    pickupLocationDetail?: string;
     dropoff: string;
+    dropoffLocationDetail?: string;
+    pickupDate?: string;
+    pickupRequiredTime?: string;
     pickupTime: string;
     price: string;
     distance?: string;
     farmerName?: string;
     farmerPhone?: string;
+    sellerName?: string;
+    specialInstructions?: string;
 }
 
 export interface TransportOffer {
@@ -127,27 +133,39 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
         id: "#GH-T1025",
         cropName: "Ripe Tomatoes",
         weight: "150 kg",
-        pickup: "Dambulla Agricultural Zone",
-        dropoff: "Colombo Fresh Market",
+        pickup: "Dambulla Agricultural Zone, Plot 14",
+        pickupLocationDetail: "Dambulla Agricultural Zone, Plot 14",
+        dropoff: "Colombo Fresh Market, Colombo 03",
+        dropoffLocationDetail: "Colombo Fresh Market, Colombo 03",
         pickupTime: "2026-08-31 · 06:00 AM",
+        pickupDate: "2026-08-31",
+        pickupRequiredTime: "06:00 AM",
         status: "Open",
         price: "Rs. 15,500",
         distance: "148 km",
-        farmerName: "Jagath Samarasinghe",
+        farmerName: "Kamal Jayasinghe",
         farmerPhone: "+94 77 234 5678",
+        sellerName: "Colombo Fresh Market",
+        specialInstructions: "Fragile. Use padded transport. Early morning delivery required.",
     },
     {
         id: "#GH-T1020",
         cropName: "Organic Carrots",
         weight: "200 kg",
-        pickup: "Nuwara Eliya Highlands Farm",
-        dropoff: "Kandy Supermart",
+        pickup: "Nuwara Eliya Highlands Farm, Section 4",
+        pickupLocationDetail: "Nuwara Eliya Highlands Farm, Section 4",
+        dropoff: "Kandy Supermart, Peradeniya Road",
+        dropoffLocationDetail: "Kandy Supermart, Peradeniya Road",
         pickupTime: "2026-08-29 · 07:00 AM",
+        pickupDate: "2026-08-29",
+        pickupRequiredTime: "07:00 AM",
         status: "Open",
         price: "Rs. 14,000",
         distance: "78 km",
         farmerName: "Wasantha Kumara",
         farmerPhone: "+94 71 876 5432",
+        sellerName: "Kandy Supermart",
+        specialInstructions: "Keep refrigerated. Handle with care during mountain transit.",
     },
 ];
 
