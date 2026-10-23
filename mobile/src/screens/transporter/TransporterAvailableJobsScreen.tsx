@@ -24,6 +24,7 @@ import {
   TransporterNotificationItem,
 } from "./data";
 import { TransporterNotificationsScreen } from "./TransporterNotificationsScreen";
+import { TransporterSubmitOfferScreen } from "./TransporterSubmitOfferScreen";
 
 export interface TransporterAvailableJobsScreenProps {
   navigation?: any;
@@ -58,6 +59,8 @@ export const TransporterAvailableJobsScreen = ({
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showNotificationsPage, setShowNotificationsPage] = useState(false);
+  const [submittingOfferJob, setSubmittingOfferJob] =
+    useState<AvailableTransportJob | null>(null);
 
   // Tab change handler
   const handleTabPress = (tab: "home" | "jobs" | "active" | "profile") => {
@@ -80,25 +83,12 @@ export const TransporterAvailableJobsScreen = ({
   };
 
   const handleSubmitOffer = (job: AvailableTransportJob) => {
-    Alert.alert(
-      "Submit Transport Offer",
-      `Submit your transport offer for ${job.cropName} (${job.weight})?\n\nRoute: ${job.pickup} → ${job.dropoff}\nEstimated Rate: ${job.price}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Submit Offer",
-          onPress: () => {
-            setSelectedJob(null);
-            Alert.alert(
-              "Offer Submitted!",
-              `Your transport offer for ${job.id} (${job.cropName}) has been sent to ${
-                job.farmerName || "the farmer"
-              }. You will be notified once accepted.`
-            );
-          },
-        },
-      ]
-    );
+    setSelectedJob(null);
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterSubmitOffer", { job });
+    } else {
+      setSubmittingOfferJob(job);
+    }
   };
 
   const handleMakeOffer = (job: AvailableTransportJob) => {
@@ -183,6 +173,17 @@ export const TransporterAvailableJobsScreen = ({
       },
     ]);
   };
+
+  if (submittingOfferJob) {
+    return (
+      <TransporterSubmitOfferScreen
+        job={submittingOfferJob}
+        navigation={navigation}
+        onBack={() => setSubmittingOfferJob(null)}
+        onSelectTab={onSelectTab}
+      />
+    );
+  }
 
   if (showNotificationsPage) {
     return (
