@@ -38,6 +38,7 @@ export const TransporterNotificationsScreen = ({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   // Responsive Breakpoints
+  const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
@@ -155,7 +156,7 @@ export const TransporterNotificationsScreen = ({
             >
               <Ionicons
                 name="arrow-back"
-                size={isSmallDevice ? 22 : isTablet ? 26 : 24}
+                size={isExtraSmall ? 20 : isSmallDevice ? 22 : isTablet ? 26 : 24}
                 color="#1F2937"
               />
             </TouchableOpacity>
@@ -163,8 +164,11 @@ export const TransporterNotificationsScreen = ({
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
+              minimumFontScale={0.85}
               className={`font-black text-gray-900 tracking-tight flex-1 ${
-                isSmallDevice
+                isExtraSmall
+                  ? "text-[16px]"
+                  : isSmallDevice
                   ? "text-[18px]"
                   : isTablet
                   ? "text-[22px]"
@@ -176,12 +180,12 @@ export const TransporterNotificationsScreen = ({
           </View>
 
           {/* Right Action Icons */}
-          <View className="flex-row items-center space-x-2.5 sm:space-x-3 gap-2.5 sm:gap-3">
+          <View className="flex-row items-center space-x-2 sm:space-x-2.5 gap-2 sm:gap-2.5">
             {/* Notification Bell */}
             <View className="relative p-1.5 rounded-full">
               <Ionicons
                 name="notifications-outline"
-                size={isSmallDevice ? 21 : isTablet ? 25 : 23}
+                size={isExtraSmall ? 18 : isSmallDevice ? 20 : isTablet ? 25 : 23}
                 color="#4B5563"
               />
               {unreadCount > 0 && (
@@ -193,13 +197,26 @@ export const TransporterNotificationsScreen = ({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowProfileModal(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
-                isSmallDevice ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-9 w-9"
+                isExtraSmall
+                  ? "h-8 w-8"
+                  : isSmallDevice
+                  ? "h-8.5 w-8.5"
+                  : isTablet
+                  ? "h-10 w-10"
+                  : "h-9 w-9"
               }`}
             >
               <Text
                 className={`font-extrabold text-white ${
-                  isSmallDevice ? "text-xs" : isTablet ? "text-base" : "text-sm"
+                  isExtraSmall
+                    ? "text-xs"
+                    : isSmallDevice
+                    ? "text-xs"
+                    : isTablet
+                    ? "text-base"
+                    : "text-sm"
                 }`}
               >
                 {profile.avatarLetter}
@@ -216,7 +233,7 @@ export const TransporterNotificationsScreen = ({
           <Text
             numberOfLines={1}
             className={`font-medium text-gray-500 ${
-              isSmallDevice ? "text-[12px]" : "text-[13.5px]"
+              isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
             }`}
           >
             {unreadCount} unread
@@ -235,7 +252,7 @@ export const TransporterNotificationsScreen = ({
             />
             <Text
               className={`font-bold text-[#16A34A] ml-1 ${
-                isSmallDevice ? "text-[12px]" : "text-[13.5px]"
+                isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
               }`}
             >
               Mark all read
@@ -247,35 +264,22 @@ export const TransporterNotificationsScreen = ({
       {/* ================= MAIN SCROLLABLE BODY ================= */}
       <SmoothScrollView
         className="flex-1"
-        {...SMOOTH_SCROLL_PROPS}
         contentContainerStyle={{
-          maxWidth: 640,
-          width: "100%",
-          alignSelf: "center",
-          paddingBottom: isSmallDevice ? 24 : 36,
+          paddingBottom: isSmallDevice ? 32 : 44,
           paddingTop: isSmallDevice ? 4 : 8,
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        bounces={true}
-        alwaysBounceVertical={true}
-        scrollEventThrottle={16}
-        decelerationRate="normal"
-        overScrollMode="never"
-        nestedScrollEnabled={true}
-        keyboardShouldPersistTaps="handled"
-        directionalLockEnabled={true}
-        removeClippedSubviews={Platform.OS === "android"}
       >
-        <View className="px-4 sm:px-5 space-y-3 gap-3">
+        <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+          <View className="px-4 sm:px-5 space-y-2.5 sm:space-y-3 gap-2.5 sm:gap-3">
           {notifications.map((item) => (
             <TouchableOpacity
               key={item.id}
               activeOpacity={0.8}
               onPress={() => handleNotificationPress(item)}
               className={`rounded-3xl bg-white border border-gray-100 shadow-xs flex-row items-start ${
-                isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
+                isExtraSmall ? "p-3" : isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
               }`}
               style={{
                 elevation: 1.5,
@@ -287,8 +291,10 @@ export const TransporterNotificationsScreen = ({
             >
               {/* Left icon badge container */}
               <View
-                className={`rounded-2xl bg-[#FEF3C7] items-center justify-center mr-3 sm:mr-3.5 ${
-                  isSmallDevice
+                className={`rounded-2xl bg-[#FEF3C7] items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
+                  isExtraSmall
+                    ? "h-9 w-9"
+                    : isSmallDevice
                     ? "h-10 w-10"
                     : isTablet
                     ? "h-14 w-14"
@@ -297,7 +303,9 @@ export const TransporterNotificationsScreen = ({
               >
                 <Text
                   className={
-                    isSmallDevice
+                    isExtraSmall
+                      ? "text-base"
+                      : isSmallDevice
                       ? "text-lg"
                       : isTablet
                       ? "text-3xl"
@@ -313,8 +321,11 @@ export const TransporterNotificationsScreen = ({
                 <Text
                   numberOfLines={1}
                   adjustsFontSizeToFit
+                  minimumFontScale={0.85}
                   className={`font-extrabold text-gray-900 mb-0.5 ${
-                    isSmallDevice
+                    isExtraSmall
+                      ? "text-[13px]"
+                      : isSmallDevice
                       ? "text-[14px]"
                       : isTablet
                       ? "text-[17px]"
@@ -334,8 +345,8 @@ export const TransporterNotificationsScreen = ({
                 </Text>
                 {item.timestamp && (
                   <Text
-                    className={`font-medium text-gray-400 mt-1.5 sm:mt-2 ${
-                      isSmallDevice ? "text-[10.5px]" : "text-[11.5px]"
+                    className={`font-medium text-gray-400 mt-1 sm:mt-1.5 ${
+                      isSmallDevice ? "text-[10px]" : "text-[11.5px]"
                     }`}
                   >
                     {item.timestamp}
@@ -346,7 +357,7 @@ export const TransporterNotificationsScreen = ({
               {/* Unread indicator dot */}
               {!item.isRead && (
                 <View
-                  className={`rounded-full bg-[#16A34A] ${
+                  className={`rounded-full bg-[#16A34A] shrink-0 ${
                     isSmallDevice
                       ? "h-2 w-2 mt-1"
                       : "h-2.5 w-2.5 mt-1.5"
@@ -369,6 +380,7 @@ export const TransporterNotificationsScreen = ({
             </View>
           )}
         </View>
+        </View>
       </SmoothScrollView>
 
       {/* ================= BOTTOM NAVIGATION BAR ================= */}
@@ -386,7 +398,7 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("home")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="home-outline"
@@ -406,7 +418,7 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("jobs")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="location-outline"
@@ -426,7 +438,7 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("active")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="bus-outline"
@@ -446,7 +458,7 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("profile")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="person-outline"
@@ -471,12 +483,12 @@ export const TransporterNotificationsScreen = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <SafeAreaView className="flex-1 bg-[#F9FAFB]">
+        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB]">
           <View
             style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
           >
-            <Text className="text-lg font-bold text-gray-900">
+            <Text className="text-base sm:text-lg font-bold text-gray-900">
               Driver Profile
             </Text>
             <TouchableOpacity
@@ -489,29 +501,17 @@ export const TransporterNotificationsScreen = ({
           </View>
 
           <SmoothScrollView
-            className="p-4 flex-1"
-            {...SMOOTH_SCROLL_PROPS}
+            className="p-3.5 sm:p-4 flex-1"
             contentContainerStyle={{
-              maxWidth: 640,
-              width: "100%",
-              alignSelf: "center",
               paddingBottom: 40,
               flexGrow: 1,
             }}
             showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            bounces={true}
-            alwaysBounceVertical={true}
-            scrollEventThrottle={16}
-            decelerationRate="normal"
-            overScrollMode="never"
             nestedScrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-            directionalLockEnabled={true}
-            removeClippedSubviews={Platform.OS === "android"}
           >
-            {/* Driver Card */}
-            <View className="rounded-2xl bg-white p-5 border border-gray-100 shadow-2xs items-center mb-4">
+            <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+              {/* Driver Card */}
+            <View className="rounded-2xl bg-white p-4 sm:p-5 border border-gray-100 shadow-2xs items-center mb-4">
               <View
                 className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
                   isSmallDevice ? "h-14 w-14" : "h-16 w-16"
@@ -525,7 +525,7 @@ export const TransporterNotificationsScreen = ({
                   {profile.avatarLetter}
                 </Text>
               </View>
-              <Text className="text-lg font-extrabold text-gray-900">
+              <Text className="text-base sm:text-lg font-extrabold text-gray-900">
                 {profile.name}
               </Text>
               <Text className="text-xs font-semibold text-gray-500">
@@ -538,11 +538,11 @@ export const TransporterNotificationsScreen = ({
             </View>
 
             {/* Vehicle details */}
-            <View className="rounded-2xl bg-white p-4 border border-gray-100 shadow-2xs mb-4">
+            <View className="rounded-2xl bg-white p-3.5 sm:p-4 border border-gray-100 shadow-2xs mb-4">
               <Text className="text-xs font-bold text-gray-500 uppercase mb-2">
                 Registered Vehicle
               </Text>
-              <View className="space-y-1.5">
+              <View className="space-y-1.5 gap-1.5">
                 <Text className="text-xs text-gray-700">
                   🚚 <Text className="font-semibold">Type:</Text>{" "}
                   {profile.vehicleType}
@@ -562,12 +562,13 @@ export const TransporterNotificationsScreen = ({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleSignOut}
-              className="rounded-2xl bg-red-50 border border-red-200 py-3.5 items-center justify-center mt-2"
+              className="rounded-2xl bg-red-50 border border-red-200 py-3 sm:py-3.5 items-center justify-center mt-2"
             >
               <Text className="text-sm font-bold text-red-600">
                 Log Out of Transporter Account
               </Text>
             </TouchableOpacity>
+            </View>
           </SmoothScrollView>
         </SafeAreaView>
       </Modal>
