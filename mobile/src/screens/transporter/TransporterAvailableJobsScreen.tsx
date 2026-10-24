@@ -66,10 +66,17 @@ export const TransporterAvailableJobsScreen = ({
 
   // Tab change handler
   const handleTabPress = (tab: "home" | "jobs" | "active" | "profile") => {
+    if (tab === "jobs") {
+      return;
+    }
     if (onSelectTab) {
       onSelectTab(tab);
     } else if (tab === "home") {
       navigation?.navigate?.("TransporterHome");
+    } else if (tab === "active") {
+      navigation?.navigate?.("TransporterActiveJob");
+    } else if (tab === "profile") {
+      setShowProfileModal(true);
     }
   };
 

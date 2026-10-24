@@ -14,7 +14,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import {
+  SmoothScrollView,
+  ThemedAlertModal,
+  ThemedAlertModalType,
+} from "../../components/common";
 
 // Data
 import {
@@ -23,6 +27,7 @@ import {
   AvailableTransportJob,
   TransporterProfile,
 } from "./data";
+import { TransporterOfferSubmittedScreen } from "./TransporterOfferSubmittedScreen";
 
 export interface TransporterSubmitOfferScreenProps {
   route?: {
@@ -66,10 +71,62 @@ export const TransporterSubmitOfferScreen: React.FC<
   // State
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [cost, setCost] = useState("");
+  const [costError, setCostError] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Themed Alert / Error Popup state
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type?: ThemedAlertModalType;
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+    secondaryButtonText?: string;
+    onSecondaryPress?: () => void;
+  } | null>(null);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    options?: {
+      type?: ThemedAlertModalType;
+      primaryButtonText?: string;
+      onPrimaryPress?: () => void;
+      secondaryButtonText?: string;
+      onSecondaryPress?: () => void;
+    }
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type: options?.type || "warning",
+      primaryButtonText: options?.primaryButtonText || "Got It",
+      onPrimaryPress: () => {
+        setAlertConfig(null);
+        options?.onPrimaryPress?.();
+      },
+      secondaryButtonText: options?.secondaryButtonText,
+      onSecondaryPress: () => {
+        setAlertConfig(null);
+        options?.onSecondaryPress?.();
+      },
+    });
+  };
+
+  // Reset form when target job changes
+  useEffect(() => {
+    setIsSubmitted(false);
+    setCost("");
+    setCostError("");
+    setDeliveryTime("");
+    setNotes("");
+  }, [job?.id]);
 
   // Keyboard listener to prevent bottom tab occlusion when typing
   useEffect(() => {
@@ -147,24 +204,43 @@ export const TransporterSubmitOfferScreen: React.FC<
     } else if (tab === "jobs") {
       handleGoBack();
     } else if (tab === "active") {
-      navigation?.navigate?.("TransporterHome");
+      navigation?.navigate?.("TransporterActiveJob");
     } else if (tab === "profile") {
       setShowProfileModal(true);
     }
   };
 
   const handleSubmitOffer = () => {
-    if (!cost.trim()) {
-      Alert.alert(
+    const trimmedCost = cost.trim();
+
+    // Validation: Transportation Cost must be filled
+    if (!trimmedCost) {
+      setCostError("Please enter your proposed transportation cost.");
+      showAlert(
         "Missing Transportation Cost",
-        "Please enter your proposed transportation cost (in Rs.) before submitting."
+        "Please enter your proposed transportation cost (in Rs.) before submitting.",
+        { type: "warning", primaryButtonText: "Got It" }
       );
       return;
     }
 
+    const numericCost = parseFloat(trimmedCost.replace(/[^0-9.]/g, ""));
+    if (isNaN(numericCost) || numericCost <= 0) {
+      setCostError("Please enter a valid amount greater than 0.");
+      showAlert(
+        "Invalid Transportation Cost",
+        "Please enter a valid transportation cost amount greater than 0.",
+        { type: "warning", primaryButtonText: "Got It" }
+      );
+      return;
+    }
+
+    // Clear error
+    setCostError("");
+
     const offerData = {
       jobId: job.id,
-      cost: cost.trim(),
+      cost: trimmedCost,
       deliveryTime: deliveryTime.trim() || getTimeString(job),
       notes: notes.trim(),
     };
@@ -173,39 +249,40 @@ export const TransporterSubmitOfferScreen: React.FC<
       onSubmitSuccess(offerData);
     }
 
-    Alert.alert(
-      "Offer Submitted!",
-      `Your transport offer of Rs. ${cost.trim()} for ${job.cropName} (${getJobIdDisplay(
-        job.id
-      )}) has been sent successfully.\n\nYou will be notified once the offer is accepted.`,
-      [
-        {
-          text: "Done",
-          onPress: () => {
-            handleGoBack();
-          },
-        },
-      ]
-    );
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterOfferSubmitted", { job, offerData });
+    } else {
+      // Switch to the dedicated Offer Submitted confirmation screen for standalone/fallback mode
+      setIsSubmitted(true);
+    }
   };
 
   const handleSignOut = () => {
     setShowProfileModal(false);
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => {
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate("Welcome");
-          }
-        },
+    showAlert("Log Out", "Are you sure you want to log out of your driver account?", {
+      type: "warning",
+      primaryButtonText: "Log Out",
+      secondaryButtonText: "Cancel",
+      onPrimaryPress: () => {
+        if (navigation?.canGoBack && navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation?.navigate("Welcome");
+        }
       },
-    ]);
+    });
   };
+
+  if (isSubmitted) {
+    return (
+      <TransporterOfferSubmittedScreen
+        job={job}
+        navigation={navigation}
+        onBackToJobs={handleGoBack}
+        onSelectTab={onSelectTab}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -308,188 +385,200 @@ export const TransporterSubmitOfferScreen: React.FC<
           flexGrow: 1,
         }}
       >
-        <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
-          {/* ================= 1. JOB SUMMARY CARD (Yellow/Amber Theme) ================= */}
-        <View
-          className={`rounded-3xl bg-[#FFFDF5] border border-[#FDE68A] shadow-xs ${
-            isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-4 sm:p-5"
-          }`}
-          style={{
-            shadowColor: "#F59E0B",
-            shadowOpacity: 0.08,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 4 },
-          }}
-        >
-          {/* Job ID Tag */}
-          <Text
-            className="text-xs sm:text-[13px] font-bold text-[#D97706] tracking-wider uppercase"
-            numberOfLines={1}
-          >
-            {getJobIdDisplay(job.id)}
-          </Text>
-
-          {/* Crop Name & Weight */}
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-            className={`font-black text-[#0F172A] tracking-tight mt-1 mb-2 sm:mb-2.5 ${
-              isExtraSmall
-                ? "text-[15px]"
-                : isSmallDevice
-                ? "text-[16px]"
-                : "text-[18px]"
-            }`}
-          >
-            {job.cropName} · {job.weight}
-          </Text>
-
-          {/* Route details: Pickup */}
-          <View className="flex-row items-start mt-1">
-            <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2.5 mt-1.5 shrink-0" />
-            <Text
-              numberOfLines={2}
-              className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+          <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+            {/* ================= 1. JOB SUMMARY CARD (Yellow/Amber Theme) ================= */}
+            <View
+              className={`rounded-3xl bg-[#FFFDF5] border border-[#FDE68A] shadow-xs ${
+                isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-4 sm:p-5"
+              }`}
+              style={{
+                shadowColor: "#F59E0B",
+                shadowOpacity: 0.08,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 4 },
+              }}
             >
-              {getPickupAddress(job)}
-            </Text>
-          </View>
+              {/* Job ID Tag */}
+              <Text
+                className="text-xs sm:text-[13px] font-bold text-[#D97706] tracking-wider uppercase"
+                numberOfLines={1}
+              >
+                {getJobIdDisplay(job.id)}
+              </Text>
 
-          {/* Route details: Dropoff */}
-          <View className="flex-row items-start mt-1.5">
-            <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2.5 mt-1.5 shrink-0" />
-            <Text
-              numberOfLines={2}
-              className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+              {/* Crop Name & Weight */}
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                className={`font-black text-[#0F172A] tracking-tight mt-1 mb-2 sm:mb-2.5 ${
+                  isExtraSmall
+                    ? "text-[15px]"
+                    : isSmallDevice
+                    ? "text-[16px]"
+                    : "text-[18px]"
+                }`}
+              >
+                {job.cropName} · {job.weight}
+              </Text>
+
+              {/* Route details: Pickup */}
+              <View className="flex-row items-start mt-1">
+                <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2.5 mt-1.5 shrink-0" />
+                <Text
+                  numberOfLines={2}
+                  className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+                >
+                  {getPickupAddress(job)}
+                </Text>
+              </View>
+
+              {/* Route details: Dropoff */}
+              <View className="flex-row items-start mt-1.5">
+                <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2.5 mt-1.5 shrink-0" />
+                <Text
+                  numberOfLines={2}
+                  className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+                >
+                  {getDeliveryAddress(job)}
+                </Text>
+              </View>
+
+              {/* Date & Time */}
+              <View className="flex-row items-center mt-2 sm:mt-2.5">
+                <Ionicons
+                  name="time-outline"
+                  size={14}
+                  color="#9CA3AF"
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  className="text-xs sm:text-[12.5px] text-gray-500 font-medium flex-1"
+                >
+                  {getTimeString(job)}
+                </Text>
+              </View>
+
+              {/* Special Instructions Callout */}
+              <View className="rounded-xl bg-[#FEF9C3] p-2.5 sm:p-3 mt-2.5 sm:mt-3">
+                <Text className="text-[11px] sm:text-xs text-[#B45309] font-medium leading-relaxed">
+                  {getSpecialInstructions(job)}
+                </Text>
+              </View>
+            </View>
+
+            {/* ================= 2. YOUR OFFER FORM CARD ================= */}
+            <View
+              className={`rounded-3xl bg-white border border-gray-100 shadow-sm mt-3.5 sm:mt-4 ${
+                isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4 sm:p-5" : "p-5 sm:p-6"
+              }`}
+              style={{
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+              }}
             >
-              {getDeliveryAddress(job)}
-            </Text>
+              <Text
+                className={`font-black text-[#0F172A] tracking-tight mb-3 sm:mb-4 ${
+                  isExtraSmall
+                    ? "text-[16px]"
+                    : isSmallDevice
+                    ? "text-[17px]"
+                    : "text-[19px]"
+                }`}
+              >
+                Your Offer
+              </Text>
+
+              {/* Field 1: Transportation Cost */}
+              <View className="mb-3.5 sm:mb-4">
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Transportation Cost (Rs.) <Text className="text-gray-700">*</Text>
+                </Text>
+                <TextInput
+                  value={cost}
+                  onChangeText={(text) => {
+                    setCost(text);
+                    if (costError) setCostError("");
+                  }}
+                  placeholder="e.g. 2000"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                  className={`w-full rounded-2xl border ${
+                    costError
+                      ? "border-red-500 bg-red-50/20"
+                      : "border-gray-200 bg-white"
+                  } px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-semibold`}
+                />
+                {costError ? (
+                  <Text className="text-xs text-red-500 font-semibold mt-1.5 ml-1">
+                    {costError}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Field 2: Estimated Delivery Date & Time */}
+              <View className="mb-3.5 sm:mb-4">
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Estimated Delivery Date & Time
+                </Text>
+                <TextInput
+                  value={deliveryTime}
+                  onChangeText={setDeliveryTime}
+                  placeholder={getTimeString(job)}
+                  placeholderTextColor="#9CA3AF"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium"
+                />
+              </View>
+
+              {/* Field 3: Additional Notes */}
+              <View>
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Additional Notes
+                </Text>
+                <TextInput
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Vehicle type, cool chain capability, cargo care notes..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium min-h-[80px] sm:min-h-[96px]"
+                />
+              </View>
+            </View>
+
+            {/* ================= 3. ACTION BUTTONS: CANCEL & SUBMIT OFFER ================= */}
+            <View className="flex-row items-center gap-2.5 sm:gap-3 mt-3.5 sm:mt-4 w-full">
+              {/* Cancel Button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleGoBack}
+                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
+              >
+                <Text className="text-xs sm:text-base font-bold text-gray-800">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              {/* Submit Offer Button */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleSubmitOffer}
+                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
+              >
+                <Text className="text-xs sm:text-base font-bold text-white">
+                  Submit Offer
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Date & Time */}
-          <View className="flex-row items-center mt-2 sm:mt-2.5">
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color="#9CA3AF"
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-              className="text-xs sm:text-[12.5px] text-gray-500 font-medium flex-1"
-            >
-              {getTimeString(job)}
-            </Text>
-          </View>
-
-          {/* Special Instructions Callout */}
-          <View className="rounded-xl bg-[#FEF9C3] p-2.5 sm:p-3 mt-2.5 sm:mt-3">
-            <Text className="text-[11px] sm:text-xs text-[#B45309] font-medium leading-relaxed">
-              {getSpecialInstructions(job)}
-            </Text>
-          </View>
-        </View>
-
-        {/* ================= 2. YOUR OFFER FORM CARD ================= */}
-        <View
-          className={`rounded-3xl bg-white border border-gray-100 shadow-sm mt-3.5 sm:mt-4 ${
-            isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4 sm:p-5" : "p-5 sm:p-6"
-          }`}
-          style={{
-            shadowColor: "#000",
-            shadowOpacity: 0.05,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-          }}
-        >
-          <Text
-            className={`font-black text-[#0F172A] tracking-tight mb-3 sm:mb-4 ${
-              isExtraSmall
-                ? "text-[16px]"
-                : isSmallDevice
-                ? "text-[17px]"
-                : "text-[19px]"
-            }`}
-          >
-            Your Offer
-          </Text>
-
-          {/* Field 1: Transportation Cost */}
-          <View className="mb-3.5 sm:mb-4">
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Transportation Cost (Rs.) <Text className="text-gray-700">*</Text>
-            </Text>
-            <TextInput
-              value={cost}
-              onChangeText={setCost}
-              placeholder="e.g. 2000"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-semibold"
-            />
-          </View>
-
-          {/* Field 2: Estimated Delivery Date & Time */}
-          <View className="mb-3.5 sm:mb-4">
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Estimated Delivery Date & Time
-            </Text>
-            <TextInput
-              value={deliveryTime}
-              onChangeText={setDeliveryTime}
-              placeholder={getTimeString(job)}
-              placeholderTextColor="#9CA3AF"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium"
-            />
-          </View>
-
-          {/* Field 3: Additional Notes */}
-          <View>
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Additional Notes
-            </Text>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Vehicle type, cool chain capability, cargo care notes..."
-              placeholderTextColor="#9CA3AF"
-              multiline={true}
-              numberOfLines={3}
-              textAlignVertical="top"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium min-h-[80px] sm:min-h-[96px]"
-            />
-          </View>
-        </View>
-
-        {/* ================= 3. ACTION BUTTONS: CANCEL & SUBMIT OFFER ================= */}
-        <View className="flex-row items-center gap-2.5 sm:gap-3 mt-3.5 sm:mt-4 w-full">
-          {/* Cancel Button */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleGoBack}
-            className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
-          >
-            <Text className="text-xs sm:text-base font-bold text-gray-800">
-              Cancel
-            </Text>
-          </TouchableOpacity>
-
-          {/* Submit Offer Button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleSubmitOffer}
-            className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
-          >
-            <Text className="text-xs sm:text-base font-bold text-white">
-              Submit Offer
-            </Text>
-          </TouchableOpacity>
-        </View>
-        </View>
-      </SmoothScrollView>
+        </SmoothScrollView>
 
       {/* ================= BOTTOM NAVIGATION BAR (Auto-hides on keyboard) ================= */}
       {!isKeyboardVisible && (
@@ -685,6 +774,21 @@ export const TransporterSubmitOfferScreen: React.FC<
           </SmoothScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* ================= THEMED ALERT / ERROR POPUP MODAL ================= */}
+      {alertConfig && (
+        <ThemedAlertModal
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={alertConfig.onPrimaryPress}
+          secondaryButtonText={alertConfig.secondaryButtonText}
+          onSecondaryPress={alertConfig.onSecondaryPress}
+          onClose={() => setAlertConfig(null)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };
