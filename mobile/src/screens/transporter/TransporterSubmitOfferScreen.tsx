@@ -14,7 +14,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import {
+  SmoothScrollView,
+  ThemedAlertModal,
+  ThemedAlertModalType,
+} from "../../components/common";
 
 // Data
 import {
@@ -72,6 +76,47 @@ export const TransporterSubmitOfferScreen: React.FC<
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Themed Alert / Error Popup state
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type?: ThemedAlertModalType;
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+    secondaryButtonText?: string;
+    onSecondaryPress?: () => void;
+  } | null>(null);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    options?: {
+      type?: ThemedAlertModalType;
+      primaryButtonText?: string;
+      onPrimaryPress?: () => void;
+      secondaryButtonText?: string;
+      onSecondaryPress?: () => void;
+    }
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type: options?.type || "warning",
+      primaryButtonText: options?.primaryButtonText || "Got It",
+      onPrimaryPress: () => {
+        setAlertConfig(null);
+        options?.onPrimaryPress?.();
+      },
+      secondaryButtonText: options?.secondaryButtonText,
+      onSecondaryPress: () => {
+        setAlertConfig(null);
+        options?.onSecondaryPress?.();
+      },
+    });
+  };
 
   // Reset form when target job changes
   useEffect(() => {
@@ -170,9 +215,10 @@ export const TransporterSubmitOfferScreen: React.FC<
     // Validation: Transportation Cost must be filled
     if (!trimmedCost) {
       setCostError("Please enter your proposed transportation cost.");
-      Alert.alert(
+      showAlert(
         "Missing Transportation Cost",
-        "Please enter your proposed transportation cost (in Rs.) before submitting."
+        "Please enter your proposed transportation cost (in Rs.) before submitting.",
+        { type: "warning", primaryButtonText: "Got It" }
       );
       return;
     }
@@ -180,9 +226,10 @@ export const TransporterSubmitOfferScreen: React.FC<
     const numericCost = parseFloat(trimmedCost.replace(/[^0-9.]/g, ""));
     if (isNaN(numericCost) || numericCost <= 0) {
       setCostError("Please enter a valid amount greater than 0.");
-      Alert.alert(
-        "Invalid Cost",
-        "Please enter a valid transportation cost greater than 0."
+      showAlert(
+        "Invalid Transportation Cost",
+        "Please enter a valid transportation cost amount greater than 0.",
+        { type: "warning", primaryButtonText: "Got It" }
       );
       return;
     }
@@ -207,20 +254,18 @@ export const TransporterSubmitOfferScreen: React.FC<
 
   const handleSignOut = () => {
     setShowProfileModal(false);
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => {
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate("Welcome");
-          }
-        },
+    showAlert("Log Out", "Are you sure you want to log out of your driver account?", {
+      type: "warning",
+      primaryButtonText: "Log Out",
+      secondaryButtonText: "Cancel",
+      onPrimaryPress: () => {
+        if (navigation?.canGoBack && navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation?.navigate("Welcome");
+        }
       },
-    ]);
+    });
   };
 
   return (
@@ -810,6 +855,21 @@ export const TransporterSubmitOfferScreen: React.FC<
           </SmoothScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* ================= THEMED ALERT / ERROR POPUP MODAL ================= */}
+      {alertConfig && (
+        <ThemedAlertModal
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={alertConfig.onPrimaryPress}
+          secondaryButtonText={alertConfig.secondaryButtonText}
+          onSecondaryPress={alertConfig.onSecondaryPress}
+          onClose={() => setAlertConfig(null)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };
