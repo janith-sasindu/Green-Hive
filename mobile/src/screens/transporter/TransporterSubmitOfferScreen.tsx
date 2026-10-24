@@ -66,10 +66,21 @@ export const TransporterSubmitOfferScreen: React.FC<
   // State
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [cost, setCost] = useState("");
+  const [costError, setCostError] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Reset form when target job changes
+  useEffect(() => {
+    setIsSubmitted(false);
+    setCost("");
+    setCostError("");
+    setDeliveryTime("");
+    setNotes("");
+  }, [job?.id]);
 
   // Keyboard listener to prevent bottom tab occlusion when typing
   useEffect(() => {
@@ -154,7 +165,11 @@ export const TransporterSubmitOfferScreen: React.FC<
   };
 
   const handleSubmitOffer = () => {
-    if (!cost.trim()) {
+    const trimmedCost = cost.trim();
+
+    // Validation: Transportation Cost must be filled
+    if (!trimmedCost) {
+      setCostError("Please enter your proposed transportation cost.");
       Alert.alert(
         "Missing Transportation Cost",
         "Please enter your proposed transportation cost (in Rs.) before submitting."
@@ -162,9 +177,22 @@ export const TransporterSubmitOfferScreen: React.FC<
       return;
     }
 
+    const numericCost = parseFloat(trimmedCost.replace(/[^0-9.]/g, ""));
+    if (isNaN(numericCost) || numericCost <= 0) {
+      setCostError("Please enter a valid amount greater than 0.");
+      Alert.alert(
+        "Invalid Cost",
+        "Please enter a valid transportation cost greater than 0."
+      );
+      return;
+    }
+
+    // Clear error
+    setCostError("");
+
     const offerData = {
       jobId: job.id,
-      cost: cost.trim(),
+      cost: trimmedCost,
       deliveryTime: deliveryTime.trim() || getTimeString(job),
       notes: notes.trim(),
     };
@@ -173,20 +201,8 @@ export const TransporterSubmitOfferScreen: React.FC<
       onSubmitSuccess(offerData);
     }
 
-    Alert.alert(
-      "Offer Submitted!",
-      `Your transport offer of Rs. ${cost.trim()} for ${job.cropName} (${getJobIdDisplay(
-        job.id
-      )}) has been sent successfully.\n\nYou will be notified once the offer is accepted.`,
-      [
-        {
-          text: "Done",
-          onPress: () => {
-            handleGoBack();
-          },
-        },
-      ]
-    );
+    // Switch to the dedicated Offer Submitted confirmation screen
+    setIsSubmitted(true);
   };
 
   const handleSignOut = () => {
@@ -297,199 +313,308 @@ export const TransporterSubmitOfferScreen: React.FC<
       </SafeAreaView>
 
       {/* ================= MAIN SCROLLABLE CONTENT ================= */}
-      <SmoothScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingHorizontal: isExtraSmall ? 12 : isSmallDevice ? 14 : 18,
-          paddingTop: 8,
-          paddingBottom: isSmallDevice ? 32 : 44,
-          flexGrow: 1,
-        }}
-      >
-        <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
-          {/* ================= 1. JOB SUMMARY CARD (Yellow/Amber Theme) ================= */}
-        <View
-          className={`rounded-3xl bg-[#FFFDF5] border border-[#FDE68A] shadow-xs ${
-            isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-4 sm:p-5"
-          }`}
-          style={{
-            shadowColor: "#F59E0B",
-            shadowOpacity: 0.08,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 4 },
+      {isSubmitted ? (
+        <SmoothScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            flexGrow: 1,
+            alignItems: "center",
+            justifyContent: "flex-start",
+            paddingTop: isSmallDevice ? 36 : 56,
+            paddingHorizontal: isExtraSmall ? 16 : 24,
+            paddingBottom: isSmallDevice ? 32 : 44,
           }}
         >
-          {/* Job ID Tag */}
-          <Text
-            className="text-xs sm:text-[13px] font-bold text-[#D97706] tracking-wider uppercase"
-            numberOfLines={1}
+          <View
+            style={{ maxWidth: 440, width: "100%", alignItems: "center" }}
           >
-            {getJobIdDisplay(job.id)}
-          </Text>
-
-          {/* Crop Name & Weight */}
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-            className={`font-black text-[#0F172A] tracking-tight mt-1 mb-2 sm:mb-2.5 ${
-              isExtraSmall
-                ? "text-[15px]"
-                : isSmallDevice
-                ? "text-[16px]"
-                : "text-[18px]"
-            }`}
-          >
-            {job.cropName} · {job.weight}
-          </Text>
-
-          {/* Route details: Pickup */}
-          <View className="flex-row items-start mt-1">
-            <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2.5 mt-1.5 shrink-0" />
-            <Text
-              numberOfLines={2}
-              className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+            {/* 1. Green Success Check Badge */}
+            <View
+              className="items-center justify-center shadow-sm"
+              style={{
+                width: isSmallDevice ? 56 : 64,
+                height: isSmallDevice ? 56 : 64,
+                borderRadius: 16,
+                backgroundColor: "#22C55E",
+                shadowColor: "#22C55E",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
             >
-              {getPickupAddress(job)}
-            </Text>
-          </View>
+              <Ionicons
+                name="checkmark"
+                size={isSmallDevice ? 34 : 40}
+                color="#FFFFFF"
+              />
+            </View>
 
-          {/* Route details: Dropoff */}
-          <View className="flex-row items-start mt-1.5">
-            <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2.5 mt-1.5 shrink-0" />
+            {/* 2. Offer Submitted Heading */}
             <Text
-              numberOfLines={2}
-              className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+              className={`font-black text-[#0F172A] tracking-tight mt-5 mb-2 text-center ${
+                isExtraSmall
+                  ? "text-[20px]"
+                  : isSmallDevice
+                  ? "text-[22px]"
+                  : "text-[24px]"
+              }`}
             >
-              {getDeliveryAddress(job)}
+              Offer Submitted!
             </Text>
-          </View>
 
-          {/* Date & Time */}
-          <View className="flex-row items-center mt-2 sm:mt-2.5">
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color="#9CA3AF"
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-              className="text-xs sm:text-[12.5px] text-gray-500 font-medium flex-1"
+            {/* 3. Subtitle */}
+            <Text className="text-xs sm:text-[13.5px] text-gray-500 font-medium text-center px-2 max-w-[320px] leading-relaxed">
+              The seller will review your offer and notify you of their decision.
+            </Text>
+
+            {/* 4. Yellow Status Box */}
+            <View
+              className={`rounded-2xl bg-[#FFFDF0] border border-[#FDE68A] mt-6 sm:mt-7 w-full max-w-[340px] sm:max-w-[360px] ${
+                isExtraSmall ? "p-3.5" : "p-4 sm:p-5"
+              }`}
+              style={{
+                shadowColor: "#F59E0B",
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+              }}
             >
-              {getTimeString(job)}
-            </Text>
-          </View>
+              <Text className="text-[13px] sm:text-sm font-bold text-[#D97706] mb-1">
+                Offer Status: Under Review
+              </Text>
+              <Text className="text-[11.5px] sm:text-xs text-[#D97706]/90 font-medium leading-snug">
+                You will be notified when the seller makes a decision
+              </Text>
+            </View>
 
-          {/* Special Instructions Callout */}
-          <View className="rounded-xl bg-[#FEF9C3] p-2.5 sm:p-3 mt-2.5 sm:mt-3">
-            <Text className="text-[11px] sm:text-xs text-[#B45309] font-medium leading-relaxed">
-              {getSpecialInstructions(job)}
-            </Text>
+            {/* 5. Back to Jobs Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleGoBack}
+              className="rounded-full bg-[#FF8C00] py-3 sm:py-3.5 px-8 sm:px-10 mt-7 sm:mt-8 shadow-xs items-center justify-center min-w-[180px] sm:min-w-[200px]"
+              style={{
+                shadowColor: "#FF8C00",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
+                Back to Jobs
+              </Text>
+            </TouchableOpacity>
           </View>
-        </View>
-
-        {/* ================= 2. YOUR OFFER FORM CARD ================= */}
-        <View
-          className={`rounded-3xl bg-white border border-gray-100 shadow-sm mt-3.5 sm:mt-4 ${
-            isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4 sm:p-5" : "p-5 sm:p-6"
-          }`}
-          style={{
-            shadowColor: "#000",
-            shadowOpacity: 0.05,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
+        </SmoothScrollView>
+      ) : (
+        <SmoothScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingHorizontal: isExtraSmall ? 12 : isSmallDevice ? 14 : 18,
+            paddingTop: 8,
+            paddingBottom: isSmallDevice ? 32 : 44,
+            flexGrow: 1,
           }}
         >
-          <Text
-            className={`font-black text-[#0F172A] tracking-tight mb-3 sm:mb-4 ${
-              isExtraSmall
-                ? "text-[16px]"
-                : isSmallDevice
-                ? "text-[17px]"
-                : "text-[19px]"
-            }`}
-          >
-            Your Offer
-          </Text>
+          <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+            {/* ================= 1. JOB SUMMARY CARD (Yellow/Amber Theme) ================= */}
+            <View
+              className={`rounded-3xl bg-[#FFFDF5] border border-[#FDE68A] shadow-xs ${
+                isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-4 sm:p-5"
+              }`}
+              style={{
+                shadowColor: "#F59E0B",
+                shadowOpacity: 0.08,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 4 },
+              }}
+            >
+              {/* Job ID Tag */}
+              <Text
+                className="text-xs sm:text-[13px] font-bold text-[#D97706] tracking-wider uppercase"
+                numberOfLines={1}
+              >
+                {getJobIdDisplay(job.id)}
+              </Text>
 
-          {/* Field 1: Transportation Cost */}
-          <View className="mb-3.5 sm:mb-4">
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Transportation Cost (Rs.) <Text className="text-gray-700">*</Text>
-            </Text>
-            <TextInput
-              value={cost}
-              onChangeText={setCost}
-              placeholder="e.g. 2000"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-semibold"
-            />
+              {/* Crop Name & Weight */}
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                className={`font-black text-[#0F172A] tracking-tight mt-1 mb-2 sm:mb-2.5 ${
+                  isExtraSmall
+                    ? "text-[15px]"
+                    : isSmallDevice
+                    ? "text-[16px]"
+                    : "text-[18px]"
+                }`}
+              >
+                {job.cropName} · {job.weight}
+              </Text>
+
+              {/* Route details: Pickup */}
+              <View className="flex-row items-start mt-1">
+                <View className="h-2 w-2 rounded-full bg-[#16A34A] mr-2.5 mt-1.5 shrink-0" />
+                <Text
+                  numberOfLines={2}
+                  className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+                >
+                  {getPickupAddress(job)}
+                </Text>
+              </View>
+
+              {/* Route details: Dropoff */}
+              <View className="flex-row items-start mt-1.5">
+                <View className="h-2 w-2 rounded-full bg-[#EF4444] mr-2.5 mt-1.5 shrink-0" />
+                <Text
+                  numberOfLines={2}
+                  className="text-xs sm:text-[13px] text-gray-700 font-medium flex-1 leading-snug"
+                >
+                  {getDeliveryAddress(job)}
+                </Text>
+              </View>
+
+              {/* Date & Time */}
+              <View className="flex-row items-center mt-2 sm:mt-2.5">
+                <Ionicons
+                  name="time-outline"
+                  size={14}
+                  color="#9CA3AF"
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  className="text-xs sm:text-[12.5px] text-gray-500 font-medium flex-1"
+                >
+                  {getTimeString(job)}
+                </Text>
+              </View>
+
+              {/* Special Instructions Callout */}
+              <View className="rounded-xl bg-[#FEF9C3] p-2.5 sm:p-3 mt-2.5 sm:mt-3">
+                <Text className="text-[11px] sm:text-xs text-[#B45309] font-medium leading-relaxed">
+                  {getSpecialInstructions(job)}
+                </Text>
+              </View>
+            </View>
+
+            {/* ================= 2. YOUR OFFER FORM CARD ================= */}
+            <View
+              className={`rounded-3xl bg-white border border-gray-100 shadow-sm mt-3.5 sm:mt-4 ${
+                isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4 sm:p-5" : "p-5 sm:p-6"
+              }`}
+              style={{
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+              }}
+            >
+              <Text
+                className={`font-black text-[#0F172A] tracking-tight mb-3 sm:mb-4 ${
+                  isExtraSmall
+                    ? "text-[16px]"
+                    : isSmallDevice
+                    ? "text-[17px]"
+                    : "text-[19px]"
+                }`}
+              >
+                Your Offer
+              </Text>
+
+              {/* Field 1: Transportation Cost */}
+              <View className="mb-3.5 sm:mb-4">
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Transportation Cost (Rs.) <Text className="text-gray-700">*</Text>
+                </Text>
+                <TextInput
+                  value={cost}
+                  onChangeText={(text) => {
+                    setCost(text);
+                    if (costError) setCostError("");
+                  }}
+                  placeholder="e.g. 2000"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                  className={`w-full rounded-2xl border ${
+                    costError
+                      ? "border-red-500 bg-red-50/20"
+                      : "border-gray-200 bg-white"
+                  } px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-semibold`}
+                />
+                {costError ? (
+                  <Text className="text-xs text-red-500 font-semibold mt-1.5 ml-1">
+                    {costError}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Field 2: Estimated Delivery Date & Time */}
+              <View className="mb-3.5 sm:mb-4">
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Estimated Delivery Date & Time
+                </Text>
+                <TextInput
+                  value={deliveryTime}
+                  onChangeText={setDeliveryTime}
+                  placeholder={getTimeString(job)}
+                  placeholderTextColor="#9CA3AF"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium"
+                />
+              </View>
+
+              {/* Field 3: Additional Notes */}
+              <View>
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
+                  Additional Notes
+                </Text>
+                <TextInput
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Vehicle type, cool chain capability, cargo care notes..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium min-h-[80px] sm:min-h-[96px]"
+                />
+              </View>
+            </View>
+
+            {/* ================= 3. ACTION BUTTONS: CANCEL & SUBMIT OFFER ================= */}
+            <View className="flex-row items-center gap-2.5 sm:gap-3 mt-3.5 sm:mt-4 w-full">
+              {/* Cancel Button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleGoBack}
+                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
+              >
+                <Text className="text-xs sm:text-base font-bold text-gray-800">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              {/* Submit Offer Button */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleSubmitOffer}
+                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
+              >
+                <Text className="text-xs sm:text-base font-bold text-white">
+                  Submit Offer
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Field 2: Estimated Delivery Date & Time */}
-          <View className="mb-3.5 sm:mb-4">
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Estimated Delivery Date & Time
-            </Text>
-            <TextInput
-              value={deliveryTime}
-              onChangeText={setDeliveryTime}
-              placeholder={getTimeString(job)}
-              placeholderTextColor="#9CA3AF"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium"
-            />
-          </View>
-
-          {/* Field 3: Additional Notes */}
-          <View>
-            <Text className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              Additional Notes
-            </Text>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Vehicle type, cool chain capability, cargo care notes..."
-              placeholderTextColor="#9CA3AF"
-              multiline={true}
-              numberOfLines={3}
-              textAlignVertical="top"
-              className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 font-medium min-h-[80px] sm:min-h-[96px]"
-            />
-          </View>
-        </View>
-
-        {/* ================= 3. ACTION BUTTONS: CANCEL & SUBMIT OFFER ================= */}
-        <View className="flex-row items-center gap-2.5 sm:gap-3 mt-3.5 sm:mt-4 w-full">
-          {/* Cancel Button */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleGoBack}
-            className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
-          >
-            <Text className="text-xs sm:text-base font-bold text-gray-800">
-              Cancel
-            </Text>
-          </TouchableOpacity>
-
-          {/* Submit Offer Button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleSubmitOffer}
-            className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
-          >
-            <Text className="text-xs sm:text-base font-bold text-white">
-              Submit Offer
-            </Text>
-          </TouchableOpacity>
-        </View>
-        </View>
-      </SmoothScrollView>
+        </SmoothScrollView>
+      )}
 
       {/* ================= BOTTOM NAVIGATION BAR (Auto-hides on keyboard) ================= */}
       {!isKeyboardVisible && (
