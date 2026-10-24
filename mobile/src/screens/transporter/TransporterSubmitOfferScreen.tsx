@@ -27,6 +27,7 @@ import {
   AvailableTransportJob,
   TransporterProfile,
 } from "./data";
+import { TransporterOfferSubmittedScreen } from "./TransporterOfferSubmittedScreen";
 
 export interface TransporterSubmitOfferScreenProps {
   route?: {
@@ -248,8 +249,12 @@ export const TransporterSubmitOfferScreen: React.FC<
       onSubmitSuccess(offerData);
     }
 
-    // Switch to the dedicated Offer Submitted confirmation screen
-    setIsSubmitted(true);
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterOfferSubmitted", { job, offerData });
+    } else {
+      // Switch to the dedicated Offer Submitted confirmation screen for standalone/fallback mode
+      setIsSubmitted(true);
+    }
   };
 
   const handleSignOut = () => {
@@ -267,6 +272,17 @@ export const TransporterSubmitOfferScreen: React.FC<
       },
     });
   };
+
+  if (isSubmitted) {
+    return (
+      <TransporterOfferSubmittedScreen
+        job={job}
+        navigation={navigation}
+        onBackToJobs={handleGoBack}
+        onSelectTab={onSelectTab}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -358,113 +374,17 @@ export const TransporterSubmitOfferScreen: React.FC<
       </SafeAreaView>
 
       {/* ================= MAIN SCROLLABLE CONTENT ================= */}
-      {isSubmitted ? (
-        <SmoothScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            flexGrow: 1,
-            alignItems: "center",
-            justifyContent: "flex-start",
-            paddingTop: isSmallDevice ? 36 : 56,
-            paddingHorizontal: isExtraSmall ? 16 : 24,
-            paddingBottom: isSmallDevice ? 32 : 44,
-          }}
-        >
-          <View
-            style={{ maxWidth: 440, width: "100%", alignItems: "center" }}
-          >
-            {/* 1. Green Success Check Badge */}
-            <View
-              className="items-center justify-center shadow-sm"
-              style={{
-                width: isSmallDevice ? 56 : 64,
-                height: isSmallDevice ? 56 : 64,
-                borderRadius: 16,
-                backgroundColor: "#22C55E",
-                shadowColor: "#22C55E",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.25,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              <Ionicons
-                name="checkmark"
-                size={isSmallDevice ? 34 : 40}
-                color="#FFFFFF"
-              />
-            </View>
-
-            {/* 2. Offer Submitted Heading */}
-            <Text
-              className={`font-black text-[#0F172A] tracking-tight mt-5 mb-2 text-center ${
-                isExtraSmall
-                  ? "text-[20px]"
-                  : isSmallDevice
-                  ? "text-[22px]"
-                  : "text-[24px]"
-              }`}
-            >
-              Offer Submitted!
-            </Text>
-
-            {/* 3. Subtitle */}
-            <Text className="text-xs sm:text-[13.5px] text-gray-500 font-medium text-center px-2 max-w-[320px] leading-relaxed">
-              The seller will review your offer and notify you of their decision.
-            </Text>
-
-            {/* 4. Yellow Status Box */}
-            <View
-              className={`rounded-2xl bg-[#FFFDF0] border border-[#FDE68A] mt-6 sm:mt-7 w-full max-w-[340px] sm:max-w-[360px] ${
-                isExtraSmall ? "p-3.5" : "p-4 sm:p-5"
-              }`}
-              style={{
-                shadowColor: "#F59E0B",
-                shadowOpacity: 0.06,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-              }}
-            >
-              <Text className="text-[13px] sm:text-sm font-bold text-[#D97706] mb-1">
-                Offer Status: Under Review
-              </Text>
-              <Text className="text-[11.5px] sm:text-xs text-[#D97706]/90 font-medium leading-snug">
-                You will be notified when the seller makes a decision
-              </Text>
-            </View>
-
-            {/* 5. Back to Jobs Button */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={handleGoBack}
-              className="rounded-full bg-[#FF8C00] py-3 sm:py-3.5 px-8 sm:px-10 mt-7 sm:mt-8 shadow-xs items-center justify-center min-w-[180px] sm:min-w-[200px]"
-              style={{
-                shadowColor: "#FF8C00",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.25,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
-              <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
-                Back to Jobs
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </SmoothScrollView>
-      ) : (
-        <SmoothScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            paddingHorizontal: isExtraSmall ? 12 : isSmallDevice ? 14 : 18,
-            paddingTop: 8,
-            paddingBottom: isSmallDevice ? 32 : 44,
-            flexGrow: 1,
-          }}
-        >
+      <SmoothScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: isExtraSmall ? 12 : isSmallDevice ? 14 : 18,
+          paddingTop: 8,
+          paddingBottom: isSmallDevice ? 32 : 44,
+          flexGrow: 1,
+        }}
+      >
           <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
             {/* ================= 1. JOB SUMMARY CARD (Yellow/Amber Theme) ================= */}
             <View
@@ -659,7 +579,6 @@ export const TransporterSubmitOfferScreen: React.FC<
             </View>
           </View>
         </SmoothScrollView>
-      )}
 
       {/* ================= BOTTOM NAVIGATION BAR (Auto-hides on keyboard) ================= */}
       {!isKeyboardVisible && (
