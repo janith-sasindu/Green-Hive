@@ -18,10 +18,10 @@ export const SMOOTH_SCROLL_PROPS: Partial<ScrollViewProps> = {
     keyboardShouldPersistTaps: "handled",
     scrollEventThrottle: 16,
     decelerationRate: "normal",
-    overScrollMode: "never",
-    bounces: true,
-    nestedScrollEnabled: true,
-    removeClippedSubviews: Platform.OS === "android",
+    overScrollMode: Platform.OS === "android" ? "always" : "never",
+    bounces: Platform.OS === "ios",
+    nestedScrollEnabled: false,
+    removeClippedSubviews: false,
 };
 
 export interface SmoothScrollViewProps extends ScrollViewProps {}
