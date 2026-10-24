@@ -33,6 +33,7 @@ import {
   TransporterNotificationItem,
 } from "./data";
 import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen";
+import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
 
 interface TransporterHomeScreenProps {
   navigation?: any;
@@ -226,6 +227,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   if (activeTab === "jobs") {
     return (
       <TransporterAvailableJobsScreen
+        navigation={navigation}
+        onSelectTab={setActiveTab}
+        activeTab={activeTab}
+      />
+    );
+  }
+
+  if (activeTab === "active") {
+    return (
+      <TransporterActiveJobScreen
         navigation={navigation}
         onSelectTab={setActiveTab}
         activeTab={activeTab}
@@ -1138,33 +1149,21 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             activeOpacity={0.7}
             onPress={() => {
               setActiveTab("active");
-              setShowJobDetailsModal(true);
             }}
             className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
-              name={activeTab === "active" ? "bus" : "bus-outline"}
+              name="bus-outline"
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "active" ? "#E68A00" : "#9CA3AF"}
+              color="#9CA3AF"
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } ${
-                activeTab === "active"
-                  ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              } font-medium text-[#9CA3AF]`}
             >
               Active
             </Text>
-            {activeTab === "active" && (
-              <View
-                className={`rounded-full bg-[#E68A00] mt-1 ${
-                  isSmallDevice ? "h-[2px] w-5" : "h-[2px] w-6"
-                }`}
-              />
-            )}
           </TouchableOpacity>
 
           {/* Profile Tab */}

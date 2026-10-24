@@ -12,6 +12,7 @@ import {
   TransporterNotificationsScreen,
   TransporterSubmitOfferScreen,
   TransporterOfferSubmittedScreen,
+  TransporterActiveJobScreen,
 } from '../screens/transporter';
 
 export type RootStackParamList = {
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   TransporterNotifications: undefined;
   TransporterSubmitOffer: { job?: any } | undefined;
   TransporterOfferSubmitted: { job?: any; offerData?: any } | undefined;
+  TransporterActiveJob: { job?: any } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -87,6 +89,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterOfferSubmitted"
         component={TransporterOfferSubmittedScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterActiveJob"
+        component={TransporterActiveJobScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

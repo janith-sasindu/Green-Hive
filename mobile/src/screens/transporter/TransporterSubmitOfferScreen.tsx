@@ -204,7 +204,7 @@ export const TransporterSubmitOfferScreen: React.FC<
     } else if (tab === "jobs") {
       handleGoBack();
     } else if (tab === "active") {
-      navigation?.navigate?.("TransporterHome");
+      navigation?.navigate?.("TransporterActiveJob");
     } else if (tab === "profile") {
       setShowProfileModal(true);
     }
