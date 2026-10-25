@@ -7,6 +7,7 @@ import {
   StatusBar,
   useWindowDimensions,
   Alert,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,6 +40,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   // Profile and stats state from mock data
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
+  const [isLightMode, setIsLightMode] = useState(false);
 
   const handleNotificationPress = () => {
     if (navigation?.navigate) {
@@ -506,6 +508,29 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </TouchableOpacity>
+
+            {/* Light Mode Switch */}
+            <View className="py-2.5 sm:py-3 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Ionicons name="sunny-outline" size={19} color="#6B7280" />
+                <Text className="text-xs sm:text-sm font-semibold text-gray-800 ml-2.5">
+                  Light Mode
+                </Text>
+              </View>
+              <Switch
+                value={isLightMode}
+                onValueChange={(val) => setIsLightMode(val)}
+                trackColor={{ false: "#E5E7EB", true: "#E68A00" }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor="#E5E7EB"
+                style={{
+                  transform: [
+                    { scaleX: isSmallDevice ? 0.85 : 0.95 },
+                    { scaleY: isSmallDevice ? 0.85 : 0.95 },
+                  ],
+                }}
+              />
+            </View>
           </View>
         </View>
       </SmoothScrollView>
