@@ -308,6 +308,114 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               </View>
             </View>
           </View>
+
+          {/* ================= 2. CONTACT & VEHICLE CARD ================= */}
+          <View
+            className={`rounded-3xl bg-white border border-gray-100 shadow-2xs mb-4 ${
+              isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-5"
+            }`}
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.04,
+              shadowRadius: 8,
+              elevation: 2,
+            }}
+          >
+            <Text className="text-base sm:text-lg font-bold text-gray-900 mb-3.5 sm:mb-4">
+              Contact & Vehicle
+            </Text>
+
+            <View className="space-y-3 sm:space-y-3.5 gap-3 sm:gap-3.5">
+              {/* Phone Row */}
+              <View className="flex-row items-center">
+                <View
+                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                    isExtraSmall ? "h-9 w-9" : "h-11 w-11"
+                  }`}
+                >
+                  <Ionicons name="call-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                    Phone
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                  >
+                    {profile.phone}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Email Row */}
+              <View className="flex-row items-center">
+                <View
+                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                    isExtraSmall ? "h-9 w-9" : "h-11 w-11"
+                  }`}
+                >
+                  <Ionicons name="mail-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                    Email
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                  >
+                    {profile.email}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Base Location Row */}
+              <View className="flex-row items-center">
+                <View
+                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                    isExtraSmall ? "h-9 w-9" : "h-11 w-11"
+                  }`}
+                >
+                  <Ionicons name="location-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                    Base Location
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                  >
+                    {profile.baseLocation || "Colombo"}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Vehicle Row */}
+              <View className="flex-row items-center">
+                <View
+                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                    isExtraSmall ? "h-9 w-9" : "h-11 w-11"
+                  }`}
+                >
+                  <Ionicons name="bus-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                    Vehicle
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                  >
+                    {profile.vehicleType}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
       </SmoothScrollView>
     </View>
