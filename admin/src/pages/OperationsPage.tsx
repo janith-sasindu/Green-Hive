@@ -39,4 +39,37 @@ export default function OperationsPage(){
     const matchesTo = toDate ? item.date <= toDate : true;
     return matchesTab && matchesSearch && matchesFrom && matchesTo;
   });
+
+  // Render Status Badge
+  const renderStatusBadge = (status: OperationItem['status']) => {
+    switch (status) {
+      case 'Active':
+      case 'Completed':
+        return (
+          <span className="px-3 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+            {status}
+          </span>
+        );
+      case 'Open':
+      case 'Payment Held':
+        return (
+          <span className="px-3 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+            {status}
+          </span>
+        );
+      case 'In Transit':
+        return (
+          <span className="px-3 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+            {status}
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+            {status}
+          </span>
+        );
+    }
+  };
+
 }
