@@ -58,6 +58,35 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     );
   };
 
+  const handleMenuPress = (itemTitle: string) => {
+    switch (itemTitle) {
+      case "Notification Settings":
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterNotifications");
+        } else {
+          Alert.alert("Notification Settings", "All push notifications are enabled for new job offers and trip updates.");
+        }
+        break;
+      case "Vehicle & License":
+        Alert.alert(
+          "Vehicle & License",
+          `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
+        );
+        break;
+      case "Help & Support":
+        Alert.alert(
+          "Help & Support",
+          "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
+        );
+        break;
+      case "Edit Profile":
+        Alert.alert("Edit Profile", "Profile editing will be unlocked in the next account review.");
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#F4F7F5]">
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
@@ -415,6 +444,68 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
               </View>
             </View>
+          </View>
+
+          {/* ================= 3. SETTINGS & PREFERENCES CARD ================= */}
+          <View
+            className={`rounded-3xl bg-white border border-gray-100 shadow-2xs mb-4 ${
+              isExtraSmall ? "px-3.5 py-1" : isSmallDevice ? "px-4 py-1.5" : "px-5 py-2"
+            }`}
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.04,
+              shadowRadius: 8,
+              elevation: 2,
+            }}
+          >
+            {/* Edit Profile */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Edit Profile")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+                Edit Profile
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Vehicle & License */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Vehicle & License")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+                Vehicle & License
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Notification Settings */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Notification Settings")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+                Notification Settings
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Help & Support */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Help & Support")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+                Help & Support
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
           </View>
         </View>
       </SmoothScrollView>
