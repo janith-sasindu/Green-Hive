@@ -89,6 +89,32 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to log out of your driver account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            if (navigation?.reset) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Welcome" }],
+              });
+            } else if (navigation?.navigate) {
+              navigation.navigate("Welcome");
+            } else if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View className="flex-1 bg-[#F4F7F5]">
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
@@ -532,6 +558,29 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               />
             </View>
           </View>
+
+          {/* ================= 4. SIGN OUT BUTTON ================= */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleSignOut}
+            className={`w-full rounded-2xl sm:rounded-3xl border border-red-200/90 items-center justify-center flex-row shadow-2xs mt-1 mb-6 ${
+              isExtraSmall ? "py-3" : isSmallDevice ? "py-3.5" : "py-4"
+            }`}
+            style={{
+              borderColor: "#FECACA",
+              backgroundColor: "#FEF2F2",
+            }}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={19}
+              color="#EF4444"
+              style={{ marginRight: 8 }}
+            />
+            <Text className="text-sm sm:text-base font-bold text-[#EF4444]">
+              Sign Out
+            </Text>
+          </TouchableOpacity>
         </View>
       </SmoothScrollView>
     </View>
