@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StatusBar,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,6 +44,18 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     if (navigation?.navigate) {
       navigation.navigate("TransporterNotifications");
     }
+  };
+
+  const handleEditAvatar = () => {
+    Alert.alert(
+      "Profile Photo",
+      "Choose an option to update your profile photo:",
+      [
+        { text: "Take Photo", onPress: () => {} },
+        { text: "Choose from Library", onPress: () => {} },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
   };
 
   return (
@@ -144,7 +157,89 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         }}
       >
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
-          {/* Content sections will be added in subsequent commits */}
+          {/* ================= 1. PROFILE HERO BANNER ================= */}
+          <View
+            className={`rounded-3xl bg-[#E68A00] overflow-hidden shadow-md ${
+              isExtraSmall ? "p-4" : isSmallDevice ? "p-5" : "p-6"
+            } items-center relative mb-4`}
+            style={{
+              shadowColor: "#E68A00",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.25,
+              shadowRadius: 12,
+              elevation: 6,
+            }}
+          >
+            {/* Ambient Background Decorative Glow */}
+            <View className="absolute -top-12 -right-12 h-44 w-44 rounded-full bg-white/10 pointer-events-none" />
+            <View className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-black/5 pointer-events-none" />
+
+            {/* Profile Avatar with Camera Edit Badge */}
+            <View className="relative mt-1">
+              <View
+                className={`rounded-full bg-white/20 border-2 border-white/40 items-center justify-center ${
+                  isExtraSmall
+                    ? "h-20 w-20"
+                    : isSmallDevice
+                    ? "h-22 w-22"
+                    : "h-24 w-24"
+                }`}
+                style={{
+                  width: isExtraSmall ? 80 : isSmallDevice ? 88 : 96,
+                  height: isExtraSmall ? 80 : isSmallDevice ? 88 : 96,
+                }}
+              >
+                <Text
+                  className={`font-black text-white ${
+                    isExtraSmall ? "text-3xl" : "text-4xl"
+                  }`}
+                >
+                  {profile.avatarLetter || "R"}
+                </Text>
+              </View>
+
+              {/* Camera Edit Badge */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleEditAvatar}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white items-center justify-center shadow-md border border-gray-100"
+                style={{
+                  elevation: 4,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
+                }}
+              >
+                <Ionicons name="camera-outline" size={17} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Driver Name */}
+            <Text
+              numberOfLines={1}
+              className={`font-bold text-white text-center mt-3 ${
+                isExtraSmall
+                  ? "text-lg"
+                  : isSmallDevice
+                  ? "text-xl"
+                  : "text-2xl"
+              }`}
+            >
+              {profile.name}
+            </Text>
+
+            {/* Vehicle Type Subtitle */}
+            <Text
+              numberOfLines={1}
+              className={`font-medium text-white/90 text-center mt-1 ${
+                isExtraSmall ? "text-xs" : "text-sm"
+              }`}
+            >
+              {profile.vehicleType}
+            </Text>
+          </View>
         </View>
       </SmoothScrollView>
     </View>
