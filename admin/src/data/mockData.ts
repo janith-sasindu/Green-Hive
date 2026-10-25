@@ -464,3 +464,196 @@ export const mockRequirementAds: RequirementAd[] = [
     status: 'open',
   },
 ];
+
+export interface OperationItem {
+  id: string;
+  code: string;
+  type: 'product' | 'order' | 'transport';
+  title: string;
+  category?: string;
+  quantity?: string;
+  rate?: string;
+  owner?: string;
+  route?: string;
+  pickupDrop?: string;
+  schedule?: string;
+  amount?: string;
+  status: 'Active' | 'Open' | 'In Transit' | 'Completed' | 'Payment Held';
+  date: string;
+}
+
+export const mockOperations: OperationItem[] = [
+  // Orders (3)
+  {
+    id: 'o1',
+    code: 'GH-2050',
+    type: 'order',
+    title: 'Ripe Tomatoes',
+    route: 'Kamal Jayasinghe → Colombo Fresh Market · 150 kg',
+    pickupDrop: 'Dambulla → Colombo 03',
+    amount: 'Rs. 15,500',
+    status: 'Payment Held',
+    date: '2026-08-28',
+  },
+  {
+    id: 'o2',
+    code: 'GH-2041',
+    type: 'order',
+    title: 'Fresh Cabbage',
+    route: 'Sunil Perera → Colombo Fresh Market · 100 kg',
+    pickupDrop: 'Nuwara Eliya → Colombo 07',
+    amount: 'Rs. 9,500',
+    status: 'In Transit',
+    date: '2026-08-25',
+  },
+  {
+    id: 'o3',
+    code: 'GH-2035',
+    type: 'order',
+    title: 'Red Onions',
+    route: 'Kamal Jayasinghe → Kandy Supermart · 250 kg',
+    pickupDrop: 'Dambulla → Kandy',
+    amount: 'Rs. 37,500',
+    status: 'Completed',
+    date: '2026-08-18',
+  },
+
+  // Transport (3)
+  {
+    id: 't1',
+    code: 'GH-T1025',
+    type: 'transport',
+    title: 'Ripe Tomatoes',
+    pickupDrop: 'Dambulla Agricultural Zone → Colombo Fresh Market',
+    schedule: 'Kamal Jayasinghe · 2026-08-31 06:00 AM',
+    status: 'Open',
+    date: '2026-08-28',
+  },
+  {
+    id: 't2',
+    code: 'GH-T1020',
+    type: 'transport',
+    title: 'Organic Carrots',
+    pickupDrop: 'Nuwara Eliya Highlands Farm → Kandy Supermart',
+    schedule: 'Sunil Perera · 2026-08-29 07:00 AM',
+    status: 'Open',
+    date: '2026-08-27',
+  },
+  {
+    id: 't3',
+    code: 'GH-T1024',
+    type: 'transport',
+    title: 'Fresh Cabbage',
+    pickupDrop: 'Nuwara Eliya Farm → Colombo Fresh Market',
+    schedule: 'Sunil Perera · 2026-08-30 08:00 AM',
+    amount: 'Rs. 1,500',
+    status: 'Active',
+    date: '2026-08-25',
+  },
+
+  // Products (8)
+  {
+    id: 'p1',
+    code: 'p4',
+    type: 'product',
+    title: 'Green Beans',
+    category: 'Vegetables',
+    quantity: '200 kg',
+    rate: 'Rs. 180/kg',
+    owner: 'Priya Kumarasinghe',
+    amount: 'Rs. 36,000',
+    status: 'Active',
+    date: '2026-08-22',
+  },
+  {
+    id: 'p2',
+    code: 'p5',
+    type: 'product',
+    title: 'Ripe Tomatoes',
+    category: 'Vegetables',
+    quantity: '400 kg',
+    rate: 'Rs. 90/kg',
+    owner: 'Kamal Jayasinghe',
+    amount: 'Rs. 36,000',
+    status: 'Active',
+    date: '2026-08-21',
+  },
+  {
+    id: 'p3',
+    code: 'p1',
+    type: 'product',
+    title: 'Fresh Cabbage',
+    category: 'Vegetables',
+    quantity: '500 kg',
+    rate: 'Rs. 80/kg',
+    owner: 'Sunil Perera',
+    amount: 'Rs. 40,000',
+    status: 'Active',
+    date: '2026-08-20',
+  },
+  {
+    id: 'p4',
+    code: 'p2',
+    type: 'product',
+    title: 'Organic Carrots',
+    category: 'Vegetables',
+    quantity: '300 kg',
+    rate: 'Rs. 120/kg',
+    owner: 'Sunil Perera',
+    amount: 'Rs. 36,000',
+    status: 'Active',
+    date: '2026-08-19',
+  },
+  {
+    id: 'p5',
+    code: 'p3',
+    type: 'product',
+    title: 'Red Onions',
+    category: 'Vegetables',
+    quantity: '1000 kg',
+    rate: 'Rs. 150/kg',
+    owner: 'Kamal Jayasinghe',
+    amount: 'Rs. 150,000',
+    status: 'Active',
+    date: '2026-08-18',
+  },
+  {
+    id: 'p6',
+    code: 'p6',
+    type: 'product',
+    title: 'Ambul Bananas',
+    category: 'Fruits',
+    quantity: '450 kg',
+    rate: 'Rs. 140/kg',
+    owner: 'Sunil Perera',
+    amount: 'Rs. 63,000',
+    status: 'Active',
+    date: '2026-08-17',
+  },
+  {
+    id: 'p7',
+    code: 'p7',
+    type: 'product',
+    title: 'Fresh Potatoes',
+    category: 'Vegetables',
+    quantity: '600 kg',
+    rate: 'Rs. 220/kg',
+    owner: 'Kamal Jayasinghe',
+    amount: 'Rs. 132,000',
+    status: 'Active',
+    date: '2026-08-16',
+  },
+  {
+    id: 'p8',
+    code: 'p8',
+    type: 'product',
+    title: 'Green Papaya',
+    category: 'Fruits',
+    quantity: '350 kg',
+    rate: 'Rs. 90/kg',
+    owner: 'Sanduni Wickrama',
+    amount: 'Rs. 31,500',
+    status: 'Active',
+    date: '2026-08-15',
+  },
+];
