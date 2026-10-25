@@ -239,6 +239,74 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             >
               {profile.vehicleType}
             </Text>
+
+            {/* Rating and Completed Jobs Row */}
+            <View className="flex-row items-center justify-center mt-2.5 sm:mt-3">
+              <Ionicons name="star" size={16} color="#FBBF24" />
+              <Text className="font-extrabold text-white text-xs sm:text-sm ml-1.5">
+                {profile.rating.toFixed(1)}
+              </Text>
+              <Text className="text-white/80 mx-1.5 text-xs sm:text-sm">·</Text>
+              <Text className="font-medium text-white/90 text-xs sm:text-sm">
+                {profile.completedJobs} jobs completed
+              </Text>
+            </View>
+
+            {/* 3-Column Performance Stats Card */}
+            <View
+              className="mt-4 sm:mt-5 w-full rounded-2xl bg-white/15 border border-white/20 p-3 sm:p-3.5 flex-row items-center justify-between"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.16)",
+              }}
+            >
+              {/* Stat 1: Jobs */}
+              <View className="flex-1 items-center justify-center">
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  className="font-black text-white text-base sm:text-lg text-center"
+                >
+                  {profile.completedJobs}
+                </Text>
+                <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
+                  Jobs
+                </Text>
+              </View>
+
+              {/* Divider */}
+              <View className="h-7 w-[1px] bg-white/25" />
+
+              {/* Stat 2: Earned */}
+              <View className="flex-1 items-center justify-center">
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  className="font-black text-white text-base sm:text-lg text-center"
+                >
+                  {profile.totalEarnings || "Rs. 320k"}
+                </Text>
+                <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
+                  Earned
+                </Text>
+              </View>
+
+              {/* Divider */}
+              <View className="h-7 w-[1px] bg-white/25" />
+
+              {/* Stat 3: On Time */}
+              <View className="flex-1 items-center justify-center">
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  className="font-black text-white text-base sm:text-lg text-center"
+                >
+                  {profile.onTimeDeliveryRate || "98%"}
+                </Text>
+                <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
+                  On Time
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </SmoothScrollView>
