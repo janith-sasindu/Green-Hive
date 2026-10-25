@@ -4,5 +4,6 @@ export * from "./TransporterNotificationsScreen";
 export * from "./TransporterSubmitOfferScreen";
 export * from "./TransporterOfferSubmittedScreen";
 export * from "./TransporterActiveJobScreen";
+export * from "./TransporterProfileScreen";
 export * from "./data";
 
