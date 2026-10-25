@@ -35,6 +35,8 @@ export interface ActiveTransportJob {
     farmerName: string;
     farmerPhone: string;
     pickupDate: string;
+    sellerName?: string;
+    specialInstructions?: string;
 }
 
 export interface AvailableTransportJob {
@@ -119,10 +121,12 @@ export const MOCK_ACTIVE_JOB: ActiveTransportJob = {
     pickup: "Nuwara Eliya Farm, Hanguranketha Road",
     dropoff: "Colombo Fresh Market, Colombo 07",
     distance: "142 km",
-    price: "Rs. 18,500",
-    farmerName: "Sunil Rathnayake",
+    price: "Rs. 1,500",
+    farmerName: "Sunil Perera",
     farmerPhone: "+94 77 123 4567",
     pickupDate: "Today, 06:30 AM",
+    sellerName: "Colombo Fresh Market",
+    specialInstructions: "Handle with care. Keep cool. Arrive by 8 AM for market opening.",
 };
 
 /**

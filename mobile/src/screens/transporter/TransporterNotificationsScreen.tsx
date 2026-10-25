@@ -110,7 +110,7 @@ export const TransporterNotificationsScreen = ({
     } else if (tab === "jobs") {
       navigation?.navigate?.("TransporterAvailableJobs");
     } else if (tab === "active") {
-      navigation?.navigate?.("TransporterHome");
+      navigation?.navigate?.("TransporterActiveJob");
     } else if (tab === "profile") {
       setShowProfileModal(true);
     }
