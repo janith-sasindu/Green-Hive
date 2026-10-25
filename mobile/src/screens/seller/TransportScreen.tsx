@@ -66,6 +66,14 @@ export const TransportScreen = () => {
         keyExtractor={(job) => String(job.id)}
         contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 12 }}
         showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        decelerationRate="normal"
+        overScrollMode="never"
+        nestedScrollEnabled={true}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={7}
         ListHeaderComponent={
           <Text className={`text-sm ${ink.muted}`}>
             Manage transport jobs for your orders that require delivery.

@@ -1,17 +1,26 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
-
+import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
 import SellerNavigator from './SellerNavigator';
-import { TransporterHomeScreen } from '../screens/transporter/TransporterHomeScreen';
+import {
+  TransporterHomeScreen,
+  TransporterAvailableJobsScreen,
+  TransporterNotificationsScreen,
+  TransporterSubmitOfferScreen,
+  TransporterOfferSubmittedScreen,
+  TransporterActiveJobScreen,
+} from '../screens/transporter';
 
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   LoginScreen: undefined;
+  RoleSelection: undefined;
+  RoleSelectionScreen: undefined;
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
   IdentityVerificationScreen: { role?: string } | undefined;
@@ -19,6 +28,11 @@ export type RootStackParamList = {
   FarmerHome: undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
+  TransporterAvailableJobs: undefined;
+  TransporterNotifications: undefined;
+  TransporterSubmitOffer: { job?: any } | undefined;
+  TransporterOfferSubmitted: { job?: any; offerData?: any } | undefined;
+  TransporterActiveJob: { job?: any } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -32,6 +46,9 @@ export default function RootNavigator() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
+
+      <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+      <Stack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
 
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
@@ -52,7 +69,32 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterHome"
         component={TransporterHomeScreen}
-        options={{ headerShown: true, title: 'Transporter Dashboard' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterAvailableJobs"
+        component={TransporterAvailableJobsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterNotifications"
+        component={TransporterNotificationsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterSubmitOffer"
+        component={TransporterSubmitOfferScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterOfferSubmitted"
+        component={TransporterOfferSubmittedScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterActiveJob"
+        component={TransporterActiveJobScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
