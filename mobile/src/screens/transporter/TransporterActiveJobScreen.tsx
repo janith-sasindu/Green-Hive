@@ -157,7 +157,7 @@ export const TransporterActiveJobScreen: React.FC<
     } else if (tab === "jobs") {
       navigation?.navigate?.("TransporterAvailableJobs");
     } else if (tab === "profile") {
-      setShowProfileModal(true);
+      navigation?.navigate?.("TransporterProfile");
     }
   };
 
@@ -343,7 +343,7 @@ export const TransporterActiveJobScreen: React.FC<
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowProfileModal(true)}
+              onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className={`items-center justify-center rounded-full bg-[#E68A00] shadow-2xs ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-9 w-9" : "h-10 w-10"
