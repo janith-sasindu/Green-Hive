@@ -115,6 +115,27 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     );
   };
 
+  const handleTabPress = (tab: "home" | "jobs" | "active" | "profile") => {
+    if (tab === "profile") {
+      return;
+    }
+    if (onSelectTab) {
+      onSelectTab(tab);
+    } else if (tab === "home") {
+      if (navigation?.navigate) {
+        navigation.navigate("TransporterHome");
+      }
+    } else if (tab === "jobs") {
+      if (navigation?.navigate) {
+        navigation.navigate("TransporterAvailableJobs");
+      }
+    } else if (tab === "active") {
+      if (navigation?.navigate) {
+        navigation.navigate("TransporterActiveJob");
+      }
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#F4F7F5]">
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
@@ -583,6 +604,104 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           </TouchableOpacity>
         </View>
       </SmoothScrollView>
+
+      {/* ================= 5. BOTTOM NAVIGATION BAR ================= */}
+      <SafeAreaView
+        edges={["bottom"]}
+        className="bg-white border-t border-gray-200/80"
+      >
+        <View
+          style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          className={`flex-row items-center justify-around ${
+            isSmallDevice ? "pt-1.5 pb-0.5" : "pt-2 pb-1"
+          }`}
+        >
+          {/* Home Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("home")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="home-outline"
+              size={isSmallDevice ? 20 : 22}
+              color="#9CA3AF"
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF]`}
+            >
+              Home
+            </Text>
+          </TouchableOpacity>
+
+          {/* Jobs Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("jobs")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="location-outline"
+              size={isSmallDevice ? 20 : 22}
+              color="#9CA3AF"
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF]`}
+            >
+              Jobs
+            </Text>
+          </TouchableOpacity>
+
+          {/* Active Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("active")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="bus-outline"
+              size={isSmallDevice ? 20 : 22}
+              color="#9CA3AF"
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF]`}
+            >
+              Active
+            </Text>
+          </TouchableOpacity>
+
+          {/* Profile Tab (Active) */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("profile")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="person"
+              size={isSmallDevice ? 20 : 22}
+              color="#E68A00"
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-bold text-[#E68A00]`}
+            >
+              Profile
+            </Text>
+            <View
+              className={`rounded-full bg-[#E68A00] mt-1 ${
+                isSmallDevice ? "h-[2px] w-5" : "h-[2px] w-6"
+              }`}
+            />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </View>
   );
 };
