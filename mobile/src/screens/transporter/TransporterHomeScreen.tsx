@@ -34,6 +34,7 @@ import {
 } from "./data";
 import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen";
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
+import { TransporterProfileScreen } from "./TransporterProfileScreen";
 
 interface TransporterHomeScreenProps {
   navigation?: any;
@@ -244,6 +245,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     );
   }
 
+  if (activeTab === "profile") {
+    return (
+      <TransporterProfileScreen
+        navigation={navigation}
+        onSelectTab={setActiveTab}
+        activeTab={activeTab}
+      />
+    );
+  }
+
   return (
     <View className="flex-1 bg-[#F4F7F5]">
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
@@ -314,7 +325,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* User Avatar Circle */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowProfileModal(true)}
+              onPress={() => setActiveTab("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-8.5 w-8.5" : "h-9 w-9"
@@ -1171,33 +1182,21 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             activeOpacity={0.7}
             onPress={() => {
               setActiveTab("profile");
-              setShowProfileModal(true);
             }}
             className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
-              name={activeTab === "profile" ? "person" : "person-outline"}
+              name="person-outline"
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "profile" ? "#E68A00" : "#9CA3AF"}
+              color="#9CA3AF"
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } ${
-                activeTab === "profile"
-                  ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
-              }`}
+              } font-medium text-[#9CA3AF]`}
             >
               Profile
             </Text>
-            {activeTab === "profile" && (
-              <View
-                className={`rounded-full bg-[#E68A00] mt-1 ${
-                  isSmallDevice ? "h-[2px] w-5" : "h-[2px] w-6"
-                }`}
-              />
-            )}
           </TouchableOpacity>
         </View>
       </SafeAreaView>
