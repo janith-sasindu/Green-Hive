@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, CommonActions } from "@react-navigation/native";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
@@ -266,28 +266,38 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   };
 
   const handleSignOut = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to log out of your driver account?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: () => {
-            if (navigation?.reset) {
-              navigation.reset({
+    showAlert(
+      "Sign Out?",
+      "Are you sure you want to sign out of your transporter account? You will return to the welcome screen.",
+      {
+        type: "error",
+        primaryButtonText: "Sign Out",
+        secondaryButtonText: "Cancel",
+        onPrimaryPress: () => {
+          let rootNav = navigation;
+          while (rootNav?.getParent && rootNav.getParent()) {
+            rootNav = rootNav.getParent();
+          }
+          if (rootNav?.dispatch) {
+            rootNav.dispatch(
+              CommonActions.reset({
                 index: 0,
                 routes: [{ name: "Welcome" }],
-              });
-            } else if (navigation?.navigate) {
-              navigation.navigate("Welcome");
-            } else if (navigation?.canGoBack && navigation.canGoBack()) {
-              navigation.goBack();
-            }
-          },
+              })
+            );
+          } else if (navigation?.reset) {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Welcome" }],
+            });
+          } else if (navigation?.navigate) {
+            navigation.navigate("Welcome");
+          }
         },
-      ]
+        onSecondaryPress: () => {
+          // Cancelled: User stays logged in
+        },
+      }
     );
   };
 

@@ -37,6 +37,7 @@ import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
 import { TransporterProfileScreen } from "./TransporterProfileScreen";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
+import { CommonActions } from "@react-navigation/native";
 
 interface TransporterHomeScreenProps {
   navigation?: any;
@@ -219,10 +220,24 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         style: "destructive",
         onPress: () => {
           setShowProfileModal(false);
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate("Welcome");
+          let rootNav = navigation;
+          while (rootNav?.getParent && rootNav.getParent()) {
+            rootNav = rootNav.getParent();
+          }
+          if (rootNav?.dispatch) {
+            rootNav.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: "Welcome" }],
+              })
+            );
+          } else if (navigation?.reset) {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Welcome" }],
+            });
+          } else if (navigation?.navigate) {
+            navigation.navigate("Welcome");
           }
         },
       },
