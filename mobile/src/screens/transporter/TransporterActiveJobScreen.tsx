@@ -64,6 +64,7 @@ export const TransporterActiveJobScreen: React.FC<
     route?.params?.job || propJob || MOCK_ACTIVE_JOB;
   const [currentJob, setCurrentJob] = useState<ActiveTransportJob>(initialJob);
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
   const [notificationsList] =
     useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
 
@@ -351,17 +352,25 @@ export const TransporterActiveJobScreen: React.FC<
               activeOpacity={0.8}
               onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`items-center justify-center rounded-full bg-[#E68A00] shadow-2xs ${
+              className={`items-center justify-center rounded-full bg-[#E68A00] shadow-2xs overflow-hidden ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-9 w-9" : "h-10 w-10"
               }`}
             >
-              <Text
-                className={`font-black text-white ${
-                  isExtraSmall ? "text-xs" : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter}
-              </Text>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`font-black text-white ${
+                    isExtraSmall ? "text-xs" : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -759,10 +768,18 @@ export const TransporterActiveJobScreen: React.FC<
             <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
               {/* Driver Card */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
-                <View className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
-                  <Text className="text-xl sm:text-2xl font-black text-white">
-                    {profile.avatarLetter}
-                  </Text>
+                <View className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2 overflow-hidden">
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text className="text-xl sm:text-2xl font-black text-white">
+                      {profile.avatarLetter}
+                    </Text>
+                  )}
                 </View>
                 <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
                   {profile.name}

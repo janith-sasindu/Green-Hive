@@ -7,6 +7,7 @@ export interface TransporterProfile {
     name: string;
     greeting: string;
     avatarLetter: string;
+    avatarUri?: string;
     email: string;
     phone: string;
     vehicleType: string;

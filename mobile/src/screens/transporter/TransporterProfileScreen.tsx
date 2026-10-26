@@ -8,10 +8,14 @@ import {
   useWindowDimensions,
   Alert,
   Switch,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_PROFILE,
@@ -43,6 +47,45 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
 
+  // Photo upload and preview state
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [tempPhotoUri, setTempPhotoUri] = useState<string | null>(null);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+
+  // Themed Alert Modal state
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+    type?: ThemedAlertModalType;
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+    secondaryButtonText?: string;
+    onSecondaryPress?: () => void;
+  } | null>(null);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    options?: {
+      type?: ThemedAlertModalType;
+      primaryButtonText?: string;
+      onPrimaryPress?: () => void;
+      secondaryButtonText?: string;
+      onSecondaryPress?: () => void;
+    }
+  ) => {
+    setAlertConfig({
+      title,
+      message,
+      type: options?.type || "warning",
+      primaryButtonText: options?.primaryButtonText || "Got It",
+      onPrimaryPress: options?.onPrimaryPress,
+      secondaryButtonText: options?.secondaryButtonText,
+      onSecondaryPress: options?.onSecondaryPress,
+    });
+  };
+
   const handleNotificationPress = () => {
     if (navigation?.navigate) {
       navigation.navigate("TransporterNotifications");
@@ -50,14 +93,128 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   };
 
   const handleEditAvatar = () => {
-    Alert.alert(
-      "Profile Photo",
-      "Choose an option to update your profile photo:",
-      [
-        { text: "Take Photo", onPress: () => {} },
-        { text: "Choose from Library", onPress: () => {} },
-        { text: "Cancel", style: "cancel" },
-      ]
+    setShowSourceModal(true);
+  };
+
+  const handleUseCamera = async () => {
+    setShowSourceModal(false);
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        showAlert(
+          "Camera Permission Required",
+          "GreenHive needs camera access to capture a picture for your profile. Please enable camera permission in your phone settings.",
+          { type: "warning" }
+        );
+        return;
+      }
+
+      setIsProcessingPhoto(true);
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setTempPhotoUri(result.assets[0].uri);
+        setShowPreviewModal(true);
+      }
+    } catch (err) {
+      showAlert(
+        "Camera Error",
+        "Could not launch the camera. Please check your device settings and try again.",
+        { type: "error" }
+      );
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    setShowSourceModal(false);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        showAlert(
+          "Gallery Permission Required",
+          "GreenHive needs photo library access to select a profile picture. Please enable gallery access in your device settings.",
+          { type: "warning" }
+        );
+        return;
+      }
+
+      setIsProcessingPhoto(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setTempPhotoUri(result.assets[0].uri);
+        setShowPreviewModal(true);
+      }
+    } catch (err) {
+      showAlert(
+        "Gallery Error",
+        "Could not access photo library. Please check your permissions and try again.",
+        { type: "error" }
+      );
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
+
+  const handleConfirmUpload = () => {
+    if (!tempPhotoUri) return;
+    setProfile((prev) => ({
+      ...prev,
+      avatarUri: tempPhotoUri,
+    }));
+    MOCK_TRANSPORTER_PROFILE.avatarUri = tempPhotoUri;
+    setShowPreviewModal(false);
+    setTempPhotoUri(null);
+
+    showAlert(
+      "Profile Picture Updated",
+      "Your new profile picture has been successfully uploaded and set!",
+      {
+        type: "success",
+        primaryButtonText: "Great!",
+      }
+    );
+  };
+
+  const handleSelectAgain = () => {
+    setShowPreviewModal(false);
+    setShowSourceModal(true);
+  };
+
+  const handleRemovePhoto = () => {
+    setShowSourceModal(false);
+    showAlert(
+      "Remove Profile Picture",
+      "Are you sure you want to remove your profile picture and restore the default initial letter?",
+      {
+        type: "warning",
+        primaryButtonText: "Remove",
+        onPrimaryPress: () => {
+          setProfile((prev) => {
+            const next = { ...prev };
+            delete next.avatarUri;
+            return next;
+          });
+          delete MOCK_TRANSPORTER_PROFILE.avatarUri;
+          showAlert("Picture Removed", "Your profile picture has been reset to default.", {
+            type: "info",
+            primaryButtonText: "Done",
+          });
+        },
+        secondaryButtonText: "Cancel",
+      }
     );
   };
 
@@ -205,23 +362,33 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             </TouchableOpacity>
 
             {/* User Avatar Circle */}
-            <View
-              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleEditAvatar}
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs overflow-hidden ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-8.5 w-8.5" : "h-9 w-9"
               }`}
             >
-              <Text
-                className={`font-bold text-white ${
-                  isExtraSmall
-                    ? "text-[11px]"
-                    : isSmallDevice
-                    ? "text-xs"
-                    : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter || "R"}
-              </Text>
-            </View>
+              {profile.avatarUri ? (
+                <Image
+                  source={{ uri: profile.avatarUri }}
+                  className="h-full w-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`font-bold text-white ${
+                    isExtraSmall
+                      ? "text-[11px]"
+                      : isSmallDevice
+                      ? "text-xs"
+                      : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter || "R"}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
@@ -255,8 +422,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
             {/* Profile Avatar with Camera Edit Badge */}
             <View className="relative mt-1">
-              <View
-                className={`rounded-full bg-white/20 border-2 border-white/40 items-center justify-center ${
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={handleEditAvatar}
+                className={`rounded-full bg-white/20 border-2 border-white/40 items-center justify-center overflow-hidden ${
                   isExtraSmall
                     ? "h-20 w-20"
                     : isSmallDevice
@@ -268,21 +437,29 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   height: isExtraSmall ? 80 : isSmallDevice ? 88 : 96,
                 }}
               >
-                <Text
-                  className={`font-black text-white ${
-                    isExtraSmall ? "text-3xl" : "text-4xl"
-                  }`}
-                >
-                  {profile.avatarLetter || "R"}
-                </Text>
-              </View>
+                {profile.avatarUri ? (
+                  <Image
+                    source={{ uri: profile.avatarUri }}
+                    className="h-full w-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text
+                    className={`font-black text-white ${
+                      isExtraSmall ? "text-3xl" : "text-4xl"
+                    }`}
+                  >
+                    {profile.avatarLetter || "R"}
+                  </Text>
+                )}
+              </TouchableOpacity>
 
               {/* Camera Edit Badge */}
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleEditAvatar}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white items-center justify-center shadow-md border border-gray-100"
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white dark:bg-slate-800 items-center justify-center shadow-md border border-gray-100 dark:border-slate-700"
                 style={{
                   elevation: 4,
                   shadowColor: "#000",
@@ -291,7 +468,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   shadowRadius: 4,
                 }}
               >
-                <Ionicons name="camera-outline" size={17} color="#4B5563" />
+                <Ionicons name="camera-outline" size={17} color={isDark ? "#E68A00" : "#4B5563"} />
               </TouchableOpacity>
             </View>
 
@@ -707,6 +884,261 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {/* ================= PHOTO SOURCE SELECTION MODAL ================= */}
+      <Modal
+        visible={showSourceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSourceModal(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-end sm:justify-center items-center p-0 sm:p-4">
+          <TouchableOpacity
+            activeOpacity={1}
+            className="absolute inset-0"
+            onPress={() => setShowSourceModal(false)}
+          />
+          <View
+            className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border-t sm:border border-gray-100 dark:border-slate-700"
+            style={{ elevation: 10 }}
+          >
+            {/* Sheet Handle for mobile */}
+            <View className="items-center mb-3 sm:hidden">
+              <View className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+            </View>
+
+            {/* Header */}
+            <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center space-x-3">
+                <View className="h-10 w-10 rounded-full bg-[#FFF5E6] dark:bg-amber-950/40 items-center justify-center border border-amber-200/60 dark:border-amber-800/40">
+                  <Ionicons name="camera" size={20} color="#E68A00" />
+                </View>
+                <View className="ml-3">
+                  <Text className="text-base sm:text-lg font-bold text-[#111827] dark:text-white">
+                    Profile Photo
+                  </Text>
+                  <Text className="text-xs text-[#6B7280] dark:text-slate-400">
+                    Choose an option to update your photo
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowSourceModal(false)}
+                className="h-8 w-8 rounded-full bg-gray-100 dark:bg-slate-700 items-center justify-center"
+              >
+                <Ionicons name="close" size={18} color={isDark ? "#94A3B8" : "#6B7280"} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Option 1: Use Camera */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleUseCamera}
+              disabled={isProcessingPhoto}
+              className="flex-row items-center p-3.5 mb-2.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/40"
+            >
+              <View className="h-11 w-11 rounded-xl bg-[#E68A00] items-center justify-center mr-3 shadow-xs">
+                <Ionicons name="camera" size={22} color="#FFFFFF" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-900 dark:text-white">
+                  Use Camera
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  Open camera to capture a picture
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
+            </TouchableOpacity>
+
+            {/* Option 2: Choose from Gallery */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handlePickFromGallery}
+              disabled={isProcessingPhoto}
+              className="flex-row items-center p-3.5 mb-2.5 rounded-2xl bg-gray-50 dark:bg-slate-700/50 border border-gray-200/60 dark:border-slate-700"
+            >
+              <View className="h-11 w-11 rounded-xl bg-blue-500 items-center justify-center mr-3 shadow-xs">
+                <Ionicons name="images" size={22} color="#FFFFFF" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-900 dark:text-white">
+                  Choose from Gallery
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  Select a picture from your device library
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
+            </TouchableOpacity>
+
+            {/* Option 3: Remove Current Photo (conditional) */}
+            {profile.avatarUri && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleRemovePhoto}
+                className="flex-row items-center p-3.5 mb-2.5 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/40"
+              >
+                <View className="h-11 w-11 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-xs">
+                  <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-bold text-red-600 dark:text-red-400">
+                    Remove Current Photo
+                  </Text>
+                  <Text className="text-xs text-red-400 dark:text-red-300 mt-0.5">
+                    Revert back to default initial letter
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#EF4444" />
+              </TouchableOpacity>
+            )}
+
+            {/* Cancel Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setShowSourceModal(false)}
+              className="mt-1 py-3.5 rounded-2xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
+            >
+              <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ================= IN-SCREEN PICTURE PREVIEW MODAL ================= */}
+      <Modal
+        visible={showPreviewModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowPreviewModal(false);
+          setTempPhotoUri(null);
+        }}
+      >
+        <View className="flex-1 bg-black/75 justify-center items-center p-4">
+          <View
+            className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-slate-700 items-center"
+            style={{ elevation: 12 }}
+          >
+            {/* Header Icon & Title */}
+            <View className="items-center mb-4">
+              <View className="h-12 w-12 rounded-full bg-[#FFF5E6] dark:bg-amber-950/40 items-center justify-center border border-amber-200/60 dark:border-amber-800/40 mb-2">
+                <Ionicons name="person-circle-outline" size={28} color="#E68A00" />
+              </View>
+              <Text className="text-lg font-bold text-gray-900 dark:text-white text-center">
+                Preview Profile Picture
+              </Text>
+              <Text className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1 px-2">
+                Check how your photo looks before uploading it as your profile picture
+              </Text>
+            </View>
+
+            {/* Circular Preview Container */}
+            <View className="my-2 items-center justify-center">
+              <View
+                className="rounded-full border-4 border-[#E68A00] p-1 shadow-lg bg-gray-100 dark:bg-slate-700"
+                style={{
+                  shadowColor: "#E68A00",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 10,
+                  elevation: 8,
+                }}
+              >
+                {tempPhotoUri && (
+                  <Image
+                    source={{ uri: tempPhotoUri }}
+                    style={{ width: 150, height: 150, borderRadius: 75 }}
+                    resizeMode="cover"
+                  />
+                )}
+              </View>
+
+              {/* Helpful Badge */}
+              <View className="flex-row items-center mt-3 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full border border-amber-200/50 dark:border-amber-800/40">
+                <Ionicons name="sparkles" size={12} color="#E68A00" />
+                <Text className="text-[11px] font-semibold text-[#E68A00] ml-1.5">
+                  Looking sharp!
+                </Text>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View className="w-full mt-4">
+              {/* Primary: Upload as Profile Picture */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleConfirmUpload}
+                className="w-full py-3.5 px-4 rounded-2xl bg-[#E68A00] flex-row items-center justify-center shadow-md mb-2.5"
+                style={{
+                  shadowColor: "#E68A00",
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                  elevation: 4,
+                }}
+              >
+                <Ionicons name="cloud-upload-outline" size={18} color="#FFFFFF" />
+                <Text className="text-sm font-bold text-white ml-2">
+                  Upload as Profile Picture
+                </Text>
+              </TouchableOpacity>
+
+              {/* Secondary: Take or Select Again */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleSelectAgain}
+                className="w-full py-3 px-4 rounded-2xl bg-gray-100 dark:bg-slate-700/80 border border-gray-200 dark:border-slate-600 flex-row items-center justify-center mb-1.5"
+              >
+                <Ionicons name="refresh-outline" size={17} color={isDark ? "#CBD5E1" : "#4B5563"} />
+                <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200 ml-2">
+                  Retake or Choose Again
+                </Text>
+              </TouchableOpacity>
+
+              {/* Cancel: Dismiss */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  setShowPreviewModal(false);
+                  setTempPhotoUri(null);
+                }}
+                className="w-full py-2.5 items-center justify-center"
+              >
+                <Text className="text-xs font-medium text-gray-400 dark:text-slate-500">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Themed Alert Modal for Warnings & Confirmations */}
+      {alertConfig && (
+        <ThemedAlertModal
+          visible={!!alertConfig}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={() => {
+            const cb = alertConfig.onPrimaryPress;
+            setAlertConfig(null);
+            if (cb) cb();
+          }}
+          secondaryButtonText={alertConfig.secondaryButtonText}
+          onSecondaryPress={() => {
+            const cb = alertConfig.onSecondaryPress;
+            setAlertConfig(null);
+            if (cb) cb();
+          }}
+          onClose={() => setAlertConfig(null)}
+        />
+      )}
     </View>
   );
 };
