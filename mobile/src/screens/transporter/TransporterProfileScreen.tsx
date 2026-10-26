@@ -14,9 +14,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useFocusEffect } from "@react-navigation/native";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
+import { TransporterEditProfileScreen } from "./TransporterEditProfileScreen";
+import { TransporterNotificationSettingsScreen } from "./TransporterNotificationSettingsScreen";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_TRANSPORTER_STATS,
@@ -46,6 +49,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   // Profile and stats state from mock data
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
+
+  // Sync profile when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      setProfile({ ...MOCK_TRANSPORTER_PROFILE });
+    }, [])
+  );
+
+  // Screen Modals
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
 
   // Photo upload and preview state
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -222,9 +236,9 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     switch (itemTitle) {
       case "Notification Settings":
         if (navigation?.navigate) {
-          navigation.navigate("TransporterNotifications");
+          navigation.navigate("TransporterNotificationSettings");
         } else {
-          Alert.alert("Notification Settings", "All push notifications are enabled for new job offers and trip updates.");
+          setShowNotificationSettingsModal(true);
         }
         break;
       case "Vehicle & License":
@@ -240,7 +254,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         );
         break;
       case "Edit Profile":
-        Alert.alert("Edit Profile", "Profile editing will be unlocked in the next account review.");
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterEditProfile");
+        } else {
+          setShowEditProfileModal(true);
+        }
         break;
       default:
         break;
@@ -1139,6 +1157,33 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           onClose={() => setAlertConfig(null)}
         />
       )}
+
+      {/* Edit Profile Full-Screen Modal Fallback */}
+      <Modal
+        visible={showEditProfileModal}
+        animationType="slide"
+        onRequestClose={() => setShowEditProfileModal(false)}
+      >
+        <TransporterEditProfileScreen
+          onBack={() => setShowEditProfileModal(false)}
+          onSave={(updated) => {
+            setProfile({ ...updated });
+            setShowEditProfileModal(false);
+          }}
+        />
+      </Modal>
+
+      {/* Notification Settings Full-Screen Modal Fallback */}
+      <Modal
+        visible={showNotificationSettingsModal}
+        animationType="slide"
+        onRequestClose={() => setShowNotificationSettingsModal(false)}
+      >
+        <TransporterNotificationSettingsScreen
+          onBack={() => setShowNotificationSettingsModal(false)}
+          navigation={navigation}
+        />
+      </Modal>
     </View>
   );
 };

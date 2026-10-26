@@ -249,3 +249,23 @@ export const MOCK_DETAILED_NOTIFICATIONS: TransporterNotificationItem[] = [
         jobId: "#GH-T1024",
     },
 ];
+
+/**
+ * Transporter Phone Notification Settings
+ */
+export interface TransporterNotificationSettings {
+    newJobsPush: boolean;
+    currentJobUpdatesPush: boolean;
+    offerStatusPush: boolean;
+    paymentPush: boolean;
+    soundAndVibration: boolean;
+}
+
+export const MOCK_TRANSPORTER_NOTIFICATION_SETTINGS: TransporterNotificationSettings = {
+    newJobsPush: true,
+    currentJobUpdatesPush: true,
+    offerStatusPush: true,
+    paymentPush: true,
+    soundAndVibration: true,
+};
+

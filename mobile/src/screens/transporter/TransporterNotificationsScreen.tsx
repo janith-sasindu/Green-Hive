@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StatusBar,
   Modal,
@@ -47,6 +48,7 @@ export const TransporterNotificationsScreen = ({
 
   // State
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
   const [notifications, setNotifications] = useState<
     TransporterNotificationItem[]
   >(MOCK_DETAILED_NOTIFICATIONS);
@@ -187,24 +189,30 @@ export const TransporterNotificationsScreen = ({
 
           {/* Right Action Icons */}
           <View className="flex-row items-center space-x-2 sm:space-x-2.5 gap-2 sm:gap-2.5">
-            {/* Notification Bell */}
-            <View className="relative p-1.5 rounded-full">
+            {/* Settings button leading to Notification Settings */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterNotificationSettings");
+                }
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className="p-1.5 rounded-full"
+            >
               <Ionicons
-                name="notifications-outline"
-                size={isExtraSmall ? 18 : isSmallDevice ? 20 : isTablet ? 25 : 23}
-                color={colors.iconMuted}
+                name="settings-outline"
+                size={isExtraSmall ? 19 : isSmallDevice ? 21 : isTablet ? 25 : 23}
+                color={colors.icon}
               />
-              {unreadCount > 0 && (
-                <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              )}
-            </View>
+            </TouchableOpacity>
 
             {/* Profile Avatar Pill */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs overflow-hidden ${
                 isExtraSmall
                   ? "h-8 w-8"
                   : isSmallDevice
@@ -214,19 +222,27 @@ export const TransporterNotificationsScreen = ({
                   : "h-9 w-9"
               }`}
             >
-              <Text
-                className={`font-extrabold text-white ${
-                  isExtraSmall
-                    ? "text-xs"
-                    : isSmallDevice
-                    ? "text-xs"
-                    : isTablet
-                    ? "text-base"
-                    : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter}
-              </Text>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`font-extrabold text-white ${
+                    isExtraSmall
+                      ? "text-xs"
+                      : isSmallDevice
+                      ? "text-xs"
+                      : isTablet
+                      ? "text-base"
+                      : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -519,17 +535,25 @@ export const TransporterNotificationsScreen = ({
               {/* Driver Card */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
                 <View
-                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
+                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 overflow-hidden ${
                     isSmallDevice ? "h-14 w-14" : "h-16 w-16"
                   }`}
                 >
-                  <Text
-                    className={`font-black text-white ${
-                      isSmallDevice ? "text-xl" : "text-2xl"
-                    }`}
-                  >
-                    {profile.avatarLetter}
-                  </Text>
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text
+                      className={`font-black text-white ${
+                        isSmallDevice ? "text-xl" : "text-2xl"
+                      }`}
+                    >
+                      {profile.avatarLetter}
+                    </Text>
+                  )}
                 </View>
                 <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
                   {profile.name}
