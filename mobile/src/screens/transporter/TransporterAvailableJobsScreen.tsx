@@ -76,7 +76,7 @@ export const TransporterAvailableJobsScreen = ({
     } else if (tab === "active") {
       navigation?.navigate?.("TransporterActiveJob");
     } else if (tab === "profile") {
-      setShowProfileModal(true);
+      navigation?.navigate?.("TransporterProfile");
     }
   };
 
@@ -271,7 +271,7 @@ export const TransporterAvailableJobsScreen = ({
             {/* Profile Avatar Pill */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowProfileModal(true)}
+              onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-8.5 w-8.5" : "h-9 w-9"

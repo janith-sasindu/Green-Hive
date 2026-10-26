@@ -11,9 +11,12 @@ export interface TransporterProfile {
     phone: string;
     vehicleType: string;
     vehiclePlate: string;
+    baseLocation?: string;
     isVerified: boolean;
     rating: number;
     completedJobs: number;
+    totalEarnings?: string;
+    onTimeDeliveryRate?: string;
 }
 
 export interface TransporterStats {
@@ -91,13 +94,16 @@ export const MOCK_TRANSPORTER_PROFILE: TransporterProfile = {
     name: "Ruwan Bandara",
     greeting: "Good morning,",
     avatarLetter: "R",
-    email: "transporter@greenhive.com",
-    phone: "+94 77 777 8899",
+    email: "ruwan@transport.lk",
+    phone: "+94 76 345 6789",
     vehicleType: "Lorry - 3 Ton",
     vehiclePlate: "WP-LH-4821",
+    baseLocation: "Colombo",
     isVerified: true,
     rating: 4.8,
     completedJobs: 47,
+    totalEarnings: "Rs. 320k",
+    onTimeDeliveryRate: "98%",
 };
 
 /**
