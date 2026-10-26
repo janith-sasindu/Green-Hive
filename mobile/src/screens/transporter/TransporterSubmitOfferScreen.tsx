@@ -26,8 +26,10 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_AVAILABLE_JOBS,
+  MOCK_MY_OFFERS,
   AvailableTransportJob,
   TransporterProfile,
+  TransportOffer,
 } from "./data";
 import { TransporterOfferSubmittedScreen } from "./TransporterOfferSubmittedScreen";
 
@@ -247,6 +249,28 @@ export const TransporterSubmitOfferScreen: React.FC<
       deliveryTime: deliveryTime.trim() || getTimeString(job),
       notes: notes.trim(),
     };
+
+    const newOffer: TransportOffer = {
+      id: job.id.startsWith("Job") ? job.id : `Job ${job.id}`,
+      title: "Transportation Offer",
+      cropName: job.cropName,
+      weight: job.weight,
+      route: `${job.pickup?.split(",")[0] || "Origin"} → ${job.dropoff?.split(",")[0] || "Destination"}`,
+      quotePrice: trimmedCost.startsWith("Rs.") ? trimmedCost : `Rs. ${trimmedCost}`,
+      estimatedDelivery: deliveryTime.trim() || getTimeString(job),
+      notes: notes.trim() || "I have refrigerated vehicle available. On-time delivery guaranteed.",
+      submittedDate: new Date().toISOString().split("T")[0],
+      status: "Submitted",
+      sellerName: job.sellerName,
+      pickupLocation: job.pickup,
+      dropoffLocation: job.dropoff,
+    };
+    const existingIdx = MOCK_MY_OFFERS.findIndex((o) => o.id === newOffer.id);
+    if (existingIdx >= 0) {
+      MOCK_MY_OFFERS[existingIdx] = newOffer;
+    } else {
+      MOCK_MY_OFFERS.unshift(newOffer);
+    }
 
     if (onSubmitSuccess) {
       onSubmitSuccess(offerData);

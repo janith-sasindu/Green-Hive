@@ -291,6 +291,23 @@ export const TransporterOfferSubmittedScreen: React.FC<
               Back to Jobs
             </Text>
           </TouchableOpacity>
+
+          {/* 6. View Submitted Offers Button */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => {
+              if (navigation?.navigate) {
+                navigation.navigate("TransporterMyOffers");
+              } else if (onSelectTab) {
+                onSelectTab("home");
+              }
+            }}
+            className="mt-3.5 py-2 px-6 items-center justify-center"
+          >
+            <Text className="text-xs sm:text-[13px] font-bold text-[#E68A00] dark:text-amber-400">
+              View Submitted Transport Offers →
+            </Text>
+          </TouchableOpacity>
         </View>
       </SmoothScrollView>
 

@@ -67,9 +67,17 @@ export interface TransportOffer {
     id: string;
     cropName: string;
     weight: string;
-    route: string;
+    route?: string;
     quotePrice: string;
-    status: string;
+    status: "Submitted" | "Accepted" | "Under Review" | "Declined" | "Pending Farmer Approval" | string;
+    title?: string;
+    estimatedDelivery?: string;
+    notes?: string;
+    submittedDate?: string;
+    sellerName?: string;
+    pickupLocation?: string;
+    dropoffLocation?: string;
+    distance?: string;
 }
 
 export interface PaymentSummaryData {
@@ -112,7 +120,7 @@ export const MOCK_TRANSPORTER_PROFILE: TransporterProfile = {
  */
 export const MOCK_TRANSPORTER_STATS: TransporterStats = {
     openJobsCount: 2,
-    myOffersCount: 1,
+    myOffersCount: 3,
     activeJobsCount: 1,
     thisMonthEarnings: "Rs. 42k",
 };
@@ -185,20 +193,52 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
  */
 export const MOCK_MY_OFFERS: TransportOffer[] = [
     {
-        id: "#GH-T1019",
+        id: "Job #GH-T1025",
+        title: "Transportation Offer",
+        cropName: "Ripe Tomatoes",
+        weight: "150 kg",
+        route: "Dambulla Agricultural Zone → Colombo Fresh Market",
+        quotePrice: "Rs. 2,000",
+        estimatedDelivery: "2026-08-31 08:00 AM",
+        notes: "I have refrigerated vehicle available. On-time delivery guaranteed.",
+        submittedDate: "2026-08-28",
+        status: "Submitted",
+        sellerName: "Colombo Fresh Market",
+        pickupLocation: "Dambulla Agricultural Zone, Plot 14",
+        dropoffLocation: "Colombo Fresh Market, Colombo 03",
+        distance: "148 km",
+    },
+    {
+        id: "Job #GH-T1019",
+        title: "Transportation Offer",
         cropName: "Red Potatoes",
         weight: "500 kg",
         route: "Nuwara Eliya → Colombo Wholesale Market",
         quotePrice: "Rs. 22,000",
-        status: "Pending Farmer Approval",
+        estimatedDelivery: "2026-09-02 10:00 AM",
+        notes: "Heavy duty 3-ton lorry ready for farm gate pickup with waterproof tarpaulin.",
+        submittedDate: "2026-08-27",
+        status: "Submitted",
+        sellerName: "Nuwara Eliya Wholesale Hub",
+        pickupLocation: "Nuwara Eliya Highlands Farm",
+        dropoffLocation: "Colombo Wholesale Market",
+        distance: "165 km",
     },
     {
-        id: "#GH-T1016",
+        id: "Job #GH-T1016",
+        title: "Transportation Offer",
         cropName: "Sweet Corn",
         weight: "300 kg",
         route: "Anuradhapura → Kurunegala Town",
         quotePrice: "Rs. 19,500",
+        estimatedDelivery: "2026-08-30 02:00 PM",
+        notes: "Insulated transport with temperature tracking. Delivery on schedule.",
+        submittedDate: "2026-08-25",
         status: "Accepted",
+        sellerName: "Kurunegala Fresh Veggie Mart",
+        pickupLocation: "Anuradhapura Central Farm",
+        dropoffLocation: "Kurunegala Town Center",
+        distance: "95 km",
     },
 ];
 

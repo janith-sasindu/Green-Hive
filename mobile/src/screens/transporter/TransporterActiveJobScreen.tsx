@@ -303,17 +303,19 @@ export const TransporterActiveJobScreen: React.FC<
               className={`rounded-xl bg-[#135228] items-center justify-center mr-2.5 shadow-xs overflow-hidden ${
                 isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
               }`}
+              style={{
+                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+              }}
             >
               <Image
                 source={require("../../assets/logo.png")}
-                className={
-                  isExtraSmall
-                    ? "h-6 w-6"
-                    : isSmallDevice
-                    ? "h-7 w-7"
-                    : "h-8 w-8"
-                }
                 resizeMode="contain"
+                resizeMethod="resize"
+                style={{
+                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                }}
               />
             </View>
             <Text

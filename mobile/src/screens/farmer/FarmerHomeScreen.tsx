@@ -92,11 +92,15 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
         <View className="px-5 pt-1.5 pb-2.5 flex-row items-center justify-between">
           {/* Logo & Dashboard Title */}
           <View className="flex-row items-center">
-            <View className="h-9 w-9 rounded-xl bg-[#14532D] items-center justify-center mr-2.5 shadow-xs overflow-hidden">
+            <View
+              className="h-9 w-9 rounded-xl bg-[#14532D] items-center justify-center mr-2.5 shadow-xs overflow-hidden"
+              style={{ width: 36, height: 36 }}
+            >
               <Image
                 source={require("../../assets/logo.png")}
-                className="h-8 w-8"
                 resizeMode="contain"
+                resizeMethod="resize"
+                style={{ width: 64, height: 36 }}
               />
             </View>
             <Text className="text-xl font-bold text-[#1F2937]">Dashboard</Text>

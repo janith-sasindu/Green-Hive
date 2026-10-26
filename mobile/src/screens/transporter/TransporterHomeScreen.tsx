@@ -36,6 +36,7 @@ import {
 import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen";
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
 import { TransporterProfileScreen } from "./TransporterProfileScreen";
+import { TransporterMyOffersScreen } from "./TransporterMyOffersScreen";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import { CommonActions } from "@react-navigation/native";
 
@@ -53,7 +54,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const isTablet = screenWidth >= 600;
 
   // Active bottom navigation tab
-  const [activeTab, setActiveTab] = useState<"home" | "jobs" | "active" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "jobs" | "active" | "profile" | "offers">("home");
 
   // Interactive Modals
   const [showNotifications, setShowNotifications] = useState(false);
@@ -274,6 +275,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     );
   }
 
+  if (activeTab === "offers") {
+    return (
+      <TransporterMyOffersScreen
+        navigation={navigation}
+        onSelectTab={setActiveTab}
+        activeTab="home"
+        onBack={() => setActiveTab("home")}
+      />
+    );
+  }
+
   return (
     <View className="flex-1 bg-[#F4F7F5] dark:bg-slate-900">
       <StatusBar barStyle={colors.statusBar} backgroundColor={colors.statusBg} />
@@ -292,17 +304,19 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               className={`rounded-xl bg-[#135228] items-center justify-center mr-2 sm:mr-2.5 shadow-xs overflow-hidden ${
                 isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
               }`}
+              style={{
+                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+              }}
             >
               <Image
                 source={require("../../assets/logo.png")}
-                className={
-                  isExtraSmall
-                    ? "h-6 w-6"
-                    : isSmallDevice
-                    ? "h-7 w-7"
-                    : "h-8 w-8"
-                }
                 resizeMode="contain"
+                resizeMethod="resize"
+                style={{
+                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                }}
               />
             </View>
             <Text
@@ -388,7 +402,9 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
           {/* ================= 1. DRIVER PROFILE BANNER CARD ================= */}
         <View className="px-4 sm:px-5 mt-2">
-          <View
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setActiveTab("profile")}
             className={`relative overflow-hidden rounded-[24px] sm:rounded-[26px] bg-[#E68A00] shadow-sm ${
               isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-5"
             }`}
@@ -496,7 +512,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 · {profile.completedJobs} completed jobs
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* ================= 2. STATS GRID (2x2) ================= */}
@@ -550,7 +566,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* My Offers */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowOffersModal(true)}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterMyOffers");
+                } else {
+                  setActiveTab("offers");
+                }
+              }}
               className={`flex-1 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex-row items-center justify-between ${
                 isExtraSmall ? "p-2.5" : isSmallDevice ? "p-3" : "p-3.5"
               }`}
@@ -597,7 +619,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Active Jobs */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowJobDetailsModal(true)}
+              onPress={() => setActiveTab("active")}
               className={`flex-1 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex-row items-center justify-between ${
                 isExtraSmall ? "p-2.5" : isSmallDevice ? "p-3" : "p-3.5"
               }`}
@@ -725,7 +747,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Active Jobs */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowJobDetailsModal(true)}
+              onPress={() => setActiveTab("active")}
               className={`flex-1 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-2xs px-2 ${
                 isExtraSmall
                   ? "h-[68px]"
@@ -757,7 +779,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* My Offers */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowOffersModal(true)}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterMyOffers");
+                } else {
+                  setActiveTab("offers");
+                }
+              }}
               className={`flex-1 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-2xs px-2 ${
                 isExtraSmall
                   ? "h-[68px]"
@@ -786,7 +814,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Profile */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowProfileModal(true)}
+              onPress={() => setActiveTab("profile")}
               className={`flex-1 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-2xs px-2 ${
                 isExtraSmall
                   ? "h-[68px]"
@@ -816,9 +844,19 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
         {/* ================= 4. ACTIVE JOB SECTION ================= */}
         <View className="mt-4 px-4 sm:px-5">
-          <Text className="text-[11.5px] sm:text-[12px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400 mb-2 sm:mb-2.5">
-            ACTIVE JOB
-          </Text>
+          <View className="flex-row items-center justify-between mb-2 sm:mb-2.5">
+            <Text className="text-[11.5px] sm:text-[12px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
+              ACTIVE JOB
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setActiveTab("active")}
+            >
+              <Text className="text-xs font-bold text-[#E68A00]">
+                View Live Trip →
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Active Job Card */}
           <View
