@@ -10,10 +10,12 @@ import {
   useWindowDimensions,
   Platform,
   ScrollView,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
 
 // Mock Data imported from dedicated transporter data folder
 import {
@@ -41,6 +43,7 @@ export const TransporterAvailableJobsScreen = ({
   onPressSeeMoreNotifications,
 }: TransporterAvailableJobsScreenProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, setDarkMode, toggleDarkMode, colors } = useTransporterTheme();
 
   // Responsive Breakpoints
   const isExtraSmall = screenWidth < 360;
@@ -205,11 +208,11 @@ export const TransporterAvailableJobsScreen = ({
   }
 
   return (
-    <View className="flex-1 bg-[#F5F8F6]">
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F8F6" />
+    <View className="flex-1 bg-[#F5F8F6] dark:bg-slate-900">
+      <StatusBar barStyle={colors.statusBar} backgroundColor={colors.statusBg} />
 
       {/* ================= TOP HEADER ================= */}
-      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6]">
+      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6] dark:bg-slate-900">
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
@@ -239,7 +242,7 @@ export const TransporterAvailableJobsScreen = ({
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.85}
-              className={`font-black text-gray-900 tracking-tight flex-1 ${
+              className={`font-black text-gray-900 dark:text-white tracking-tight flex-1 ${
                 isExtraSmall
                   ? "text-[16px]"
                   : isSmallDevice
@@ -263,9 +266,9 @@ export const TransporterAvailableJobsScreen = ({
               <Ionicons
                 name="notifications-outline"
                 size={isExtraSmall ? 18 : isSmallDevice ? 20 : 23}
-                color="#4B5563"
+                color={colors.icon}
               />
-              <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+              <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-800" />
             </TouchableOpacity>
 
             {/* Profile Avatar Pill */}
@@ -305,7 +308,7 @@ export const TransporterAvailableJobsScreen = ({
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.85}
-            className={`font-medium text-gray-500 ${
+            className={`font-medium text-gray-500 dark:text-slate-400 ${
               isSmallDevice ? "text-[12px]" : "text-[13.5px]"
             }`}
           >
@@ -320,7 +323,7 @@ export const TransporterAvailableJobsScreen = ({
               key={job.id}
               activeOpacity={0.88}
               onPress={() => setSelectedJob(job)}
-              className={`rounded-3xl bg-white border border-gray-100 shadow-xs ${
+              className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs ${
                 isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-5"
               }`}
               style={{
@@ -334,15 +337,15 @@ export const TransporterAvailableJobsScreen = ({
               {/* Header row: Job ID & Open Pill Badge */}
               <View className="flex-row items-center justify-between mb-1.5">
                 <Text
-                  className={`font-semibold text-gray-400 ${
+                  className={`font-semibold text-gray-400 dark:text-slate-400 ${
                     isSmallDevice ? "text-[11px]" : "text-xs"
                   }`}
                   numberOfLines={1}
                 >
                   {job.id}
                 </Text>
-                <View className="rounded-full bg-amber-100/70 px-2.5 py-0.5">
-                  <Text className="text-[10px] sm:text-[11px] font-bold text-amber-800">
+                <View className="rounded-full bg-amber-100/70 dark:bg-amber-500/20 px-2.5 py-0.5">
+                  <Text className="text-[10px] sm:text-[11px] font-bold text-amber-800 dark:text-amber-300">
                     {job.status}
                   </Text>
                 </View>
@@ -353,7 +356,7 @@ export const TransporterAvailableJobsScreen = ({
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
-                className={`font-extrabold text-gray-900 mb-2 sm:mb-2.5 ${
+                className={`font-extrabold text-gray-900 dark:text-white mb-2 sm:mb-2.5 ${
                   isExtraSmall
                     ? "text-[15px]"
                     : isSmallDevice
@@ -372,11 +375,11 @@ export const TransporterAvailableJobsScreen = ({
                     <Ionicons
                       name="cube-outline"
                       size={isSmallDevice ? 15 : 16}
-                      color="#6B7280"
+                      color={colors.iconMuted}
                     />
                   </View>
                   <Text
-                    className={`font-medium text-gray-600 ${
+                    className={`font-medium text-gray-600 dark:text-slate-300 ${
                       isSmallDevice ? "text-[11.5px]" : "text-xs"
                     }`}
                   >
@@ -392,7 +395,7 @@ export const TransporterAvailableJobsScreen = ({
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    className={`font-medium text-gray-600 flex-1 ${
+                    className={`font-medium text-gray-600 dark:text-slate-300 flex-1 ${
                       isSmallDevice ? "text-[11.5px]" : "text-xs"
                     }`}
                   >
@@ -408,7 +411,7 @@ export const TransporterAvailableJobsScreen = ({
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    className={`font-medium text-gray-600 flex-1 ${
+                    className={`font-medium text-gray-600 dark:text-slate-300 flex-1 ${
                       isSmallDevice ? "text-[11.5px]" : "text-xs"
                     }`}
                   >
@@ -418,18 +421,18 @@ export const TransporterAvailableJobsScreen = ({
               </View>
 
               {/* Footer row: Date/Time and "View Job >" button */}
-              <View className="flex-row items-center justify-between pt-2.5 sm:pt-3 mt-1 border-t border-gray-100/80">
+              <View className="flex-row items-center justify-between pt-2.5 sm:pt-3 mt-1 border-t border-gray-100/80 dark:border-slate-700">
                 <View className="flex-row items-center flex-1 pr-2">
                   <Ionicons
                     name="time-outline"
                     size={isSmallDevice ? 13 : 14}
-                    color="#9CA3AF"
+                    color={colors.iconMuted}
                   />
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.8}
-                    className={`font-medium text-gray-400 ml-1.5 flex-1 ${
+                    className={`font-medium text-gray-400 dark:text-slate-400 ml-1.5 flex-1 ${
                       isSmallDevice ? "text-[10.5px]" : "text-[11.5px]"
                     }`}
                   >
@@ -444,7 +447,7 @@ export const TransporterAvailableJobsScreen = ({
                   className="flex-row items-center py-1 pl-2"
                 >
                   <Text
-                    className={`font-bold text-[#D97706] ${
+                    className={`font-bold text-[#D97706] dark:text-amber-400 ${
                       isSmallDevice ? "text-[11.5px]" : "text-xs"
                     }`}
                   >
@@ -461,7 +464,7 @@ export const TransporterAvailableJobsScreen = ({
       {/* ================= BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
         edges={["bottom"]}
-        className="bg-white border-t border-gray-200/60"
+        className="bg-white dark:bg-slate-800 border-t border-gray-200/60 dark:border-slate-700"
       >
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
@@ -478,7 +481,7 @@ export const TransporterAvailableJobsScreen = ({
             <Ionicons
               name={activeTab === "home" ? "home" : "home-outline"}
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "home" ? "#E68A00" : "#9CA3AF"}
+              color={activeTab === "home" ? "#E68A00" : colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
@@ -486,7 +489,7 @@ export const TransporterAvailableJobsScreen = ({
               } ${
                 activeTab === "home"
                   ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
+                  : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
               Home
@@ -509,7 +512,7 @@ export const TransporterAvailableJobsScreen = ({
             <Ionicons
               name={activeTab === "jobs" ? "location" : "location-outline"}
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "jobs" ? "#E68A00" : "#9CA3AF"}
+              color={activeTab === "jobs" ? "#E68A00" : colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
@@ -517,7 +520,7 @@ export const TransporterAvailableJobsScreen = ({
               } ${
                 activeTab === "jobs"
                   ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
+                  : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
               Jobs
@@ -540,7 +543,7 @@ export const TransporterAvailableJobsScreen = ({
             <Ionicons
               name={activeTab === "active" ? "bus" : "bus-outline"}
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "active" ? "#E68A00" : "#9CA3AF"}
+              color={activeTab === "active" ? "#E68A00" : colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
@@ -548,7 +551,7 @@ export const TransporterAvailableJobsScreen = ({
               } ${
                 activeTab === "active"
                   ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
+                  : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
               Active
@@ -571,7 +574,7 @@ export const TransporterAvailableJobsScreen = ({
             <Ionicons
               name={activeTab === "profile" ? "person" : "person-outline"}
               size={isSmallDevice ? 20 : 22}
-              color={activeTab === "profile" ? "#E68A00" : "#9CA3AF"}
+              color={activeTab === "profile" ? "#E68A00" : colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
@@ -579,7 +582,7 @@ export const TransporterAvailableJobsScreen = ({
               } ${
                 activeTab === "profile"
                   ? "font-bold text-[#E68A00]"
-                  : "font-medium text-[#9CA3AF]"
+                  : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
               Profile
@@ -627,7 +630,7 @@ export const TransporterAvailableJobsScreen = ({
                 <TouchableOpacity activeOpacity={1}>
                   {/* Main White Details Card */}
                   <View
-                    className={`bg-white rounded-3xl border border-gray-100 shadow-xl ${
+                    className={`bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-xl ${
                       isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4 sm:p-5" : "p-5 sm:p-6"
                     }`}
                     style={{
@@ -641,14 +644,14 @@ export const TransporterAvailableJobsScreen = ({
                     {/* Header Row: JOB #GH-T1025 & Open badge */}
                     <View className="flex-row items-center justify-between">
                       <Text
-                        className="text-xs sm:text-[13px] font-bold text-gray-400 tracking-wider flex-1 pr-2"
+                        className="text-xs sm:text-[13px] font-bold text-gray-400 dark:text-slate-400 tracking-wider flex-1 pr-2"
                         numberOfLines={1}
                       >
                         {getJobIdDisplay(selectedJob.id)}
                       </Text>
-                      <View className="flex-row items-center bg-[#FEF3C7] px-2.5 py-1 rounded-full shrink-0">
+                      <View className="flex-row items-center bg-[#FEF3C7] dark:bg-amber-950/60 px-2.5 py-1 rounded-full shrink-0">
                         <View className="h-2 w-2 rounded-full bg-[#E68A00] mr-1.5" />
-                        <Text className="text-[10.5px] sm:text-xs font-bold text-[#B45309]">
+                        <Text className="text-[10.5px] sm:text-xs font-bold text-[#B45309] dark:text-amber-300">
                           {selectedJob.status || "Open"}
                         </Text>
                       </View>
@@ -659,7 +662,7 @@ export const TransporterAvailableJobsScreen = ({
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.8}
-                      className={`font-black text-[#0F172A] tracking-tight mt-2 sm:mt-2.5 ${
+                      className={`font-black text-[#0F172A] dark:text-white tracking-tight mt-2 sm:mt-2.5 ${
                         isExtraSmall
                           ? "text-[18px]"
                           : isSmallDevice
@@ -669,78 +672,78 @@ export const TransporterAvailableJobsScreen = ({
                     >
                       {selectedJob.cropName}
                     </Text>
-                    <Text className="text-xs sm:text-sm font-medium text-gray-500 mt-0.5">
+                    <Text className="text-xs sm:text-sm font-medium text-gray-500 dark:text-slate-400 mt-0.5">
                       {selectedJob.weight}
                     </Text>
 
                     {/* ROUTE Section */}
-                    <Text className="text-[10.5px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 sm:mt-5 mb-2 sm:mb-2.5">
+                    <Text className="text-[10.5px] sm:text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mt-4 sm:mt-5 mb-2 sm:mb-2.5">
                       ROUTE
                     </Text>
 
                     {/* Pickup Card */}
-                    <View className="rounded-2xl bg-[#F0FDF4] p-3 sm:p-4">
+                    <View className="rounded-2xl bg-[#F0FDF4] dark:bg-emerald-950/30 border border-transparent dark:border-emerald-800/40 p-3 sm:p-4">
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mr-2" />
-                        <Text className="text-xs sm:text-[13px] font-bold text-[#16A34A]">
+                        <Text className="text-xs sm:text-[13px] font-bold text-[#16A34A] dark:text-emerald-400">
                           Pickup
                         </Text>
                       </View>
                       <Text
                         numberOfLines={2}
-                        className="text-xs sm:text-sm font-bold text-[#0F172A] mt-1 sm:mt-1.5 leading-snug"
+                        className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-slate-100 mt-1 sm:mt-1.5 leading-snug"
                       >
                         {getPickupAddress(selectedJob)}
                       </Text>
-                      <Text className="text-xs text-gray-500 font-medium mt-0.5" numberOfLines={1}>
+                      <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
                         Farmer: {selectedJob.farmerName || "Kamal Jayasinghe"}
                       </Text>
                     </View>
 
                     {/* Delivery Card */}
-                    <View className="rounded-2xl bg-[#FEF2F2] p-3 sm:p-4 mt-2 sm:mt-2.5">
+                    <View className="rounded-2xl bg-[#FEF2F2] dark:bg-rose-950/30 border border-transparent dark:border-rose-800/40 p-3 sm:p-4 mt-2 sm:mt-2.5">
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#EF4444] mr-2" />
-                        <Text className="text-xs sm:text-[13px] font-bold text-[#DC2626]">
+                        <Text className="text-xs sm:text-[13px] font-bold text-[#DC2626] dark:text-rose-400">
                           Delivery
                         </Text>
                       </View>
                       <Text
                         numberOfLines={2}
-                        className="text-xs sm:text-sm font-bold text-[#0F172A] mt-1 sm:mt-1.5 leading-snug"
+                        className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-slate-100 mt-1 sm:mt-1.5 leading-snug"
                       >
                         {getDeliveryAddress(selectedJob)}
                       </Text>
-                      <Text className="text-xs text-gray-500 font-medium mt-0.5" numberOfLines={1}>
+                      <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
                         Seller: {selectedJob.sellerName || "Colombo Fresh Market"}
                       </Text>
                     </View>
 
                     {/* Required Date & Required Time (Two Columns) */}
                     <View className="flex-row items-center gap-2 sm:gap-3 mt-2.5 sm:mt-3">
-                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] p-2.5 sm:p-3.5 border border-slate-100">
-                        <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400">
+                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700/60 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
+                        <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                           Required Date
                         </Text>
                         <Text
                           numberOfLines={1}
                           adjustsFontSizeToFit
                           minimumFontScale={0.75}
-                          className="text-xs sm:text-[15px] font-bold text-[#0F172A] mt-0.5 sm:mt-1"
+                          className="text-xs sm:text-[15px] font-bold text-[#0F172A] dark:text-slate-100 mt-0.5 sm:mt-1"
                         >
                           {getJobDate(selectedJob)}
                         </Text>
                       </View>
 
-                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] p-2.5 sm:p-3.5 border border-slate-100">
-                        <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400">
+                      <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700/60 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
+                        <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                           Required Time
                         </Text>
                         <Text
                           numberOfLines={1}
                           adjustsFontSizeToFit
                           minimumFontScale={0.75}
-                          className="text-xs sm:text-[15px] font-bold text-[#0F172A] mt-0.5 sm:mt-1"
+                          className="text-xs sm:text-[15px] font-bold text-[#0F172A] dark:text-slate-100 mt-0.5 sm:mt-1"
                         >
                           {getJobTime(selectedJob)}
                         </Text>
@@ -748,24 +751,24 @@ export const TransporterAvailableJobsScreen = ({
                     </View>
 
                     {/* Special Instructions Card */}
-                    <View className="rounded-2xl bg-[#FFFDF0] p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#FDE68A]">
-                      <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#D97706]">
+                    <View className="rounded-2xl bg-[#FFFDF0] dark:bg-amber-950/30 p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#FDE68A] dark:border-amber-700/50">
+                      <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#D97706] dark:text-amber-400">
                         Special Instructions
                       </Text>
-                      <Text className="text-[11px] sm:text-[12.5px] text-[#92400E] font-medium mt-1 leading-relaxed">
+                      <Text className="text-[11px] sm:text-[12.5px] text-[#92400E] dark:text-amber-200 font-medium mt-1 leading-relaxed">
                         {getSpecialInstructions(selectedJob)}
                       </Text>
                     </View>
 
                     {/* Payment Protected Card */}
-                    <View className="rounded-2xl bg-[#F0FDF4] p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#BBF7D0]">
+                    <View className="rounded-2xl bg-[#F0FDF4] dark:bg-emerald-950/30 p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#BBF7D0] dark:border-emerald-700/50">
                       <View className="flex-row items-center">
                         <Text className="text-xs mr-1.5">🔒</Text>
-                        <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#16A34A]">
+                        <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#16A34A] dark:text-emerald-400">
                           Payment Protected
                         </Text>
                       </View>
-                      <Text className="text-[11px] sm:text-xs text-[#16A34A] font-medium mt-1 leading-relaxed">
+                      <Text className="text-[11px] sm:text-xs text-[#16A34A] dark:text-emerald-300 font-medium mt-1 leading-relaxed">
                         Transportation payment is held by Green Hive and released upon
                         successful delivery confirmation.
                       </Text>
@@ -777,9 +780,9 @@ export const TransporterAvailableJobsScreen = ({
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => setSelectedJob(null)}
-                      className="flex-[0.4] py-3 sm:py-3.5 rounded-2xl bg-white border border-gray-200/90 items-center justify-center shadow-2xs"
+                      className="flex-[0.4] py-3 sm:py-3.5 rounded-2xl bg-white dark:bg-slate-700 border border-gray-200/90 dark:border-slate-600 items-center justify-center shadow-2xs"
                     >
-                      <Text className="text-xs sm:text-base font-bold text-gray-800">
+                      <Text className="text-xs sm:text-base font-bold text-gray-800 dark:text-slate-200">
                         Back
                       </Text>
                     </TouchableOpacity>
@@ -815,21 +818,21 @@ export const TransporterAvailableJobsScreen = ({
         >
           <View
             style={{ maxWidth: 480, width: "100%", alignSelf: "center", maxHeight: "85%" }}
-            className={`bg-white rounded-3xl shadow-xl ${
+            className={`bg-white dark:bg-slate-800 rounded-3xl border border-transparent dark:border-slate-700 shadow-xl ${
               isSmallDevice ? "p-4" : "p-5"
             }`}
           >
-            <View className="flex-row items-center justify-between pb-3 border-b border-gray-100">
+            <View className="flex-row items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-700">
               <View className="flex-row items-center">
                 <Text
-                  className={`font-bold text-gray-900 ${
+                  className={`font-bold text-gray-900 dark:text-white ${
                     isSmallDevice ? "text-base" : "text-lg"
                   }`}
                 >
                   Notifications
                 </Text>
-                <View className="ml-2 bg-[#FEF3C7] px-2 py-0.5 rounded-full">
-                  <Text className="text-[10.5px] sm:text-xs font-bold text-amber-800">
+                <View className="ml-2 bg-[#FEF3C7] dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                  <Text className="text-[10.5px] sm:text-xs font-bold text-amber-800 dark:text-amber-300">
                     {notifications.length} new
                   </Text>
                 </View>
@@ -837,9 +840,9 @@ export const TransporterAvailableJobsScreen = ({
               <TouchableOpacity
                 onPress={() => setShowNotificationsModal(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                className="h-8 w-8 rounded-full bg-gray-100 items-center justify-center"
+                className="h-8 w-8 rounded-full bg-gray-100 dark:bg-slate-700 items-center justify-center"
               >
-                <Ionicons name="close" size={18} color="#6B7280" />
+                <Ionicons name="close" size={18} color={colors.iconMuted} />
               </TouchableOpacity>
             </View>
 
@@ -853,12 +856,12 @@ export const TransporterAvailableJobsScreen = ({
                 {notifications.map((notif) => (
                   <View
                     key={notif.id}
-                    className="p-3 bg-gray-50 rounded-2xl border border-gray-100"
+                    className="p-3 bg-gray-50 dark:bg-slate-700/60 rounded-2xl border border-gray-100 dark:border-slate-600"
                   >
-                    <Text className="text-xs font-bold text-gray-800">
+                    <Text className="text-xs font-bold text-gray-800 dark:text-slate-100">
                       {notif.title}
                     </Text>
-                    <Text className="text-xs text-gray-600 mt-0.5 leading-snug">
+                    <Text className="text-xs text-gray-600 dark:text-slate-300 mt-0.5 leading-snug">
                       {notif.message}
                     </Text>
                   </View>
@@ -870,9 +873,9 @@ export const TransporterAvailableJobsScreen = ({
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={handleSeeMoreNotifications}
-              className="mt-2.5 py-2.5 rounded-xl border border-amber-200 bg-amber-50/70 items-center justify-center flex-row"
+              className="mt-2.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/40 items-center justify-center flex-row"
             >
-              <Text className="text-xs font-bold text-[#D97706]">See More</Text>
+              <Text className="text-xs font-bold text-[#D97706] dark:text-amber-400">See More</Text>
               <Ionicons
                 name="chevron-forward"
                 size={14}
@@ -900,20 +903,20 @@ export const TransporterAvailableJobsScreen = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB]">
+        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB] dark:bg-slate-900">
           <View
             style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
-            <Text className="text-base sm:text-lg font-bold text-gray-900">
+            <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
               Driver Profile
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="p-1 rounded-full bg-gray-100"
+              className="p-1 rounded-full bg-gray-100 dark:bg-slate-700"
             >
-              <Ionicons name="close" size={22} color="#4B5563" />
+              <Ionicons name="close" size={22} color={colors.iconMuted} />
             </TouchableOpacity>
           </View>
 
@@ -928,55 +931,84 @@ export const TransporterAvailableJobsScreen = ({
           >
             <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
               {/* Driver Card */}
-            <View className="rounded-2xl bg-white p-4 sm:p-5 border border-gray-100 shadow-2xs items-center mb-4">
-              <View className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
-                <Text className="text-xl sm:text-2xl font-black text-white">
-                  {profile.avatarLetter}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
+                <View className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
+                  <Text className="text-xl sm:text-2xl font-black text-white">
+                    {profile.avatarLetter}
+                  </Text>
+                </View>
+                <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
+                  {profile.name}
+                </Text>
+                <Text className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                  {profile.email}
+                </Text>
+                <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
+                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
+                  Completed Trips)
                 </Text>
               </View>
-              <Text className="text-base sm:text-lg font-extrabold text-gray-900">
-                {profile.name}
-              </Text>
-              <Text className="text-xs font-semibold text-gray-500">
-                {profile.email}
-              </Text>
-              <Text className="text-xs text-amber-700 font-bold mt-1">
-                ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                Completed Trips)
-              </Text>
-            </View>
 
-            {/* Vehicle details */}
-            <View className="rounded-2xl bg-white p-3.5 sm:p-4 border border-gray-100 shadow-2xs mb-4">
-              <Text className="text-xs font-bold text-gray-500 uppercase mb-2">
-                Registered Vehicle
-              </Text>
-              <View className="space-y-1.5 gap-1.5">
-                <Text className="text-xs text-gray-700">
-                  🚚 <Text className="font-semibold">Type:</Text>{" "}
-                  {profile.vehicleType}
+              {/* Vehicle details */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
+                  Registered Vehicle
                 </Text>
-                <Text className="text-xs text-gray-700">
-                  🔢 <Text className="font-semibold">Plate:</Text>{" "}
-                  {profile.vehiclePlate}
-                </Text>
-                <Text className="text-xs text-gray-700">
-                  🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                  Verified
-                </Text>
+                <View className="space-y-1.5 gap-1.5">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    {profile.vehicleType}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    {profile.vehiclePlate}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
+                    Verified
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            {/* Sign Out Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleSignOut}
-              className="rounded-2xl bg-red-50 border border-red-200 py-3.5 items-center justify-center mt-2"
-            >
-              <Text className="text-sm font-bold text-red-600">
-                Log Out of Transporter Account
-              </Text>
-            </TouchableOpacity>
+              {/* Dark Mode Toggle Card */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-8 w-8 rounded-full bg-amber-50 dark:bg-slate-700 items-center justify-center mr-3">
+                      <Ionicons
+                        name={isDark ? "moon" : "sunny"}
+                        size={18}
+                        color={isDark ? "#F59E0B" : "#D97706"}
+                      />
+                    </View>
+                    <View>
+                      <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                        Dark Mode
+                      </Text>
+                      <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={isDark}
+                    onValueChange={toggleDarkMode}
+                    trackColor={{ false: "#D1D5DB", true: "#E68A00" }}
+                    thumbColor={isDark ? "#FFFFFF" : "#FFFFFF"}
+                  />
+                </View>
+              </View>
+
+              {/* Sign Out Button */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleSignOut}
+                className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3.5 items-center justify-center mt-2"
+              >
+                <Text className="text-sm font-bold text-red-600 dark:text-red-400">
+                  Log Out of Transporter Account
+                </Text>
+              </TouchableOpacity>
             </View>
           </SmoothScrollView>
         </SafeAreaView>

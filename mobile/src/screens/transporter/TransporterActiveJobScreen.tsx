@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Modal,
+  Switch,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +16,7 @@ import {
   ThemedAlertModal,
   ThemedAlertModalType,
 } from "../../components/common";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
 
 // Data
 import {
@@ -50,6 +52,7 @@ export const TransporterActiveJobScreen: React.FC<
   onPressNotifications,
 }) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, toggleDarkMode, colors } = useTransporterTheme();
 
   // Responsive Breakpoints
   const isExtraSmall = screenWidth < 360;
@@ -112,33 +115,33 @@ export const TransporterActiveJobScreen: React.FC<
     switch (status) {
       case "In Progress":
         return {
-          bg: "bg-[#FEF3C7]",
-          text: "text-[#D97706]",
-          dot: "bg-[#D97706]",
+          bg: isDark ? "bg-amber-950/60 border border-amber-800/40" : "bg-[#FEF3C7]",
+          text: isDark ? "text-amber-300" : "text-[#D97706]",
+          dot: isDark ? "bg-amber-400" : "bg-[#D97706]",
         };
       case "At Pickup":
         return {
-          bg: "bg-[#EFF6FF]",
-          text: "text-[#2563EB]",
-          dot: "bg-[#2563EB]",
+          bg: isDark ? "bg-blue-950/60 border border-blue-800/40" : "bg-[#EFF6FF]",
+          text: isDark ? "text-blue-300" : "text-[#2563EB]",
+          dot: isDark ? "bg-blue-400" : "bg-[#2563EB]",
         };
       case "In Transit":
         return {
-          bg: "bg-[#E0F2FE]",
-          text: "text-[#0284C7]",
-          dot: "bg-[#0284C7]",
+          bg: isDark ? "bg-sky-950/60 border border-sky-800/40" : "bg-[#E0F2FE]",
+          text: isDark ? "text-sky-300" : "text-[#0284C7]",
+          dot: isDark ? "bg-sky-400" : "bg-[#0284C7]",
         };
       case "Delivered":
         return {
-          bg: "bg-[#DCFCE7]",
-          text: "text-[#16A34A]",
-          dot: "bg-[#16A34A]",
+          bg: isDark ? "bg-emerald-950/60 border border-emerald-800/40" : "bg-[#DCFCE7]",
+          text: isDark ? "text-emerald-300" : "text-[#16A34A]",
+          dot: isDark ? "bg-emerald-400" : "bg-[#16A34A]",
         };
       default:
         return {
-          bg: "bg-[#FEF3C7]",
-          text: "text-[#D97706]",
-          dot: "bg-[#D97706]",
+          bg: isDark ? "bg-amber-950/60 border border-amber-800/40" : "bg-[#FEF3C7]",
+          text: isDark ? "text-amber-300" : "text-[#D97706]",
+          dot: isDark ? "bg-amber-400" : "bg-[#D97706]",
         };
     }
   };
@@ -279,11 +282,14 @@ export const TransporterActiveJobScreen: React.FC<
   };
 
   return (
-    <View className="flex-1 bg-[#F4F7F5]">
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
+    <View className="flex-1 bg-[#F4F7F5] dark:bg-slate-900">
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0F172A" : "#F4F7F5"}
+      />
 
       {/* ================= 1. TOP HEADER ================= */}
-      <SafeAreaView edges={["top"]} className="bg-[#F4F7F5]">
+      <SafeAreaView edges={["top"]} className="bg-[#F4F7F5] dark:bg-slate-900">
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
@@ -310,7 +316,7 @@ export const TransporterActiveJobScreen: React.FC<
               />
             </View>
             <Text
-              className={`font-black text-[#0F172A] tracking-tight ${
+              className={`font-black text-[#0F172A] dark:text-white tracking-tight ${
                 isExtraSmall
                   ? "text-[16px]"
                   : isSmallDevice
@@ -328,14 +334,14 @@ export const TransporterActiveJobScreen: React.FC<
               activeOpacity={0.7}
               onPress={handleNotificationPress}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`items-center justify-center rounded-xl bg-white/80 border border-gray-200/60 shadow-2xs relative ${
+              className={`items-center justify-center rounded-xl bg-white/80 dark:bg-slate-800 border border-gray-200/60 dark:border-slate-700 shadow-2xs relative ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-9 w-9" : "h-10 w-10"
               }`}
             >
               <Ionicons
                 name="notifications-outline"
                 size={isExtraSmall ? 18 : isSmallDevice ? 20 : 21}
-                color="#4B5563"
+                color={colors.iconMuted}
               />
               {/* Unread indicator dot */}
               <View className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border border-white" />
@@ -388,14 +394,14 @@ export const TransporterActiveJobScreen: React.FC<
               </Text>
             </View>
 
-            <Text className="text-[13px] font-semibold text-[#6B7280]">
+            <Text className="text-[13px] font-semibold text-[#6B7280] dark:text-slate-400">
               {currentJob.id}
             </Text>
           </View>
 
           {/* ================= CARD 1: CROP & ROUTE DETAILS ================= */}
           <View
-            className={`rounded-3xl bg-white border border-gray-100 shadow-xs mb-3 ${
+            className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs mb-3 ${
               isExtraSmall ? "p-3.5" : "p-4 sm:p-5"
             }`}
             style={{
@@ -408,7 +414,7 @@ export const TransporterActiveJobScreen: React.FC<
           >
             {/* Crop Header */}
             <Text
-              className={`font-black text-[#111827] tracking-tight mb-3 sm:mb-3.5 ${
+              className={`font-black text-[#111827] dark:text-white tracking-tight mb-3 sm:mb-3.5 ${
                 isExtraSmall ? "text-[16px]" : "text-[18px]"
               }`}
             >
@@ -416,33 +422,33 @@ export const TransporterActiveJobScreen: React.FC<
             </Text>
 
             {/* Sub-Card: Farmer / Pickup */}
-            <View className="rounded-2xl bg-[#F0FDF4] p-3 sm:p-3.5 mb-2.5 border border-[#DCFCE7]/60">
+            <View className="rounded-2xl bg-[#F0FDF4] dark:bg-emerald-950/30 p-3 sm:p-3.5 mb-2.5 border border-[#DCFCE7]/60 dark:border-emerald-800/40">
               <View className="flex-row items-center mb-1">
                 <Ionicons name="person-outline" size={13.5} color="#16A34A" />
-                <Text className="text-[11.5px] sm:text-xs font-bold text-[#16A34A] ml-1.5">
+                <Text className="text-[11.5px] sm:text-xs font-bold text-[#16A34A] dark:text-emerald-400 ml-1.5">
                   Farmer / Pickup
                 </Text>
               </View>
-              <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827]">
+              <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827] dark:text-slate-100">
                 {currentJob.farmerName}
               </Text>
-              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] font-normal mt-0.5">
+              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] dark:text-slate-400 font-normal mt-0.5">
                 {currentJob.pickup}
               </Text>
             </View>
 
             {/* Sub-Card: Seller / Delivery */}
-            <View className="rounded-2xl bg-[#EFF6FF] p-3 sm:p-3.5 border border-[#DBEAFE]/60">
+            <View className="rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/30 p-3 sm:p-3.5 border border-[#DBEAFE]/60 dark:border-blue-800/40">
               <View className="flex-row items-center mb-1">
                 <Ionicons name="person-outline" size={13.5} color="#2563EB" />
-                <Text className="text-[11.5px] sm:text-xs font-bold text-[#2563EB] ml-1.5">
+                <Text className="text-[11.5px] sm:text-xs font-bold text-[#2563EB] dark:text-blue-400 ml-1.5">
                   Seller / Delivery
                 </Text>
               </View>
-              <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827]">
+              <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827] dark:text-slate-100">
                 {currentJob.sellerName || "Colombo Fresh Market"}
               </Text>
-              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] font-normal mt-0.5">
+              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] dark:text-slate-400 font-normal mt-0.5">
                 {currentJob.dropoff}
               </Text>
             </View>
@@ -450,7 +456,7 @@ export const TransporterActiveJobScreen: React.FC<
 
           {/* ================= CARD 2: YOUR EARNINGS ================= */}
           <View
-            className={`rounded-2xl bg-white border border-gray-100 shadow-xs mb-3 ${
+            className={`rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs mb-3 ${
               isExtraSmall ? "p-3.5" : "p-4 sm:p-4.5"
             }`}
             style={{
@@ -461,11 +467,11 @@ export const TransporterActiveJobScreen: React.FC<
               shadowOffset: { width: 0, height: 2 },
             }}
           >
-            <Text className="text-[11.5px] sm:text-xs text-[#9CA3AF] font-medium">
+            <Text className="text-[11.5px] sm:text-xs text-[#9CA3AF] dark:text-slate-400 font-medium">
               Your Earnings
             </Text>
             <Text
-              className={`font-black text-[#16A34A] tracking-tight mt-1 mb-1.5 ${
+              className={`font-black text-[#16A34A] dark:text-emerald-400 tracking-tight mt-1 mb-1.5 ${
                 isExtraSmall ? "text-[22px]" : "text-[26px]"
               }`}
             >
@@ -473,18 +479,18 @@ export const TransporterActiveJobScreen: React.FC<
             </Text>
             <View className="flex-row items-center">
               <Text className="text-xs mr-1 text-[#6B7280]">🔒</Text>
-              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] font-medium">
+              <Text className="text-[11.5px] sm:text-xs text-[#6B7280] dark:text-slate-400 font-medium">
                 Held by Green Hive · Released on delivery
               </Text>
             </View>
           </View>
 
           {/* ================= CARD 3: SPECIAL INSTRUCTIONS ================= */}
-          <View className="rounded-2xl bg-[#FFFDF0] border border-[#FDE68A] p-3.5 sm:p-4 mb-5">
-            <Text className="text-[12px] sm:text-[13px] font-bold text-[#D97706] mb-1">
+          <View className="rounded-2xl bg-[#FFFDF0] dark:bg-amber-950/30 border border-[#FDE68A] dark:border-amber-700/50 p-3.5 sm:p-4 mb-5">
+            <Text className="text-[12px] sm:text-[13px] font-bold text-[#D97706] dark:text-amber-400 mb-1">
               Special Instructions
             </Text>
-            <Text className="text-[11.5px] sm:text-[12.5px] text-[#92400E] font-medium leading-relaxed">
+            <Text className="text-[11.5px] sm:text-[12.5px] text-[#92400E] dark:text-amber-200 font-medium leading-relaxed">
               {currentJob.specialInstructions ||
                 "Handle with care. Keep cool. Arrive by 8 AM for market opening."}
             </Text>
@@ -560,7 +566,7 @@ export const TransporterActiveJobScreen: React.FC<
       {/* ================= 4. BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
         edges={["bottom"]}
-        className="bg-white border-t border-gray-200/60"
+        className="bg-white dark:bg-slate-800 border-t border-gray-200/60 dark:border-slate-700"
       >
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
@@ -577,12 +583,12 @@ export const TransporterActiveJobScreen: React.FC<
             <Ionicons
               name="home-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Home
             </Text>
@@ -597,12 +603,12 @@ export const TransporterActiveJobScreen: React.FC<
             <Ionicons
               name="location-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Jobs
             </Text>
@@ -639,12 +645,12 @@ export const TransporterActiveJobScreen: React.FC<
             <Ionicons
               name="person-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Profile
             </Text>
@@ -666,21 +672,21 @@ export const TransporterActiveJobScreen: React.FC<
         >
           <View
             style={{ maxWidth: 400, width: "100%" }}
-            className="rounded-3xl bg-white p-4 sm:p-5 border border-gray-100 shadow-xl"
+            className="rounded-3xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-xl"
           >
-            <View className="flex-row items-center justify-between pb-3 border-b border-gray-100 mb-3">
+            <View className="flex-row items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-700 mb-3">
               <View className="flex-row items-center">
                 <Ionicons name="notifications" size={20} color="#FF8C00" />
-                <Text className="text-base font-bold text-gray-900 ml-2">
+                <Text className="text-base font-bold text-gray-900 dark:text-white ml-2">
                   Notifications
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowNotificationsModal(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                className="p-1 rounded-full bg-gray-100"
+                className="p-1 rounded-full bg-gray-100 dark:bg-slate-700"
               >
-                <Ionicons name="close" size={18} color="#4B5563" />
+                <Ionicons name="close" size={18} color={colors.iconMuted} />
               </TouchableOpacity>
             </View>
 
@@ -688,12 +694,12 @@ export const TransporterActiveJobScreen: React.FC<
               {notificationsList.slice(0, 3).map((item) => (
                 <View
                   key={item.id}
-                  className="p-2.5 rounded-xl bg-gray-50 border border-gray-100"
+                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600"
                 >
-                  <Text className="text-xs font-bold text-gray-900">
+                  <Text className="text-xs font-bold text-gray-900 dark:text-white">
                     {item.title}
                   </Text>
-                  <Text className="text-[11px] text-gray-600 mt-0.5">
+                  <Text className="text-[11px] text-gray-600 dark:text-slate-300 mt-0.5">
                     {item.message}
                   </Text>
                 </View>
@@ -725,20 +731,20 @@ export const TransporterActiveJobScreen: React.FC<
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB]">
+        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB] dark:bg-slate-900">
           <View
             style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
-            <Text className="text-base sm:text-lg font-bold text-gray-900">
+            <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
               Driver Profile
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="p-1 rounded-full bg-gray-100"
+              className="p-1 rounded-full bg-gray-100 dark:bg-slate-700"
             >
-              <Ionicons name="close" size={22} color="#4B5563" />
+              <Ionicons name="close" size={22} color={colors.iconMuted} />
             </TouchableOpacity>
           </View>
 
@@ -752,42 +758,71 @@ export const TransporterActiveJobScreen: React.FC<
           >
             <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
               {/* Driver Card */}
-              <View className="rounded-2xl bg-white p-4 sm:p-5 border border-gray-100 shadow-2xs items-center mb-4">
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
                 <View className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#E68A00] items-center justify-center mb-2">
                   <Text className="text-xl sm:text-2xl font-black text-white">
                     {profile.avatarLetter}
                   </Text>
                 </View>
-                <Text className="text-base sm:text-lg font-extrabold text-gray-900">
+                <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
                   {profile.name}
                 </Text>
-                <Text className="text-xs font-semibold text-gray-500">
+                <Text className="text-xs font-semibold text-gray-500 dark:text-slate-400">
                   {profile.email}
                 </Text>
-                <Text className="text-xs text-amber-700 font-bold mt-1">
+                <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
                   ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
                   Completed Trips)
                 </Text>
               </View>
 
               {/* Vehicle details */}
-              <View className="rounded-2xl bg-white p-3.5 sm:p-4 border border-gray-100 shadow-2xs mb-4">
-                <Text className="text-xs font-bold text-gray-500 uppercase mb-2">
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
                   Registered Vehicle
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
-                  <Text className="text-xs text-gray-700">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
                     🚚 <Text className="font-semibold">Type:</Text>{" "}
                     {profile.vehicleType}
                   </Text>
-                  <Text className="text-xs text-gray-700">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
                     🔢 <Text className="font-semibold">Plate:</Text>{" "}
                     {profile.vehiclePlate}
                   </Text>
-                  <Text className="text-xs text-gray-700">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
                     🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
                     Verified
                   </Text>
+                </View>
+              </View>
+
+              {/* Dark Mode Toggle Card */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-8 w-8 rounded-full bg-amber-50 dark:bg-slate-700 items-center justify-center mr-3">
+                      <Ionicons
+                        name={isDark ? "moon" : "sunny"}
+                        size={18}
+                        color={isDark ? "#F59E0B" : "#D97706"}
+                      />
+                    </View>
+                    <View>
+                      <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                        Dark Mode
+                      </Text>
+                      <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={isDark}
+                    onValueChange={toggleDarkMode}
+                    trackColor={{ false: "#D1D5DB", true: "#E68A00" }}
+                    thumbColor={isDark ? "#FFFFFF" : "#FFFFFF"}
+                  />
                 </View>
               </View>
 
@@ -795,9 +830,9 @@ export const TransporterActiveJobScreen: React.FC<
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleSignOut}
-                className="rounded-2xl bg-red-50 border border-red-200 py-3.5 items-center justify-center mt-2"
+                className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3.5 items-center justify-center mt-2"
               >
-                <Text className="text-sm font-bold text-red-600">
+                <Text className="text-sm font-bold text-red-600 dark:text-red-400">
                   Log Out of Transporter Account
                 </Text>
               </TouchableOpacity>

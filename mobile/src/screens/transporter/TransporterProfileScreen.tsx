@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_TRANSPORTER_STATS,
@@ -31,6 +32,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   activeTab = "profile",
 }) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, setDarkMode, toggleDarkMode, colors } = useTransporterTheme();
 
   // Responsive Breakpoints
   const isExtraSmall = screenWidth < 360;
@@ -40,7 +42,6 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   // Profile and stats state from mock data
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
-  const [isLightMode, setIsLightMode] = useState(false);
 
   const handleNotificationPress = () => {
     if (navigation?.navigate) {
@@ -137,11 +138,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   };
 
   return (
-    <View className="flex-1 bg-[#F4F7F5]">
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F7F5" />
+    <View className="flex-1 bg-[#F4F7F5] dark:bg-slate-900">
+      <StatusBar barStyle={colors.statusBar} backgroundColor={colors.statusBg} />
 
       {/* Top Header Bar */}
-      <SafeAreaView edges={["top"]} className="bg-[#F4F7F5]">
+      <SafeAreaView edges={["top"]} className="bg-[#F4F7F5] dark:bg-slate-900">
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
@@ -171,7 +172,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.85}
-              className={`font-bold text-[#111827] flex-1 ${
+              className={`font-bold text-[#111827] dark:text-white flex-1 ${
                 isExtraSmall
                   ? "text-[16px]"
                   : isSmallDevice
@@ -190,17 +191,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               activeOpacity={0.7}
               onPress={handleNotificationPress}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`relative items-center justify-center rounded-full bg-white border border-gray-100/90 shadow-xs ${
+              className={`relative items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-100/90 dark:border-slate-700 shadow-xs ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-9 w-9" : "h-10 w-10"
               }`}
             >
               <Ionicons
                 name="notifications-outline"
                 size={isExtraSmall ? 16 : isSmallDevice ? 18 : 20}
-                color="#4B5563"
+                color={colors.icon}
               />
               {/* Unread Alert Dot */}
-              <View className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#EF4444] border border-white" />
+              <View className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#EF4444] border border-white dark:border-slate-800" />
             </TouchableOpacity>
 
             {/* User Avatar Circle */}
@@ -389,7 +390,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
           {/* ================= 2. CONTACT & VEHICLE CARD ================= */}
           <View
-            className={`rounded-3xl bg-white border border-gray-100 shadow-2xs mb-4 ${
+            className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4 ${
               isExtraSmall ? "p-3.5" : isSmallDevice ? "p-4" : "p-5"
             }`}
             style={{
@@ -400,7 +401,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               elevation: 2,
             }}
           >
-            <Text className="text-base sm:text-lg font-bold text-gray-900 mb-3.5 sm:mb-4">
+            <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3.5 sm:mb-4">
               Contact & Vehicle
             </Text>
 
@@ -408,19 +409,19 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               {/* Phone Row */}
               <View className="flex-row items-center">
                 <View
-                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                  className={`rounded-2xl bg-gray-100/80 dark:bg-slate-700 items-center justify-center mr-3 sm:mr-3.5 ${
                     isExtraSmall ? "h-9 w-9" : "h-11 w-11"
                   }`}
                 >
-                  <Ionicons name="call-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                  <Ionicons name="call-outline" size={isExtraSmall ? 17 : 20} color={colors.icon} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                     Phone
                   </Text>
                   <Text
                     numberOfLines={1}
-                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                    className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
                     {profile.phone}
                   </Text>
@@ -430,19 +431,19 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               {/* Email Row */}
               <View className="flex-row items-center">
                 <View
-                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                  className={`rounded-2xl bg-gray-100/80 dark:bg-slate-700 items-center justify-center mr-3 sm:mr-3.5 ${
                     isExtraSmall ? "h-9 w-9" : "h-11 w-11"
                   }`}
                 >
-                  <Ionicons name="mail-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                  <Ionicons name="mail-outline" size={isExtraSmall ? 17 : 20} color={colors.icon} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                     Email
                   </Text>
                   <Text
                     numberOfLines={1}
-                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                    className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
                     {profile.email}
                   </Text>
@@ -452,19 +453,19 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               {/* Base Location Row */}
               <View className="flex-row items-center">
                 <View
-                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                  className={`rounded-2xl bg-gray-100/80 dark:bg-slate-700 items-center justify-center mr-3 sm:mr-3.5 ${
                     isExtraSmall ? "h-9 w-9" : "h-11 w-11"
                   }`}
                 >
-                  <Ionicons name="location-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                  <Ionicons name="location-outline" size={isExtraSmall ? 17 : 20} color={colors.icon} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                     Base Location
                   </Text>
                   <Text
                     numberOfLines={1}
-                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                    className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
                     {profile.baseLocation || "Colombo"}
                   </Text>
@@ -474,19 +475,19 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               {/* Vehicle Row */}
               <View className="flex-row items-center">
                 <View
-                  className={`rounded-2xl bg-gray-100/80 items-center justify-center mr-3 sm:mr-3.5 ${
+                  className={`rounded-2xl bg-gray-100/80 dark:bg-slate-700 items-center justify-center mr-3 sm:mr-3.5 ${
                     isExtraSmall ? "h-9 w-9" : "h-11 w-11"
                   }`}
                 >
-                  <Ionicons name="bus-outline" size={isExtraSmall ? 17 : 20} color="#4B5563" />
+                  <Ionicons name="bus-outline" size={isExtraSmall ? 17 : 20} color={colors.icon} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400">
+                  <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
                     Vehicle
                   </Text>
                   <Text
                     numberOfLines={1}
-                    className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5"
+                    className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
                     {profile.vehicleType}
                   </Text>
@@ -497,7 +498,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
           {/* ================= 3. SETTINGS & PREFERENCES CARD ================= */}
           <View
-            className={`rounded-3xl bg-white border border-gray-100 shadow-2xs mb-4 ${
+            className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4 ${
               isExtraSmall ? "px-3.5 py-1" : isSmallDevice ? "px-4 py-1.5" : "px-5 py-2"
             }`}
             style={{
@@ -512,64 +513,68 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleMenuPress("Edit Profile")}
-              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
-              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
                 Edit Profile
               </Text>
-              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
 
             {/* Vehicle & License */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleMenuPress("Vehicle & License")}
-              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
-              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
                 Vehicle & License
               </Text>
-              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
 
             {/* Notification Settings */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleMenuPress("Notification Settings")}
-              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
-              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
                 Notification Settings
               </Text>
-              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
 
             {/* Help & Support */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleMenuPress("Help & Support")}
-              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90"
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
-              <Text className="text-xs sm:text-sm font-semibold text-gray-800">
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
                 Help & Support
               </Text>
-              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
 
-            {/* Light Mode Switch */}
+            {/* Dark Mode Switch */}
             <View className="py-2.5 sm:py-3 flex-row items-center justify-between">
               <View className="flex-row items-center">
-                <Ionicons name="sunny-outline" size={19} color="#6B7280" />
-                <Text className="text-xs sm:text-sm font-semibold text-gray-800 ml-2.5">
-                  Light Mode
+                <Ionicons
+                  name={isDark ? "moon" : "sunny-outline"}
+                  size={19}
+                  color={isDark ? "#FBBF24" : "#6B7280"}
+                />
+                <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white ml-2.5">
+                  Dark Mode
                 </Text>
               </View>
               <Switch
-                value={isLightMode}
-                onValueChange={(val) => setIsLightMode(val)}
-                trackColor={{ false: "#E5E7EB", true: "#E68A00" }}
+                value={isDark}
+                onValueChange={(val) => setDarkMode(val)}
+                trackColor={colors.switchTrack}
                 thumbColor="#FFFFFF"
-                ios_backgroundColor="#E5E7EB"
+                ios_backgroundColor={isDark ? "#334155" : "#E5E7EB"}
                 style={{
                   transform: [
                     { scaleX: isSmallDevice ? 0.85 : 0.95 },
@@ -584,12 +589,12 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleSignOut}
-            className={`w-full rounded-2xl sm:rounded-3xl border border-red-200/90 items-center justify-center flex-row shadow-2xs mt-1 mb-6 ${
+            className={`w-full rounded-2xl sm:rounded-3xl border items-center justify-center flex-row shadow-2xs mt-1 mb-6 ${
               isExtraSmall ? "py-3" : isSmallDevice ? "py-3.5" : "py-4"
             }`}
             style={{
-              borderColor: "#FECACA",
-              backgroundColor: "#FEF2F2",
+              borderColor: isDark ? "rgba(239, 68, 68, 0.4)" : "#FECACA",
+              backgroundColor: isDark ? "rgba(239, 68, 68, 0.12)" : "#FEF2F2",
             }}
           >
             <Ionicons
@@ -608,7 +613,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       {/* ================= 5. BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
         edges={["bottom"]}
-        className="bg-white border-t border-gray-200/80"
+        className="bg-white dark:bg-slate-800 border-t border-gray-200/80 dark:border-slate-700"
       >
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
@@ -625,12 +630,12 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             <Ionicons
               name="home-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Home
             </Text>
@@ -645,12 +650,12 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             <Ionicons
               name="location-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Jobs
             </Text>
@@ -665,12 +670,12 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             <Ionicons
               name="bus-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Active
             </Text>

@@ -117,7 +117,7 @@ export const ThemedAlertModal: React.FC<ThemedAlertModalProps> = ({
             shadowRadius: 24,
             elevation: 12,
           }}
-          className={`bg-white rounded-3xl border border-gray-100 items-center ${
+          className={`bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 items-center ${
             isExtraSmall ? "p-4.5" : isSmallDevice ? "p-5" : "p-6"
           }`}
         >
@@ -138,7 +138,7 @@ export const ThemedAlertModal: React.FC<ThemedAlertModalProps> = ({
 
           {/* Modal Title */}
           <Text
-            className={`font-black text-[#0F172A] tracking-tight text-center mb-2 ${
+            className={`font-black text-[#0F172A] dark:text-white tracking-tight text-center mb-2 ${
               isExtraSmall
                 ? "text-base"
                 : isSmallDevice
@@ -151,7 +151,7 @@ export const ThemedAlertModal: React.FC<ThemedAlertModalProps> = ({
 
           {/* Modal Message */}
           <Text
-            className={`text-gray-600 font-medium text-center leading-relaxed px-1 mb-5 sm:mb-6 ${
+            className={`text-gray-600 dark:text-slate-300 font-medium text-center leading-relaxed px-1 mb-5 sm:mb-6 ${
               isExtraSmall ? "text-xs" : "text-xs sm:text-sm"
             }`}
           >
@@ -164,9 +164,9 @@ export const ThemedAlertModal: React.FC<ThemedAlertModalProps> = ({
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={handleSecondary}
-                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-gray-100 items-center justify-center"
+                className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
               >
-                <Text className="text-xs sm:text-sm font-bold text-gray-700">
+                <Text className="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-200">
                   {secondaryButtonText}
                 </Text>
               </TouchableOpacity>
