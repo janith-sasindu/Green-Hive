@@ -33,9 +33,9 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
   const [isDark, setIsDark] = useState(false);
 
   const [products, setProducts] = useState([
-    { id: "prod-1", name: "Fresh Cabbage",   quantity: "500 kg", unitPrice: "Rs. 80/kg",  status: "Active", image: require("../../assets/farmer/cabbage.png") },
+    { id: "prod-1", name: "Fresh Cabbage", quantity: "500 kg", unitPrice: "Rs. 80/kg", status: "Active", image: require("../../assets/farmer/cabbage.png") },
     { id: "prod-2", name: "Organic Carrots", quantity: "300 kg", unitPrice: "Rs. 120/kg", status: "Active", image: require("../../assets/farmer/carrots.png") },
-    { id: "prod-3", name: "Leeks",           quantity: "150 kg", unitPrice: "Rs. 200/kg", status: "Active", image: require("../../assets/farmer/leeks.png") },
+    { id: "prod-3", name: "Leeks", quantity: "150 kg", unitPrice: "Rs. 200/kg", status: "Active", image: require("../../assets/farmer/leeks.png") },
   ]);
 
   const handleAddProduct = (newProd: { name: string; quantity: string; unitPrice: string; category: string }) => {
@@ -58,39 +58,39 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
 
   // ── Theme token map ──────────────────────────────────────────────────────────
   const t = {
-    bg:              isDark ? "#0F1A12" : "#F5F8F6",
-    headerBg:        isDark ? "#172116" : "#F5F8F6",
-    cardBg:          isDark ? "#1C2B1F" : "#FFFFFF",
-    cardBorder:      isDark ? "#2A3D2E" : "rgba(243,244,246,0.7)",
-    sectionLabel:    isDark ? "#6EAB7A" : "#64748B",
-    titleText:       isDark ? "#E8F5EA" : "#1F2937",
-    subText:         isDark ? "#8DB898" : "#6B7280",
-    valueText:       isDark ? "#E8F5EA" : "#111827",
-    iconBgGreen:     isDark ? "#1E3324" : "#E8F8EE",
-    iconBgOrange:    isDark ? "#2D2215" : "#FFF4EC",
-    iconBgBlue:      isDark ? "#12213A" : "#EFF6FF",
-    navBg:           isDark ? "#172116" : "#FFFFFF",
-    navBorder:       isDark ? "#2A3D2E" : "rgba(229,231,235,0.6)",
-    navInactive:     isDark ? "#4B7A54" : "#9CA3AF",
-    payCardBg:       isDark ? "#132A1A" : "rgba(240,253,244,0.6)",
-    payCardBorder:   isDark ? "#1E4D28" : "#A7F3D0",
-    payDivider:      isDark ? "#1E4D28" : "#D1FAE5",
-    payTitle:        isDark ? "#4ADE80" : "#059669",
-    payValue:        isDark ? "#BBF7D0" : "#065F46",
-    notifBg:         isDark ? "#1C2B1F" : "#FFFFFF",
-    notifBorder:     isDark ? "#2A3D2E" : "#F3F4F6",
-    notifBadgeBg:    isDark ? "#1A3D22" : "#DCFCE7",
-    notifBadgeText:  isDark ? "#4ADE80" : "#166534",
-    closeBtnBg:      isDark ? "#2A3D2E" : "#F3F4F6",
-    statusBarStyle:  (isDark ? "light-content" : "dark-content") as "light-content" | "dark-content",
+    bg: isDark ? "#0F1A12" : "#F5F8F6",
+    headerBg: isDark ? "#172116" : "#F5F8F6",
+    cardBg: isDark ? "#1C2B1F" : "#FFFFFF",
+    cardBorder: isDark ? "#2A3D2E" : "rgba(243,244,246,0.7)",
+    sectionLabel: isDark ? "#6EAB7A" : "#64748B",
+    titleText: isDark ? "#E8F5EA" : "#1F2937",
+    subText: isDark ? "#8DB898" : "#6B7280",
+    valueText: isDark ? "#E8F5EA" : "#111827",
+    iconBgGreen: isDark ? "#1E3324" : "#E8F8EE",
+    iconBgOrange: isDark ? "#2D2215" : "#FFF4EC",
+    iconBgBlue: isDark ? "#12213A" : "#EFF6FF",
+    navBg: isDark ? "#172116" : "#FFFFFF",
+    navBorder: isDark ? "#2A3D2E" : "rgba(229,231,235,0.6)",
+    navInactive: isDark ? "#4B7A54" : "#9CA3AF",
+    payCardBg: isDark ? "#132A1A" : "rgba(240,253,244,0.6)",
+    payCardBorder: isDark ? "#1E4D28" : "#A7F3D0",
+    payDivider: isDark ? "#1E4D28" : "#D1FAE5",
+    payTitle: isDark ? "#4ADE80" : "#059669",
+    payValue: isDark ? "#BBF7D0" : "#065F46",
+    notifBg: isDark ? "#1C2B1F" : "#FFFFFF",
+    notifBorder: isDark ? "#2A3D2E" : "#F3F4F6",
+    notifBadgeBg: isDark ? "#1A3D22" : "#DCFCE7",
+    notifBadgeText: isDark ? "#4ADE80" : "#166534",
+    closeBtnBg: isDark ? "#2A3D2E" : "#F3F4F6",
+    statusBarStyle: (isDark ? "light-content" : "dark-content") as "light-content" | "dark-content",
   };
 
   const navTabs = [
-    { label: "Home",         active: "home",         inactive: "home-outline" },
-    { label: "Products",     active: "cube",         inactive: "cube-outline" },
-    { label: "Requirements", active: "clipboard",    inactive: "clipboard-outline" },
-    { label: "Orders",       active: "bag-handle",   inactive: "bag-handle-outline" },
-    { label: "Profile",      active: "person",       inactive: "person-outline" },
+    { label: "Home", active: "home", inactive: "home-outline" },
+    { label: "Products", active: "cube", inactive: "cube-outline" },
+    { label: "Requirements", active: "clipboard", inactive: "clipboard-outline" },
+    { label: "Orders", active: "bag-handle", inactive: "bag-handle-outline" },
+    { label: "Profile", active: "person", inactive: "person-outline" },
   ] as const;
 
   return (
@@ -101,8 +101,16 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
       <SafeAreaView edges={["top"]} style={{ backgroundColor: t.headerBg }}>
         <View className="px-5 pt-1.5 pb-2.5 flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <View className="h-9 w-9 rounded-xl bg-[#14532D] items-center justify-center mr-2.5 overflow-hidden">
-              <Image source={require("../../assets/logo.png")} className="h-8 w-8" resizeMode="contain" />
+            <View
+              className="h-9 w-9 rounded-xl bg-[#14532D] items-center justify-center mr-2.5 shadow-xs overflow-hidden"
+              style={{ width: 36, height: 36 }}
+            >
+              <Image
+                source={require("../../assets/logo.png")}
+                resizeMode="contain"
+                resizeMethod="resize"
+                style={{ width: 64, height: 36 }}
+              />
             </View>
             <Text style={{ color: t.titleText }} className="text-xl font-bold">Dashboard</Text>
           </View>
@@ -149,10 +157,10 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
             {/* Stats Grid */}
             <View className="mx-4 mt-3.5 flex-row flex-wrap justify-between gap-y-3">
               {[
-                { label: "Active Products", value: String(products.length), icon: "cube-outline",       iconColor: "#16A34A", iconBg: t.iconBgGreen,  onPress: () => setActiveTab("Products") },
-                { label: "Active Orders",   value: "1",                     icon: "bag-handle-outline", iconColor: "#EA580C", iconBg: t.iconBgOrange, onPress: () => setActiveTab("Orders") },
-                { label: "Pending Requests",value: "1",                     icon: "eye-outline",        iconColor: "#2563EB", iconBg: t.iconBgBlue,   onPress: () => setActiveTab("Requirements") },
-                { label: "Total Earnings",  value: "Rs. 0k",                icon: "trending-up",        iconColor: "#16A34A", iconBg: t.iconBgGreen,  onPress: undefined },
+                { label: "Active Products", value: String(products.length), icon: "cube-outline", iconColor: "#16A34A", iconBg: t.iconBgGreen, onPress: () => setActiveTab("Products") },
+                { label: "Active Orders", value: "1", icon: "bag-handle-outline", iconColor: "#EA580C", iconBg: t.iconBgOrange, onPress: () => setActiveTab("Orders") },
+                { label: "Pending Requests", value: "1", icon: "eye-outline", iconColor: "#2563EB", iconBg: t.iconBgBlue, onPress: () => setActiveTab("Requirements") },
+                { label: "Total Earnings", value: "Rs. 0k", icon: "trending-up", iconColor: "#16A34A", iconBg: t.iconBgGreen, onPress: undefined },
               ].map(({ label, value, icon, iconColor, iconBg, onPress }) => (
                 <TouchableOpacity key={label} disabled={!onPress} onPress={onPress} activeOpacity={0.8}
                   className="w-[48%] rounded-2xl p-4"
@@ -176,9 +184,9 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
                 <Text className="text-sm font-bold text-white mt-1">Add Product</Text>
               </TouchableOpacity>
               {[
-                { label: "My Products",  emoji: "📦", tab: "Products" },
+                { label: "My Products", emoji: "📦", tab: "Products" },
                 { label: "Requirements", emoji: "📋", tab: "Requirements" },
-                { label: "My Orders",    emoji: "🛒", tab: "Orders" },
+                { label: "My Orders", emoji: "🛒", tab: "Orders" },
               ].map(({ label, emoji, tab }) => (
                 <TouchableOpacity key={label} onPress={() => setActiveTab(tab as any)} activeOpacity={0.8}
                   className="w-[48%] rounded-2xl py-4 items-center justify-center"
