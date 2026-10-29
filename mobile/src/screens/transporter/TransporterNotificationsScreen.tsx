@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StatusBar,
   Modal,
   Alert,
+  Switch,
   useWindowDimensions,
   Platform,
 } from "react-native";
@@ -15,6 +17,7 @@ import {
   SmoothScrollView,
   SMOOTH_SCROLL_PROPS,
 } from "../../components/common/SmoothScrollView";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
 
 // Mock Data imported from dedicated transporter data folder
 import {
@@ -36,6 +39,7 @@ export const TransporterNotificationsScreen = ({
   onSelectTab,
 }: TransporterNotificationsScreenProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, toggleDarkMode, colors } = useTransporterTheme();
 
   // Responsive Breakpoints
   const isExtraSmall = screenWidth < 360;
@@ -44,6 +48,7 @@ export const TransporterNotificationsScreen = ({
 
   // State
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
   const [notifications, setNotifications] = useState<
     TransporterNotificationItem[]
   >(MOCK_DETAILED_NOTIFICATIONS);
@@ -135,11 +140,14 @@ export const TransporterNotificationsScreen = ({
   };
 
   return (
-    <View className="flex-1 bg-[#F5F8F6]">
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F8F6" />
+    <View className="flex-1 bg-[#F5F8F6] dark:bg-slate-900">
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0F172A" : "#F5F8F6"}
+      />
 
       {/* ================= TOP HEADER ================= */}
-      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6]">
+      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6] dark:bg-slate-900">
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
@@ -157,7 +165,7 @@ export const TransporterNotificationsScreen = ({
               <Ionicons
                 name="arrow-back"
                 size={isExtraSmall ? 20 : isSmallDevice ? 22 : isTablet ? 26 : 24}
-                color="#1F2937"
+                color={isDark ? "#FFFFFF" : "#1F2937"}
               />
             </TouchableOpacity>
 
@@ -165,7 +173,7 @@ export const TransporterNotificationsScreen = ({
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.85}
-              className={`font-black text-gray-900 tracking-tight flex-1 ${
+              className={`font-black text-gray-900 dark:text-white tracking-tight flex-1 ${
                 isExtraSmall
                   ? "text-[16px]"
                   : isSmallDevice
@@ -181,24 +189,30 @@ export const TransporterNotificationsScreen = ({
 
           {/* Right Action Icons */}
           <View className="flex-row items-center space-x-2 sm:space-x-2.5 gap-2 sm:gap-2.5">
-            {/* Notification Bell */}
-            <View className="relative p-1.5 rounded-full">
+            {/* Settings button leading to Notification Settings */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterNotificationSettings");
+                }
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className="p-1.5 rounded-full"
+            >
               <Ionicons
-                name="notifications-outline"
-                size={isExtraSmall ? 18 : isSmallDevice ? 20 : isTablet ? 25 : 23}
-                color="#4B5563"
+                name="settings-outline"
+                size={isExtraSmall ? 19 : isSmallDevice ? 21 : isTablet ? 25 : 23}
+                color={colors.icon}
               />
-              {unreadCount > 0 && (
-                <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              )}
-            </View>
+            </TouchableOpacity>
 
             {/* Profile Avatar Pill */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs overflow-hidden ${
                 isExtraSmall
                   ? "h-8 w-8"
                   : isSmallDevice
@@ -208,19 +222,27 @@ export const TransporterNotificationsScreen = ({
                   : "h-9 w-9"
               }`}
             >
-              <Text
-                className={`font-extrabold text-white ${
-                  isExtraSmall
-                    ? "text-xs"
-                    : isSmallDevice
-                    ? "text-xs"
-                    : isTablet
-                    ? "text-base"
-                    : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter}
-              </Text>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`font-extrabold text-white ${
+                    isExtraSmall
+                      ? "text-xs"
+                      : isSmallDevice
+                      ? "text-xs"
+                      : isTablet
+                      ? "text-base"
+                      : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -232,7 +254,7 @@ export const TransporterNotificationsScreen = ({
         >
           <Text
             numberOfLines={1}
-            className={`font-medium text-gray-500 ${
+            className={`font-medium text-gray-500 dark:text-slate-400 ${
               isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
             }`}
           >
@@ -248,10 +270,10 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="checkmark"
               size={isSmallDevice ? 14 : 15}
-              color="#16A34A"
+              color={isDark ? "#34D399" : "#16A34A"}
             />
             <Text
-              className={`font-bold text-[#16A34A] ml-1 ${
+              className={`font-bold text-[#16A34A] dark:text-emerald-400 ml-1 ${
                 isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
               }`}
             >
@@ -278,7 +300,7 @@ export const TransporterNotificationsScreen = ({
               key={item.id}
               activeOpacity={0.8}
               onPress={() => handleNotificationPress(item)}
-              className={`rounded-3xl bg-white border border-gray-100 shadow-xs flex-row items-start ${
+              className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs flex-row items-start ${
                 isExtraSmall ? "p-3" : isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
               }`}
               style={{
@@ -291,7 +313,7 @@ export const TransporterNotificationsScreen = ({
             >
               {/* Left icon badge container */}
               <View
-                className={`rounded-2xl bg-[#FEF3C7] items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
+                className={`rounded-2xl bg-[#FEF3C7] dark:bg-amber-950/60 items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
                   isExtraSmall
                     ? "h-9 w-9"
                     : isSmallDevice
@@ -322,7 +344,7 @@ export const TransporterNotificationsScreen = ({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.85}
-                  className={`font-extrabold text-gray-900 mb-0.5 ${
+                  className={`font-extrabold text-gray-900 dark:text-white mb-0.5 ${
                     isExtraSmall
                       ? "text-[13px]"
                       : isSmallDevice
@@ -335,7 +357,7 @@ export const TransporterNotificationsScreen = ({
                   {item.title}
                 </Text>
                 <Text
-                  className={`text-gray-600 font-medium ${
+                  className={`text-gray-600 dark:text-slate-300 font-medium ${
                     isSmallDevice
                       ? "text-[11.5px] leading-[17px]"
                       : "text-[13px] leading-5"
@@ -345,7 +367,7 @@ export const TransporterNotificationsScreen = ({
                 </Text>
                 {item.timestamp && (
                   <Text
-                    className={`font-medium text-gray-400 mt-1 sm:mt-1.5 ${
+                    className={`font-medium text-gray-400 dark:text-slate-400 mt-1 sm:mt-1.5 ${
                       isSmallDevice ? "text-[10px]" : "text-[11.5px]"
                     }`}
                   >
@@ -370,11 +392,11 @@ export const TransporterNotificationsScreen = ({
           {/* Empty state fallback if notifications cleared */}
           {notifications.length === 0 && (
             <View className="py-16 items-center justify-center">
-              <View className="h-16 w-16 rounded-full bg-gray-100 items-center justify-center mb-3">
-                <Ionicons name="notifications-off-outline" size={28} color="#9CA3AF" />
+              <View className="h-16 w-16 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center mb-3">
+                <Ionicons name="notifications-off-outline" size={28} color={colors.iconMuted} />
               </View>
-              <Text className="text-base font-bold text-gray-700">No Notifications</Text>
-              <Text className="text-xs text-gray-400 text-center max-w-[240px] mt-1">
+              <Text className="text-base font-bold text-gray-700 dark:text-slate-200">No Notifications</Text>
+              <Text className="text-xs text-gray-400 dark:text-slate-400 text-center max-w-[240px] mt-1">
                 You have caught up with all your transport alerts and updates.
               </Text>
             </View>
@@ -386,7 +408,7 @@ export const TransporterNotificationsScreen = ({
       {/* ================= BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
         edges={["bottom"]}
-        className="bg-white border-t border-gray-200/60"
+        className="bg-white dark:bg-slate-800 border-t border-gray-200/60 dark:border-slate-700"
       >
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
@@ -403,12 +425,12 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="home-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Home
             </Text>
@@ -423,12 +445,12 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="location-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Jobs
             </Text>
@@ -443,12 +465,12 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="bus-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Active
             </Text>
@@ -463,12 +485,12 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="person-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
               Profile
             </Text>
@@ -483,20 +505,20 @@ export const TransporterNotificationsScreen = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB]">
+        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB] dark:bg-slate-900">
           <View
             style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
-            <Text className="text-base sm:text-lg font-bold text-gray-900">
+            <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
               Driver Profile
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="p-1 rounded-full bg-gray-100"
+              className="p-1 rounded-full bg-gray-100 dark:bg-slate-700"
             >
-              <Ionicons name="close" size={22} color="#4B5563" />
+              <Ionicons name="close" size={22} color={colors.iconMuted} />
             </TouchableOpacity>
           </View>
 
@@ -511,63 +533,100 @@ export const TransporterNotificationsScreen = ({
           >
             <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
               {/* Driver Card */}
-            <View className="rounded-2xl bg-white p-4 sm:p-5 border border-gray-100 shadow-2xs items-center mb-4">
-              <View
-                className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
-                  isSmallDevice ? "h-14 w-14" : "h-16 w-16"
-                }`}
-              >
-                <Text
-                  className={`font-black text-white ${
-                    isSmallDevice ? "text-xl" : "text-2xl"
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
+                <View
+                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 overflow-hidden ${
+                    isSmallDevice ? "h-14 w-14" : "h-16 w-16"
                   }`}
                 >
-                  {profile.avatarLetter}
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text
+                      className={`font-black text-white ${
+                        isSmallDevice ? "text-xl" : "text-2xl"
+                      }`}
+                    >
+                      {profile.avatarLetter}
+                    </Text>
+                  )}
+                </View>
+                <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
+                  {profile.name}
+                </Text>
+                <Text className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                  {profile.email}
+                </Text>
+                <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
+                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
+                  Completed Trips)
                 </Text>
               </View>
-              <Text className="text-base sm:text-lg font-extrabold text-gray-900">
-                {profile.name}
-              </Text>
-              <Text className="text-xs font-semibold text-gray-500">
-                {profile.email}
-              </Text>
-              <Text className="text-xs text-amber-700 font-bold mt-1">
-                ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                Completed Trips)
-              </Text>
-            </View>
 
-            {/* Vehicle details */}
-            <View className="rounded-2xl bg-white p-3.5 sm:p-4 border border-gray-100 shadow-2xs mb-4">
-              <Text className="text-xs font-bold text-gray-500 uppercase mb-2">
-                Registered Vehicle
-              </Text>
-              <View className="space-y-1.5 gap-1.5">
-                <Text className="text-xs text-gray-700">
-                  🚚 <Text className="font-semibold">Type:</Text>{" "}
-                  {profile.vehicleType}
+              {/* Vehicle details */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
+                  Registered Vehicle
                 </Text>
-                <Text className="text-xs text-gray-700">
-                  🔢 <Text className="font-semibold">Plate:</Text>{" "}
-                  {profile.vehiclePlate}
-                </Text>
-                <Text className="text-xs text-gray-700">
-                  🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                  Verified
-                </Text>
+                <View className="space-y-1.5 gap-1.5">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    {profile.vehicleType}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    {profile.vehiclePlate}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
+                    Verified
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            {/* Sign Out Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleSignOut}
-              className="rounded-2xl bg-red-50 border border-red-200 py-3 sm:py-3.5 items-center justify-center mt-2"
-            >
-              <Text className="text-sm font-bold text-red-600">
-                Log Out of Transporter Account
-              </Text>
-            </TouchableOpacity>
+              {/* Dark Mode Toggle Card */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-8 w-8 rounded-full bg-amber-50 dark:bg-slate-700 items-center justify-center mr-3">
+                      <Ionicons
+                        name={isDark ? "moon" : "sunny"}
+                        size={18}
+                        color={isDark ? "#F59E0B" : "#D97706"}
+                      />
+                    </View>
+                    <View>
+                      <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                        Dark Mode
+                      </Text>
+                      <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={isDark}
+                    onValueChange={toggleDarkMode}
+                    trackColor={{ false: "#D1D5DB", true: "#E68A00" }}
+                    thumbColor={isDark ? "#FFFFFF" : "#FFFFFF"}
+                  />
+                </View>
+              </View>
+
+              {/* Sign Out Button */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleSignOut}
+                className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3 sm:py-3.5 items-center justify-center mt-2"
+              >
+                <Text className="text-sm font-bold text-red-600 dark:text-red-400">
+                  Log Out of Transporter Account
+                </Text>
+              </TouchableOpacity>
             </View>
           </SmoothScrollView>
         </SafeAreaView>
