@@ -242,10 +242,14 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         }
         break;
       case "Vehicle & License":
-        Alert.alert(
-          "Vehicle & License",
-          `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
-        );
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterVehicleLicense");
+        } else {
+          Alert.alert(
+            "Vehicle & License",
+            `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
+          );
+        }
         break;
       case "Help & Support":
         Alert.alert(
