@@ -11,5 +11,6 @@ export * from "./TransporterMyOffersScreen";
 export * from "./TransporterConfirmPickupScreen";
 export * from "./TransporterConfirmDeliveryScreen";
 export * from "./TransporterVehicleLicenseScreen";
+export * from "./TransporterHelpSupportScreen";
 export * from "./data";
 

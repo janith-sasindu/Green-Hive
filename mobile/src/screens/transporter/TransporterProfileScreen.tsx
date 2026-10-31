@@ -252,10 +252,14 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         }
         break;
       case "Help & Support":
-        Alert.alert(
-          "Help & Support",
-          "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
-        );
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterHelpSupport");
+        } else {
+          Alert.alert(
+            "Help & Support",
+            "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
+          );
+        }
         break;
       case "Edit Profile":
         if (navigation?.navigate) {
