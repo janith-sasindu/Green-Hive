@@ -44,6 +44,10 @@ export interface ActiveTransportJob {
     proofPhotoUri?: string;
     pickupTimestamp?: string;
     pickupNotes?: string;
+    deliveryProofPhotoUri?: string;
+    deliveryTimestamp?: string;
+    deliveryNotes?: string;
+    receiverName?: string;
 }
 
 export interface AvailableTransportJob {

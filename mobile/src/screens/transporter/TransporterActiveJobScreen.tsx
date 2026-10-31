@@ -217,7 +217,14 @@ export const TransporterActiveJobScreen: React.FC<
       showAlert(
         "Job Already Delivered",
         `This shipment has already been successfully delivered and payment of ${currentJob.price} was released.`,
-        { type: "success" }
+        {
+          type: "success",
+          primaryButtonText: "View Delivery Proof",
+          secondaryButtonText: "Close",
+          onPrimaryPress: () => {
+            navigation?.navigate?.("TransporterConfirmDelivery", { job: currentJob });
+          },
+        }
       );
       return;
     }
@@ -228,33 +235,22 @@ export const TransporterActiveJobScreen: React.FC<
         "Please confirm cargo pickup at the farm before confirming delivery to the seller.",
         {
           type: "warning",
-          primaryButtonText: "Understood",
+          primaryButtonText: "Confirm Pickup First",
+          secondaryButtonText: "Proceed Anyway",
+          onPrimaryPress: () => {
+            navigation?.navigate?.("TransporterConfirmPickup", { job: currentJob });
+          },
+          onSecondaryPress: () => {
+            navigation?.navigate?.("TransporterConfirmDelivery", { job: currentJob });
+          },
         }
       );
       return;
     }
 
-    showAlert(
-      "Confirm Delivery Completion",
-      `Are you at ${currentJob.dropoff} to deliver ${currentJob.cropName} · ${currentJob.weight} to ${
-        currentJob.sellerName || "the receiver"
-      }?`,
-      {
-        type: "warning",
-        primaryButtonText: "Confirm Delivery",
-        secondaryButtonText: "Cancel",
-        onPrimaryPress: () => {
-          setCurrentJob((prev) => ({ ...prev, status: "Delivered" }));
-          setTimeout(() => {
-            showAlert(
-              "Delivery Completed!",
-              `Excellent! Delivery has been confirmed by the seller. Your earnings of ${currentJob.price} have been credited to your wallet.`,
-              { type: "success" }
-            );
-          }, 350);
-        },
-      }
-    );
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmDelivery", { job: currentJob });
+    }
   };
 
   // Sign Out Handler
@@ -480,6 +476,42 @@ export const TransporterActiveJobScreen: React.FC<
                 />
               </View>
             )}
+
+            {/* Sub-Card: Delivery Proof Photo & Notes */}
+            {currentJob.deliveryProofPhotoUri && (
+              <View className="rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/30 p-3 sm:p-3.5 mt-2.5 border border-[#DBEAFE]/60 dark:border-blue-800/40">
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="flex-row items-center">
+                    <Ionicons name="checkmark-done-circle" size={15} color="#2563EB" />
+                    <Text className="text-[11.5px] sm:text-xs font-bold text-[#2563EB] dark:text-blue-400 ml-1.5">
+                      Delivery Proof & Handover
+                    </Text>
+                  </View>
+                  {currentJob.deliveryTimestamp && (
+                    <Text className="text-[10.5px] text-[#6B7280] dark:text-slate-400">
+                      {currentJob.deliveryTimestamp}
+                    </Text>
+                  )}
+                </View>
+                <Image
+                  source={{ uri: currentJob.deliveryProofPhotoUri }}
+                  className="w-full h-36 rounded-xl"
+                  resizeMode="cover"
+                />
+                {currentJob.deliveryNotes && (
+                  <View className="mt-2 pt-2 border-t border-blue-100 dark:border-blue-900/50">
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium italic">
+                      Note: "{currentJob.deliveryNotes}"
+                    </Text>
+                  </View>
+                )}
+                {currentJob.receiverName && (
+                  <Text className="text-[11px] text-[#1E293B] dark:text-slate-200 font-semibold mt-1">
+                    Received by: {currentJob.receiverName}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
 
           {/* ================= CARD 2: YOUR EARNINGS ================= */}
@@ -565,19 +597,25 @@ export const TransporterActiveJobScreen: React.FC<
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={handleConfirmDelivery}
-            className={`w-full rounded-2xl items-center justify-center shadow-xs ${
+            className={`w-full rounded-2xl flex-row items-center justify-center shadow-xs ${
               currentJob.status === "Delivered"
                 ? "bg-[#16A34A]"
                 : "bg-[#FF8C00]"
             } ${isExtraSmall ? "py-3" : "py-3.5 sm:py-4"}`}
             style={{
               elevation: 3,
-              shadowColor: "#FF8C00",
+              shadowColor: currentJob.status === "Delivered" ? "#16A34A" : "#FF8C00",
               shadowOpacity: 0.2,
               shadowRadius: 6,
               shadowOffset: { width: 0, height: 3 },
             }}
           >
+            <Ionicons
+              name={currentJob.status === "Delivered" ? "checkmark-circle" : "checkmark-done-circle-outline"}
+              size={isExtraSmall ? 18 : 20}
+              color="#FFFFFF"
+              style={{ marginRight: 8 }}
+            />
             <Text
               className={`font-bold text-white tracking-wide ${
                 isExtraSmall ? "text-[14px]" : "text-[15.5px]"

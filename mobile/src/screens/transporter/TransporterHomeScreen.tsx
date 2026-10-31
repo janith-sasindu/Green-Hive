@@ -90,6 +90,32 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     }
   };
 
+  const handleConfirmDelivery = () => {
+    if (showJobDetailsModal) {
+      setShowJobDetailsModal(false);
+    }
+    if (activeJob.status === "Delivered") {
+      Alert.alert(
+        "Job Already Delivered",
+        `This shipment has already been delivered. Payment of ${activeJob.price} has been released.`,
+        [
+          {
+            text: "View Details",
+            onPress: () =>
+              navigation?.navigate?.("TransporterConfirmDelivery", {
+                job: activeJob,
+              }),
+          },
+          { text: "OK", style: "cancel" },
+        ]
+      );
+      return;
+    }
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmDelivery", { job: activeJob });
+    }
+  };
+
   const handleUpdateStatus = () => {
     Alert.alert(
       "Update Delivery Status",
@@ -110,11 +136,15 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         {
           text: `Delivered to Destination`,
           onPress: () => {
-            setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
-            Alert.alert(
-              "Delivery Completed!",
-              `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
-            );
+            if (navigation?.navigate) {
+              navigation.navigate("TransporterConfirmDelivery", { job: activeJob });
+            } else {
+              setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
+              Alert.alert(
+                "Delivery Completed!",
+                `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
+              );
+            }
           },
         },
         { text: "Cancel", style: "cancel" },
@@ -946,11 +976,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 </Text>
               </TouchableOpacity>
 
-              {/* Update Status Button */}
+              {/* Confirm Delivery Button */}
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={handleUpdateStatus}
-                className={`flex-1 items-center justify-center rounded-xl bg-[#F59E0B] shadow-xs px-2 ${
+                onPress={handleConfirmDelivery}
+                className={`flex-1 items-center justify-center rounded-xl bg-[#FF8C00] shadow-xs px-2 ${
                   isExtraSmall ? "h-9" : isSmallDevice ? "h-10" : "h-11"
                 }`}
               >
@@ -966,7 +996,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Update Status
+                  Confirm Delivery
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1746,11 +1776,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={handleUpdateStatus}
-                className="rounded-2xl bg-[#F59E0B] py-3 sm:py-3.5 items-center justify-center shadow-xs"
+                onPress={handleConfirmDelivery}
+                className="rounded-2xl bg-[#FF8C00] py-3 sm:py-3.5 items-center justify-center shadow-xs"
               >
                 <Text className="text-sm font-bold text-white">
-                  Update Status
+                  Confirm Delivery
                 </Text>
               </TouchableOpacity>
             </View>
