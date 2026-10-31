@@ -17,6 +17,10 @@ import {
   TransporterEditProfileScreen,
   TransporterNotificationSettingsScreen,
   TransporterMyOffersScreen,
+  TransporterConfirmPickupScreen,
+  TransporterConfirmDeliveryScreen,
+  TransporterVehicleLicenseScreen,
+  TransporterHelpSupportScreen,
 } from '../screens/transporter';
 
 export type RootStackParamList = {
@@ -41,6 +45,10 @@ export type RootStackParamList = {
   TransporterEditProfile: undefined;
   TransporterNotificationSettings: undefined;
   TransporterMyOffers: undefined;
+  TransporterConfirmPickup: { job?: any } | undefined;
+  TransporterConfirmDelivery: { job?: any } | undefined;
+  TransporterVehicleLicense: undefined;
+  TransporterHelpSupport: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -122,6 +130,26 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterMyOffers"
         component={TransporterMyOffersScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmPickup"
+        component={TransporterConfirmPickupScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmDelivery"
+        component={TransporterConfirmDeliveryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterVehicleLicense"
+        component={TransporterVehicleLicenseScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterHelpSupport"
+        component={TransporterHelpSupportScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

@@ -74,20 +74,46 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [notificationsList] = useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
 
   const handleConfirmPickup = () => {
-    Alert.alert(
-      "Confirm Pickup",
-      `Are you currently at ${activeJob.pickup} to confirm loading of ${activeJob.cropName} · ${activeJob.weight}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => {
-            setActiveJob((prev) => ({ ...prev, status: "In Transit" }));
-            Alert.alert("Pickup Confirmed!", "Cargo is loaded. Trip status updated to 'In Transit'.");
+    if (activeJob.status === "In Transit" || activeJob.status === "Delivered") {
+      Alert.alert(
+        "Cargo Already Picked Up",
+        `You have already confirmed pickup for ${activeJob.cropName} · ${activeJob.weight}. Status: ${activeJob.status}.`,
+        [
+          { text: "View Trip", onPress: () => navigation?.navigate?.("TransporterActiveJob") },
+          { text: "OK", style: "cancel" },
+        ]
+      );
+      return;
+    }
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmPickup", { job: activeJob });
+    }
+  };
+
+  const handleConfirmDelivery = () => {
+    if (showJobDetailsModal) {
+      setShowJobDetailsModal(false);
+    }
+    if (activeJob.status === "Delivered") {
+      Alert.alert(
+        "Job Already Delivered",
+        `This shipment has already been delivered. Payment of ${activeJob.price} has been released.`,
+        [
+          {
+            text: "View Details",
+            onPress: () =>
+              navigation?.navigate?.("TransporterConfirmDelivery", {
+                job: activeJob,
+              }),
           },
-        },
-      ]
-    );
+          { text: "OK", style: "cancel" },
+        ]
+      );
+      return;
+    }
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmDelivery", { job: activeJob });
+    }
   };
 
   const handleUpdateStatus = () => {
@@ -110,11 +136,15 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
         {
           text: `Delivered to Destination`,
           onPress: () => {
-            setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
-            Alert.alert(
-              "Delivery Completed!",
-              `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
-            );
+            if (navigation?.navigate) {
+              navigation.navigate("TransporterConfirmDelivery", { job: activeJob });
+            } else {
+              setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
+              Alert.alert(
+                "Delivery Completed!",
+                `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
+              );
+            }
           },
         },
         { text: "Cancel", style: "cancel" },
@@ -301,20 +331,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           {/* Left: App Logo & Dashboard Title */}
           <View className="flex-row items-center flex-1 pr-2">
             <View
-              className={`rounded-xl bg-[#135228] items-center justify-center mr-2 sm:mr-2.5 shadow-xs overflow-hidden ${
-                isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
-              }`}
+              className="mr-2 sm:mr-2.5 items-center justify-center"
               style={{
-                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                 height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
               }}
             >
               <Image
-                source={require("../../assets/logo.png")}
+                source={require("../../assets/logo-icon.png")}
                 resizeMode="contain"
-                resizeMethod="resize"
                 style={{
-                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                   height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
                 }}
               />
@@ -949,11 +976,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 </Text>
               </TouchableOpacity>
 
-              {/* Update Status Button */}
+              {/* Confirm Delivery Button */}
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={handleUpdateStatus}
-                className={`flex-1 items-center justify-center rounded-xl bg-[#F59E0B] shadow-xs px-2 ${
+                onPress={handleConfirmDelivery}
+                className={`flex-1 items-center justify-center rounded-xl bg-[#FF8C00] shadow-xs px-2 ${
                   isExtraSmall ? "h-9" : isSmallDevice ? "h-10" : "h-11"
                 }`}
               >
@@ -969,7 +996,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Update Status
+                  Confirm Delivery
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1749,11 +1776,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={handleUpdateStatus}
-                className="rounded-2xl bg-[#F59E0B] py-3 sm:py-3.5 items-center justify-center shadow-xs"
+                onPress={handleConfirmDelivery}
+                className="rounded-2xl bg-[#FF8C00] py-3 sm:py-3.5 items-center justify-center shadow-xs"
               >
                 <Text className="text-sm font-bold text-white">
-                  Update Status
+                  Confirm Delivery
                 </Text>
               </TouchableOpacity>
             </View>
