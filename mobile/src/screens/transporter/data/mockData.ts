@@ -7,6 +7,7 @@ export interface TransporterProfile {
     name: string;
     greeting: string;
     avatarLetter: string;
+    avatarUri?: string;
     email: string;
     phone: string;
     vehicleType: string;
@@ -40,6 +41,13 @@ export interface ActiveTransportJob {
     pickupDate: string;
     sellerName?: string;
     specialInstructions?: string;
+    proofPhotoUri?: string;
+    pickupTimestamp?: string;
+    pickupNotes?: string;
+    deliveryProofPhotoUri?: string;
+    deliveryTimestamp?: string;
+    deliveryNotes?: string;
+    receiverName?: string;
 }
 
 export interface AvailableTransportJob {
@@ -66,9 +74,17 @@ export interface TransportOffer {
     id: string;
     cropName: string;
     weight: string;
-    route: string;
+    route?: string;
     quotePrice: string;
-    status: string;
+    status: "Submitted" | "Accepted" | "Under Review" | "Declined" | "Pending Farmer Approval" | string;
+    title?: string;
+    estimatedDelivery?: string;
+    notes?: string;
+    submittedDate?: string;
+    sellerName?: string;
+    pickupLocation?: string;
+    dropoffLocation?: string;
+    distance?: string;
 }
 
 export interface PaymentSummaryData {
@@ -111,7 +127,7 @@ export const MOCK_TRANSPORTER_PROFILE: TransporterProfile = {
  */
 export const MOCK_TRANSPORTER_STATS: TransporterStats = {
     openJobsCount: 2,
-    myOffersCount: 1,
+    myOffersCount: 3,
     activeJobsCount: 1,
     thisMonthEarnings: "Rs. 42k",
 };
@@ -184,20 +200,52 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
  */
 export const MOCK_MY_OFFERS: TransportOffer[] = [
     {
-        id: "#GH-T1019",
+        id: "Job #GH-T1025",
+        title: "Transportation Offer",
+        cropName: "Ripe Tomatoes",
+        weight: "150 kg",
+        route: "Dambulla Agricultural Zone → Colombo Fresh Market",
+        quotePrice: "Rs. 2,000",
+        estimatedDelivery: "2026-08-31 08:00 AM",
+        notes: "I have refrigerated vehicle available. On-time delivery guaranteed.",
+        submittedDate: "2026-08-28",
+        status: "Submitted",
+        sellerName: "Colombo Fresh Market",
+        pickupLocation: "Dambulla Agricultural Zone, Plot 14",
+        dropoffLocation: "Colombo Fresh Market, Colombo 03",
+        distance: "148 km",
+    },
+    {
+        id: "Job #GH-T1019",
+        title: "Transportation Offer",
         cropName: "Red Potatoes",
         weight: "500 kg",
         route: "Nuwara Eliya → Colombo Wholesale Market",
         quotePrice: "Rs. 22,000",
-        status: "Pending Farmer Approval",
+        estimatedDelivery: "2026-09-02 10:00 AM",
+        notes: "Heavy duty 3-ton lorry ready for farm gate pickup with waterproof tarpaulin.",
+        submittedDate: "2026-08-27",
+        status: "Submitted",
+        sellerName: "Nuwara Eliya Wholesale Hub",
+        pickupLocation: "Nuwara Eliya Highlands Farm",
+        dropoffLocation: "Colombo Wholesale Market",
+        distance: "165 km",
     },
     {
-        id: "#GH-T1016",
+        id: "Job #GH-T1016",
+        title: "Transportation Offer",
         cropName: "Sweet Corn",
         weight: "300 kg",
         route: "Anuradhapura → Kurunegala Town",
         quotePrice: "Rs. 19,500",
+        estimatedDelivery: "2026-08-30 02:00 PM",
+        notes: "Insulated transport with temperature tracking. Delivery on schedule.",
+        submittedDate: "2026-08-25",
         status: "Accepted",
+        sellerName: "Kurunegala Fresh Veggie Mart",
+        pickupLocation: "Anuradhapura Central Farm",
+        dropoffLocation: "Kurunegala Town Center",
+        distance: "95 km",
     },
 ];
 
@@ -248,3 +296,97 @@ export const MOCK_DETAILED_NOTIFICATIONS: TransporterNotificationItem[] = [
         jobId: "#GH-T1024",
     },
 ];
+
+/**
+ * Transporter Phone Notification Settings
+ */
+export interface TransporterNotificationSettings {
+    newJobsPush: boolean;
+    currentJobUpdatesPush: boolean;
+    offerStatusPush: boolean;
+    paymentPush: boolean;
+    soundAndVibration: boolean;
+}
+
+export const MOCK_TRANSPORTER_NOTIFICATION_SETTINGS: TransporterNotificationSettings = {
+    newJobsPush: true,
+    currentJobUpdatesPush: true,
+    offerStatusPush: true,
+    paymentPush: true,
+    soundAndVibration: true,
+};
+
+/**
+ * Transporter Driving License & Vehicle Details
+ */
+export interface TransporterVehicleAndLicense {
+    // Driver's License
+    driverName: string;
+    licenseNumber: string;
+    licenseExpiry: string;
+    licenseIssueDate: string;
+    licenseCategories: string[];
+    nicNumber: string;
+    bloodGroup: string;
+    licenseFrontPhotoUri?: string;
+    licenseBackPhotoUri?: string;
+    licenseStatus: "Verified" | "Pending Review" | "Expired";
+
+    // Vehicle Details
+    vehicleType: string;
+    vehiclePlate: string;
+    vehicleMakeModel: string;
+    vehicleYear: string;
+    vehicleColor: string;
+    maxCapacityKg: number;
+    cargoDimensions: string;
+    fuelType: string;
+    refrigerated: boolean;
+    vehiclePhotoUri?: string;
+
+    // Legal & Permits
+    revenueLicenseNo: string;
+    revenueLicenseExpiry: string;
+    insuranceProvider: string;
+    insurancePolicyNo: string;
+    insuranceExpiry: string;
+    emissionCertificateStatus: "Passed" | "Pending";
+    emissionCertificateExpiry: string;
+    verificationDate: string;
+    verificationStatus: "Verified" | "Under Review" | "Action Required";
+}
+
+export const MOCK_TRANSPORTER_VEHICLE_LICENSE: TransporterVehicleAndLicense = {
+    driverName: "Ruwan Bandara",
+    licenseNumber: "B3849201",
+    licenseExpiry: "14/03/2028",
+    licenseIssueDate: "15/03/2018",
+    licenseCategories: ["B (Dual Purpose)", "C1 (Light Lorry)", "C (Heavy Lorry 3T+)"],
+    nicNumber: "198923401234",
+    bloodGroup: "O+",
+    licenseFrontPhotoUri: "https://images.unsplash.com/photo-1589330694653-dad6d3240a2b?auto=format&fit=crop&w=800&q=80",
+    licenseBackPhotoUri: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+    licenseStatus: "Verified",
+
+    vehicleType: "Lorry - 3 Ton",
+    vehiclePlate: "WP-LH-4821",
+    vehicleMakeModel: "Isuzu Elf NPR 71",
+    vehicleYear: "2020",
+    vehicleColor: "Polar White",
+    maxCapacityKg: 3000,
+    cargoDimensions: "14.5 ft × 6.2 ft × 6.0 ft",
+    fuelType: "Diesel",
+    refrigerated: false,
+    vehiclePhotoUri: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80",
+
+    revenueLicenseNo: "RL-2025-98321",
+    revenueLicenseExpiry: "30/11/2026",
+    insuranceProvider: "Sri Lanka Insurance Corporation (SLIC)",
+    insurancePolicyNo: "SLIC-CV-783921",
+    insuranceExpiry: "15/01/2027",
+    emissionCertificateStatus: "Passed",
+    emissionCertificateExpiry: "24/10/2026",
+    verificationDate: "12 Jan 2026",
+    verificationStatus: "Verified",
+};
+

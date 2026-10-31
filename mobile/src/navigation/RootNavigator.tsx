@@ -14,6 +14,13 @@ import {
   TransporterOfferSubmittedScreen,
   TransporterActiveJobScreen,
   TransporterProfileScreen,
+  TransporterEditProfileScreen,
+  TransporterNotificationSettingsScreen,
+  TransporterMyOffersScreen,
+  TransporterConfirmPickupScreen,
+  TransporterConfirmDeliveryScreen,
+  TransporterVehicleLicenseScreen,
+  TransporterHelpSupportScreen,
 } from '../screens/transporter';
 
 export type RootStackParamList = {
@@ -35,6 +42,13 @@ export type RootStackParamList = {
   TransporterOfferSubmitted: { job?: any; offerData?: any } | undefined;
   TransporterActiveJob: { job?: any } | undefined;
   TransporterProfile: undefined;
+  TransporterEditProfile: undefined;
+  TransporterNotificationSettings: undefined;
+  TransporterMyOffers: undefined;
+  TransporterConfirmPickup: { job?: any } | undefined;
+  TransporterConfirmDelivery: { job?: any } | undefined;
+  TransporterVehicleLicense: undefined;
+  TransporterHelpSupport: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -101,6 +115,41 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterProfile"
         component={TransporterProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterEditProfile"
+        component={TransporterEditProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterNotificationSettings"
+        component={TransporterNotificationSettingsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterMyOffers"
+        component={TransporterMyOffersScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmPickup"
+        component={TransporterConfirmPickupScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmDelivery"
+        component={TransporterConfirmDeliveryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterVehicleLicense"
+        component={TransporterVehicleLicenseScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterHelpSupport"
+        component={TransporterHelpSupportScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
