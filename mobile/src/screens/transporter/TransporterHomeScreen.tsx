@@ -74,20 +74,20 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [notificationsList] = useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
 
   const handleConfirmPickup = () => {
-    Alert.alert(
-      "Confirm Pickup",
-      `Are you currently at ${activeJob.pickup} to confirm loading of ${activeJob.cropName} · ${activeJob.weight}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => {
-            setActiveJob((prev) => ({ ...prev, status: "In Transit" }));
-            Alert.alert("Pickup Confirmed!", "Cargo is loaded. Trip status updated to 'In Transit'.");
-          },
-        },
-      ]
-    );
+    if (activeJob.status === "In Transit" || activeJob.status === "Delivered") {
+      Alert.alert(
+        "Cargo Already Picked Up",
+        `You have already confirmed pickup for ${activeJob.cropName} · ${activeJob.weight}. Status: ${activeJob.status}.`,
+        [
+          { text: "View Trip", onPress: () => navigation?.navigate?.("TransporterActiveJob") },
+          { text: "OK", style: "cancel" },
+        ]
+      );
+      return;
+    }
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmPickup", { job: activeJob });
+    }
   };
 
   const handleUpdateStatus = () => {
@@ -301,20 +301,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           {/* Left: App Logo & Dashboard Title */}
           <View className="flex-row items-center flex-1 pr-2">
             <View
-              className={`rounded-xl bg-[#135228] items-center justify-center mr-2 sm:mr-2.5 shadow-xs overflow-hidden ${
-                isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
-              }`}
+              className="mr-2 sm:mr-2.5 items-center justify-center"
               style={{
-                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                 height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
               }}
             >
               <Image
-                source={require("../../assets/logo.png")}
+                source={require("../../assets/logo-icon.png")}
                 resizeMode="contain"
-                resizeMethod="resize"
                 style={{
-                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                   height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
                 }}
               />

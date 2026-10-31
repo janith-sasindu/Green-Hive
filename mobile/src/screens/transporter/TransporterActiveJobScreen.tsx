@@ -59,10 +59,15 @@ export const TransporterActiveJobScreen: React.FC<
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
-  // Active Job Data
   const initialJob: ActiveTransportJob =
     route?.params?.job || propJob || MOCK_ACTIVE_JOB;
   const [currentJob, setCurrentJob] = useState<ActiveTransportJob>(initialJob);
+
+  React.useEffect(() => {
+    if (route?.params?.job) {
+      setCurrentJob(route.params.job);
+    }
+  }, [route?.params?.job]);
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
   const [notificationsList] =
@@ -189,30 +194,21 @@ export const TransporterActiveJobScreen: React.FC<
       showAlert(
         "Cargo Already Picked Up",
         `You have already picked up ${currentJob.cropName} · ${currentJob.weight}. Currently in transit to ${currentJob.dropoff}.`,
-        { type: "info" }
+        {
+          type: "info",
+          primaryButtonText: "View Pickup Details",
+          secondaryButtonText: "Close",
+          onPrimaryPress: () => {
+            navigation?.navigate?.("TransporterConfirmPickup", { job: currentJob });
+          },
+        }
       );
       return;
     }
 
-    showAlert(
-      "Confirm Cargo Pickup",
-      `Are you currently at ${currentJob.pickup} and ready to confirm loading ${currentJob.cropName} · ${currentJob.weight}?`,
-      {
-        type: "info",
-        primaryButtonText: "Confirm Pickup",
-        secondaryButtonText: "Cancel",
-        onPrimaryPress: () => {
-          setCurrentJob((prev) => ({ ...prev, status: "In Transit" }));
-          setTimeout(() => {
-            showAlert(
-              "Pickup Confirmed!",
-              `Cargo is safely loaded. Your trip status is now 'In Transit'. Please proceed to ${currentJob.dropoff}.`,
-              { type: "success" }
-            );
-          }, 350);
-        },
-      }
-    );
+    if (navigation?.navigate) {
+      navigation.navigate("TransporterConfirmPickup", { job: currentJob });
+    }
   };
 
   // Delivery Confirmation Action
@@ -300,20 +296,17 @@ export const TransporterActiveJobScreen: React.FC<
           {/* Left: Green-Hive Logo & Title */}
           <View className="flex-row items-center flex-1 pr-2">
             <View
-              className={`rounded-xl bg-[#135228] items-center justify-center mr-2.5 shadow-xs overflow-hidden ${
-                isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
-              }`}
+              className="mr-2.5 items-center justify-center"
               style={{
-                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                 height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
               }}
             >
               <Image
-                source={require("../../assets/logo.png")}
+                source={require("../../assets/logo-icon.png")}
                 resizeMode="contain"
-                resizeMethod="resize"
                 style={{
-                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                   height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
                 }}
               />
@@ -463,6 +456,30 @@ export const TransporterActiveJobScreen: React.FC<
                 {currentJob.dropoff}
               </Text>
             </View>
+
+            {/* Sub-Card: Pickup Proof Photo */}
+            {currentJob.proofPhotoUri && (
+              <View className="rounded-2xl bg-[#F0FDF4] dark:bg-emerald-950/30 p-3 sm:p-3.5 mt-2.5 border border-[#DCFCE7]/60 dark:border-emerald-800/40">
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="flex-row items-center">
+                    <Ionicons name="camera-outline" size={13.5} color="#16A34A" />
+                    <Text className="text-[11.5px] sm:text-xs font-bold text-[#16A34A] dark:text-emerald-400 ml-1.5">
+                      Pickup Proof Attached
+                    </Text>
+                  </View>
+                  {currentJob.pickupTimestamp && (
+                    <Text className="text-[10.5px] text-[#6B7280] dark:text-slate-400">
+                      {currentJob.pickupTimestamp}
+                    </Text>
+                  )}
+                </View>
+                <Image
+                  source={{ uri: currentJob.proofPhotoUri }}
+                  className="w-full h-36 rounded-xl"
+                  resizeMode="cover"
+                />
+              </View>
+            )}
           </View>
 
           {/* ================= CARD 2: YOUR EARNINGS ================= */}

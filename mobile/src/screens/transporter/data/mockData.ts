@@ -41,6 +41,9 @@ export interface ActiveTransportJob {
     pickupDate: string;
     sellerName?: string;
     specialInstructions?: string;
+    proofPhotoUri?: string;
+    pickupTimestamp?: string;
+    pickupNotes?: string;
 }
 
 export interface AvailableTransportJob {
