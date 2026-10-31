@@ -23,3 +23,54 @@ export const getAdminHealth = async(
     });
   }
 };
+
+export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { role, search, status } = req.query;
+    let query = `
+      SELECT 
+        id, 
+        name, 
+        email, 
+        phone, 
+        role, 
+        location, 
+        verified, 
+        status, 
+        created_at
+      FROM users
+      WHERE 1 = 1
+    `;
+    const params: (string | number)[] = [];
+    // Filter by role if provided (farmer, seller, transporter)
+    if (role && role !== 'all') {
+      query += ` AND role = ?`;
+      params.push(String(role));
+    }
+    // Filter by account status if provided (active, pending, suspended)
+    if (status && status !== 'all') {
+      query += ` AND status = ?`;
+      params.push(String(status));
+    }
+    // Search by name, email, or phone
+    if (search) {
+      query += ` AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)`;
+      const searchWildcard = `%${search}%`;
+      params.push(searchWildcard, searchWildcard, searchWildcard);
+    }
+    query += ` ORDER BY created_at DESC`;
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+    res.status(200).json({
+      success: true,
+      count: rows.length,
+      users: rows,
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve users',
+      error: (error as Error).message,
+    });
+  }
+};
