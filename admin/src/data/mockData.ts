@@ -657,3 +657,110 @@ export const mockOperations: OperationItem[] = [
     date: '2026-08-15',
   },
 ];
+
+export interface PaymentTransaction {
+  id: string;
+  txCode: string;
+  type: 'Product Payment' | 'Transport Payment';
+  fromTo: string;
+  details: string;
+  amount: string;
+  status: 'On Hold' | 'Pending' | 'Completed';
+  date: string;
+}
+
+export const mockPaymentSummary = {
+  heldAmount: 'Rs. 25,000',
+  heldCount: '4 transactions on hold',
+  completedAmount: 'Rs. 83,000',
+  completedCount: '4 completed',
+  totalTransactions: '8',
+};
+
+// 4 Holding Payments (Escrow)
+export const mockHoldingPayments: PaymentTransaction[] = [
+  {
+    id: 'h1',
+    txCode: 'TXN-4501',
+    type: 'Product Payment',
+    fromTo: 'Colombo Fresh Market → Sunil Perera',
+    details: 'Fresh Cabbage · 100 kg · #GH-2041',
+    amount: 'Rs. 8,000',
+    status: 'On Hold',
+    date: '2026-08-27',
+  },
+  {
+    id: 'h2',
+    txCode: 'TXN-4502',
+    type: 'Transport Payment',
+    fromTo: 'Colombo Fresh Market → Ruwan Bandara',
+    details: 'Fresh Cabbage · 100 kg · #GH-2041',
+    amount: 'Rs. 1,500',
+    status: 'On Hold',
+    date: '2026-08-27',
+  },
+  {
+    id: 'h3',
+    txCode: 'TXN-4510',
+    type: 'Product Payment',
+    fromTo: 'Colombo Fresh Market → Kamal Jayasinghe',
+    details: 'Red Onions · 90 kg · #GH-2050',
+    amount: 'Rs. 13,500',
+    status: 'On Hold',
+    date: '2026-08-28',
+  },
+  {
+    id: 'h4',
+    txCode: 'TXN-4511',
+    type: 'Transport Payment',
+    fromTo: 'Colombo Fresh Market → TBD',
+    details: 'Red Onions · 90 kg · #GH-2050',
+    amount: 'Rs. 2,000',
+    status: 'Pending',
+    date: '2026-08-28',
+  },
+];
+
+// 4 Completed Payments
+export const mockCompletedPayments: PaymentTransaction[] = [
+  {
+    id: 'c1',
+    txCode: 'TXN-4498',
+    type: 'Product Payment',
+    fromTo: 'Kandy Supermart → Kamal Jayasinghe',
+    details: 'Basmati Rice · 250 kg · #GH-2035',
+    amount: 'Rs. 37,500',
+    status: 'Completed',
+    date: '2026-08-22',
+  },
+  {
+    id: 'c2',
+    txCode: 'TXN-4490',
+    type: 'Product Payment',
+    fromTo: 'Colombo Fresh Market → Nimal Fernando',
+    details: 'Banana Bunch · 400 kg · #GH-2028',
+    amount: 'Rs. 24,000',
+    status: 'Completed',
+    date: '2026-08-18',
+  },
+  {
+    id: 'c3',
+    txCode: 'TXN-4491',
+    type: 'Transport Payment',
+    fromTo: 'Colombo Fresh Market → Sisira Gamage',
+    details: 'Banana Bunch · 400 kg · #GH-2028',
+    amount: 'Rs. 3,500',
+    status: 'Completed',
+    date: '2026-08-18',
+  },
+  {
+    id: 'c4',
+    txCode: 'TXN-4480',
+    type: 'Product Payment',
+    fromTo: 'Kandy Supermart → Chamara Dissanayake',
+    details: 'Organic Carrots · 150 kg · #GH-2020',
+    amount: 'Rs. 18,000',
+    status: 'Completed',
+    date: '2026-08-14',
+  },
+];
