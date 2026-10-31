@@ -41,6 +41,13 @@ export interface ActiveTransportJob {
     pickupDate: string;
     sellerName?: string;
     specialInstructions?: string;
+    proofPhotoUri?: string;
+    pickupTimestamp?: string;
+    pickupNotes?: string;
+    deliveryProofPhotoUri?: string;
+    deliveryTimestamp?: string;
+    deliveryNotes?: string;
+    receiverName?: string;
 }
 
 export interface AvailableTransportJob {
@@ -307,5 +314,79 @@ export const MOCK_TRANSPORTER_NOTIFICATION_SETTINGS: TransporterNotificationSett
     offerStatusPush: true,
     paymentPush: true,
     soundAndVibration: true,
+};
+
+/**
+ * Transporter Driving License & Vehicle Details
+ */
+export interface TransporterVehicleAndLicense {
+    // Driver's License
+    driverName: string;
+    licenseNumber: string;
+    licenseExpiry: string;
+    licenseIssueDate: string;
+    licenseCategories: string[];
+    nicNumber: string;
+    bloodGroup: string;
+    licenseFrontPhotoUri?: string;
+    licenseBackPhotoUri?: string;
+    licenseStatus: "Verified" | "Pending Review" | "Expired";
+
+    // Vehicle Details
+    vehicleType: string;
+    vehiclePlate: string;
+    vehicleMakeModel: string;
+    vehicleYear: string;
+    vehicleColor: string;
+    maxCapacityKg: number;
+    cargoDimensions: string;
+    fuelType: string;
+    refrigerated: boolean;
+    vehiclePhotoUri?: string;
+
+    // Legal & Permits
+    revenueLicenseNo: string;
+    revenueLicenseExpiry: string;
+    insuranceProvider: string;
+    insurancePolicyNo: string;
+    insuranceExpiry: string;
+    emissionCertificateStatus: "Passed" | "Pending";
+    emissionCertificateExpiry: string;
+    verificationDate: string;
+    verificationStatus: "Verified" | "Under Review" | "Action Required";
+}
+
+export const MOCK_TRANSPORTER_VEHICLE_LICENSE: TransporterVehicleAndLicense = {
+    driverName: "Ruwan Bandara",
+    licenseNumber: "B3849201",
+    licenseExpiry: "14/03/2028",
+    licenseIssueDate: "15/03/2018",
+    licenseCategories: ["B (Dual Purpose)", "C1 (Light Lorry)", "C (Heavy Lorry 3T+)"],
+    nicNumber: "198923401234",
+    bloodGroup: "O+",
+    licenseFrontPhotoUri: "https://images.unsplash.com/photo-1589330694653-dad6d3240a2b?auto=format&fit=crop&w=800&q=80",
+    licenseBackPhotoUri: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+    licenseStatus: "Verified",
+
+    vehicleType: "Lorry - 3 Ton",
+    vehiclePlate: "WP-LH-4821",
+    vehicleMakeModel: "Isuzu Elf NPR 71",
+    vehicleYear: "2020",
+    vehicleColor: "Polar White",
+    maxCapacityKg: 3000,
+    cargoDimensions: "14.5 ft × 6.2 ft × 6.0 ft",
+    fuelType: "Diesel",
+    refrigerated: false,
+    vehiclePhotoUri: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80",
+
+    revenueLicenseNo: "RL-2025-98321",
+    revenueLicenseExpiry: "30/11/2026",
+    insuranceProvider: "Sri Lanka Insurance Corporation (SLIC)",
+    insurancePolicyNo: "SLIC-CV-783921",
+    insuranceExpiry: "15/01/2027",
+    emissionCertificateStatus: "Passed",
+    emissionCertificateExpiry: "24/10/2026",
+    verificationDate: "12 Jan 2026",
+    verificationStatus: "Verified",
 };
 

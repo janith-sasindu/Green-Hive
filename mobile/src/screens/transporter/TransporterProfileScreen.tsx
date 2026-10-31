@@ -242,16 +242,24 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         }
         break;
       case "Vehicle & License":
-        Alert.alert(
-          "Vehicle & License",
-          `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
-        );
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterVehicleLicense");
+        } else {
+          Alert.alert(
+            "Vehicle & License",
+            `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
+          );
+        }
         break;
       case "Help & Support":
-        Alert.alert(
-          "Help & Support",
-          "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
-        );
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterHelpSupport");
+        } else {
+          Alert.alert(
+            "Help & Support",
+            "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
+          );
+        }
         break;
       case "Edit Profile":
         if (navigation?.navigate) {
@@ -337,20 +345,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           {/* Left: App Logo & Screen Title */}
           <View className="flex-row items-center flex-1 pr-2">
             <View
-              className={`rounded-xl bg-[#135228] items-center justify-center mr-2.5 shadow-xs overflow-hidden ${
-                isExtraSmall ? "h-7 w-7" : isSmallDevice ? "h-8 w-8" : "h-9 w-9"
-              }`}
+              className="mr-2.5 items-center justify-center"
               style={{
-                width: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
+                width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                 height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
               }}
             >
               <Image
-                source={require("../../assets/logo.png")}
+                source={require("../../assets/logo-icon.png")}
                 resizeMode="contain"
-                resizeMethod="resize"
                 style={{
-                  width: isExtraSmall ? 50 : isSmallDevice ? 56 : 64,
+                  width: isExtraSmall ? 33 : isSmallDevice ? 38 : 43,
                   height: isExtraSmall ? 28 : isSmallDevice ? 32 : 36,
                 }}
               />
