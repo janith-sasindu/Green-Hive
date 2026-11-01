@@ -5,6 +5,6 @@ const route = Router();
 
 route.get('/health', getAdminHealth);
 
-route.get('/user', getAllUsers);
+route.get('/users', getAllUsers);
 
 export default route;
