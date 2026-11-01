@@ -108,8 +108,22 @@ export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
       params.push(String(status));
     }
 
+    query += ` ORDER BY d.submitted_at DESC`;
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    res.status(200).json({
+       success: true,
+      count: rows.length,
+      approvals: rows,
+    })
   }
   catch(error){
-
+    console.error('Error fetching approvals:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve approvals',
+      error: (error as Error).message,
+    });
   }
+  
 }
