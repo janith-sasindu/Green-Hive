@@ -11,6 +11,7 @@ import {
   FarmerProfileData,
 } from "./FarmerEditProfileModal";
 import { FarmerNotificationSettingsModal } from "./FarmerNotificationSettingsModal";
+import { FarmerHelpSupportModal } from "./FarmerHelpSupportModal";
 import type { NotificationSettings } from "../../types/seller";
 
 interface FarmerProfileScreenProps {
@@ -45,6 +46,7 @@ export const FarmerProfileScreen = ({
   });
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [notificationSettingsVisible, setNotificationSettingsVisible] = useState(false);
+  const [helpSupportVisible, setHelpSupportVisible] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     orders: true,
     payments: true,
@@ -85,7 +87,7 @@ export const FarmerProfileScreen = ({
         setNotificationSettingsVisible(true);
         break;
       case "Help & Support":
-        Alert.alert("Help & Support", "For farmer support, contact our 24/7 hotline at 1920 or email support@greenhive.lk");
+        setHelpSupportVisible(true);
         break;
       default: break;
     }
@@ -269,6 +271,11 @@ export const FarmerProfileScreen = ({
         settings={notificationSettings}
         onClose={() => setNotificationSettingsVisible(false)}
         onSave={setNotificationSettings}
+      />
+      <FarmerHelpSupportModal
+        visible={helpSupportVisible}
+        isDark={isDark}
+        onClose={() => setHelpSupportVisible(false)}
       />
     </View>
   );
