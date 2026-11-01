@@ -10,6 +10,8 @@ import {
   FarmerEditProfileModal,
   FarmerProfileData,
 } from "./FarmerEditProfileModal";
+import { FarmerNotificationSettingsModal } from "./FarmerNotificationSettingsModal";
+import type { NotificationSettings } from "../../types/seller";
 
 interface FarmerProfileScreenProps {
   onBackToHome: () => void;
@@ -42,6 +44,15 @@ export const FarmerProfileScreen = ({
     activeListings: "3 Crops",
   });
   const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [notificationSettingsVisible, setNotificationSettingsVisible] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    orders: true,
+    payments: true,
+    transportation: true,
+    fulfillment: true,
+    promotions: true,
+    security: true,
+  });
 
   // ── Theme tokens ──────────────────────────────────────────────────────────
   const t = {
@@ -71,7 +82,7 @@ export const FarmerProfileScreen = ({
         Alert.alert("Bank & Payment Details", "Bank: People's Bank\nAcc No: **** 4521\nStatus: Verified");
         break;
       case "Notification Settings":
-        Alert.alert("Notification Settings", "All push notifications are enabled for new buyer requirements and order updates.");
+        setNotificationSettingsVisible(true);
         break;
       case "Help & Support":
         Alert.alert("Help & Support", "For farmer support, contact our 24/7 hotline at 1920 or email support@greenhive.lk");
@@ -251,6 +262,13 @@ export const FarmerProfileScreen = ({
         isDark={isDark}
         onClose={() => setEditProfileVisible(false)}
         onSave={setFarmerProfile}
+      />
+      <FarmerNotificationSettingsModal
+        visible={notificationSettingsVisible}
+        isDark={isDark}
+        settings={notificationSettings}
+        onClose={() => setNotificationSettingsVisible(false)}
+        onSave={setNotificationSettings}
       />
     </View>
   );
