@@ -77,7 +77,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
 // Approvals
 
-export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
+export const getApprovals = async (req: Request, res:Response):Promise<void> =>{
   try{
     const {status} = req.query;
 
@@ -270,3 +270,196 @@ export const getOperations = async (req: Request, res: Response): Promise<void> 
 };
 
 // Payments 
+export const getPayments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Payments list with payer (seller) and payee (farmer) details
+    const [payments] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        p.id,
+        p.tx_code,
+        p.order_id,
+        o.order_code,
+        o.product_name,
+        payer.name AS payer_name,
+        payee.name AS payee_name,
+        p.amount,
+        p.payment_type,
+        p.status,
+        p.held_at,
+        p.released_at
+      FROM payments p
+      JOIN orders o ON p.order_id = o.id
+      JOIN users payer ON p.payer_id = payer.id
+      JOIN users payee ON p.payee_id = payee.id
+      ORDER BY p.held_at DESC
+    `);
+    // Categorize payments into held vs completed
+    const holdingPayments = payments.filter((p) => p.status === 'Held in Escrow');
+    const completedPayments = payments.filter((p) => p.status === 'Released');
+    // Summary calculations
+    const totalHeldAmount = holdingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const totalCompletedAmount = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    res.status(200).json({
+      success: true,
+      summary: {
+        totalHeldAmount: `Rs. ${totalHeldAmount.toLocaleString()}`,
+        totalCompletedAmount: `Rs. ${totalCompletedAmount.toLocaleString()}`,
+        totalTransactionsCount: payments.length,
+      },
+      holdingPayments,
+      completedPayments,
+    });
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve payments',
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // 1. Total platform users count
+    const [userCountRow] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM users WHERE role != 'admin'`
+    );
+    // 2. Active orders count
+    const [orderCountRow] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM orders WHERE order_status NOT IN ('Completed', 'Cancelled')`
+    );
+    // 3. Held escrow sum
+    const [escrowRow] = await pool.query<RowDataPacket[]>(
+      `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'Held in Escrow'`
+    );
+    // 4. Active transport jobs count
+    const [transportCountRow] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM transport_jobs WHERE status IN ('Open', 'Assigned', 'In Transit')`
+    );
+    // 5. Role distribution counts
+    const [roleRows] = await pool.query<RowDataPacket[]>(
+      `SELECT role, COUNT(*) AS count FROM users GROUP BY role`
+    );
+    const roles = {
+      farmers: 0,
+      sellers: 0,
+      transporters: 0,
+    };
+    roleRows.forEach((r) => {
+      if (r.role === 'farmer') roles.farmers = r.count;
+      if (r.role === 'seller') roles.sellers = r.count;
+      if (r.role === 'transporter') roles.transporters = r.count;
+    });
+    // 6. Recent Orders (Top 5)
+    const [recentOrders] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        o.id,
+        o.order_code,
+        o.product_name AS product,
+        f.name AS farmer,
+        s.name AS seller,
+        o.total_amount AS amount,
+        o.order_status AS status,
+        o.payment_status AS payment
+      FROM orders o
+      JOIN users f ON o.farmer_id = f.id
+      JOIN users s ON o.seller_id = s.id
+      ORDER BY o.created_at DESC
+      LIMIT 5
+    `);
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers: userCountRow[0].total.toLocaleString(),
+        activeOrders: orderCountRow[0].total.toString(),
+        heldPayments: `Rs. ${Number(escrowRow[0].total).toLocaleString()}`,
+        transportJobs: transportCountRow[0].total.toString(),
+      },
+      roleCounts: roles,
+      recentOrders,
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve dashboard stats',
+      error: (error as Error).message,
+    });
+  }
+};
+/**
+ * 8. Dashboard 12-Month Charts
+ * GET /api/admin/dashboard/charts
+ */
+export const getDashboardCharts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    // 1. Orders Over Time by Month
+    const [orderRows] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        MONTH(created_at) AS month_num,
+        COUNT(*) AS orders
+      FROM orders
+      WHERE YEAR(created_at) = ?
+      GROUP BY MONTH(created_at)
+    `, [currentYear]);
+    // 2. User Growth by Month & Role
+    const [userRows] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        MONTH(created_at) AS month_num,
+        SUM(CASE WHEN role = 'farmer' THEN 1 ELSE 0 END) AS farmers,
+        SUM(CASE WHEN role = 'seller' THEN 1 ELSE 0 END) AS sellers,
+        SUM(CASE WHEN role = 'transporter' THEN 1 ELSE 0 END) AS transporters
+      FROM users
+      WHERE YEAR(created_at) = ?
+      GROUP BY MONTH(created_at)
+    `, [currentYear]);
+    // 3. Transaction Volume (Millions) by Month
+    const [paymentRows] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        MONTH(held_at) AS month_num,
+        COALESCE(SUM(CASE WHEN payment_type = 'product_purchase' THEN amount ELSE 0 END), 0) / 1000000 AS product,
+        COALESCE(SUM(CASE WHEN payment_type = 'transport_fee' THEN amount ELSE 0 END), 0) / 1000000 AS transport
+      FROM payments
+      WHERE YEAR(held_at) = ?
+      GROUP BY MONTH(held_at)
+    `, [currentYear]);
+    // Build complete 12-month array (Jan–Dec) ensuring no month is missing
+    const ordersOverTime = monthNames.map((name, index) => {
+      const row = orderRows.find((r) => r.month_num === index + 1);
+      return { month: name, orders: row ? Number(row.orders) : 0 };
+    });
+    const userGrowth = monthNames.map((name, index) => {
+      const row = userRows.find((r) => r.month_num === index + 1);
+      return {
+        month: name,
+        farmers: row ? Number(row.farmers) : 0,
+        sellers: row ? Number(row.sellers) : 0,
+        transporters: row ? Number(row.transporters) : 0,
+      };
+    });
+    const transactionVolume = monthNames.map((name, index) => {
+      const row = paymentRows.find((r) => r.month_num === index + 1);
+      return {
+        month: name,
+        product: row ? parseFloat(Number(row.product).toFixed(2)) : 0,
+        transport: row ? parseFloat(Number(row.transport).toFixed(2)) : 0,
+      };
+    });
+    res.status(200).json({
+      success: true,
+      ordersOverTime,
+      userGrowth,
+      transactionVolume,
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard charts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve dashboard chart data',
+      error: (error as Error).message,
+    });
+  }
+};
