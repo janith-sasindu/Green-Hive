@@ -74,3 +74,35 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     });
   }
 };
+
+// Approvals
+
+export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
+  try{
+    const {status} = req.body;
+
+    let query = `
+      SELECT 
+        d.id,
+        d.user_id,
+        u.name AS user_name,
+        u.email AS user_email,
+        u.phone AS user_phone,
+        u.role AS user_role,
+        u.location AS user_location,
+        d.doc_type,
+        d.id_number,
+        d.document_image_url,
+        d.status,
+        d.rejection_reason,
+        d.submitted_at,
+        d.reviewed_at
+      FROM identity_documents d
+      JOIN users u ON d.user_id = u.id
+      WHERE 1 = 1
+    `;
+  }
+  catch(error){
+
+  }
+}
