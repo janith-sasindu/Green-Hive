@@ -125,5 +125,148 @@ export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
       error: (error as Error).message,
     });
   }
-  
 }
+  // Ads Management
+
+export const getAds = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // 1. Fetch Selling Ads (posted by farmers)
+    const [sellingAds] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        s.id,
+        s.farmer_id,
+        u.name AS farmer_name,
+        u.phone AS farmer_phone,
+        s.title,
+        s.category,
+        s.price_per_kg,
+        s.quantity_available,
+        s.unit,
+        s.location,
+        s.valid_until,
+        s.image_url,
+        s.status,
+        s.created_at
+      FROM selling_ads s
+      JOIN users u ON s.farmer_id = u.id
+      ORDER BY s.created_at DESC
+    `);
+    // 2. Fetch Requirement Ads (posted by sellers)
+    const [requirementAds] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        r.id,
+        r.seller_id,
+        u.name AS seller_name,
+        u.phone AS seller_phone,
+        r.title,
+        r.category,
+        r.offered_price_per_kg,
+        r.quantity_needed,
+        r.unit,
+        r.location,
+        r.deadline,
+        r.description,
+        r.status,
+        r.created_at
+      FROM requirement_ads r
+      JOIN users u ON r.seller_id = u.id
+      ORDER BY r.created_at DESC
+    `);
+    res.status(200).json({
+      success: true,
+      totalSellingAds: sellingAds.length,
+      totalRequirementAds: requirementAds.length,
+      sellingAds,
+      requirementAds,
+    });
+  } catch (error) {
+    console.error('Error fetching ads:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve ads',
+      error: (error as Error).message,
+    });
+  }
+};
+
+// Operations 
+
+export const getOperations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // 1. Products listed
+    const [products] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        s.id,
+        s.title AS name,
+        'Product' AS operation_type,
+        u.name AS farmer_name,
+        s.category,
+        s.price_per_kg AS price,
+        s.quantity_available AS quantity,
+        s.status,
+        s.created_at
+      FROM selling_ads s
+      JOIN users u ON s.farmer_id = u.id
+      ORDER BY s.created_at DESC
+    `);
+    // 2. Orders placed
+    const [orders] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        o.id,
+        o.order_code,
+        'Order' AS operation_type,
+        o.product_name,
+        f.name AS farmer_name,
+        s.name AS seller_name,
+        o.quantity,
+        o.total_amount,
+        o.order_status AS status,
+        o.payment_status,
+        o.created_at
+      FROM orders o
+      JOIN users f ON o.farmer_id = f.id
+      JOIN users s ON o.seller_id = s.id
+      ORDER BY o.created_at DESC
+    `);
+    // 3. Transport Jobs
+    const [transports] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        t.id,
+        t.job_code,
+        'Transport' AS operation_type,
+        t.order_id,
+        COALESCE(u.name, 'Unassigned') AS transporter_name,
+        t.pickup_location,
+        t.drop_location,
+        t.vehicle_type,
+        t.fee,
+        t.status,
+        t.scheduled_date,
+        t.created_at
+      FROM transport_jobs t
+      LEFT JOIN users u ON t.transporter_id = u.id
+      ORDER BY t.created_at DESC
+    `);
+    res.status(200).json({
+      success: true,
+      counts: {
+        all: products.length + orders.length + transports.length,
+        products: products.length,
+        orders: orders.length,
+        transport: transports.length,
+      },
+      products,
+      orders,
+      transports,
+    });
+  } catch (error) {
+    console.error('Error fetching operations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve operations data',
+      error: (error as Error).message,
+    });
+  }
+};
+
+// Payments 
