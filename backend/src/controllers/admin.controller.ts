@@ -79,7 +79,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
 export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
   try{
-    const {status} = req.body;
+    const {status} = req.query;
 
     let query = `
       SELECT 
@@ -101,6 +101,13 @@ export const getApprovels = async (req: Request, res:Response):Promise<void> =>{
       JOIN users u ON d.user_id = u.id
       WHERE 1 = 1
     `;
+
+    const params: string[] = [];
+    if (status && status !== 'all'){
+      query += 'AND d.status = ?';
+      params.push(String(status));
+    }
+
   }
   catch(error){
 
