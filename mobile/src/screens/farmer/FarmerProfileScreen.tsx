@@ -6,6 +6,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
+import {
+  FarmerEditProfileModal,
+  FarmerProfileData,
+} from "./FarmerEditProfileModal";
 
 interface FarmerProfileScreenProps {
   onBackToHome: () => void;
@@ -24,7 +28,7 @@ export const FarmerProfileScreen = ({
   const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
 
-  const farmerProfile = {
+  const [farmerProfile, setFarmerProfile] = useState<FarmerProfileData>({
     name: "Sunil Perera",
     role: "Verified Farmer",
     location: "Nuwara Eliya",
@@ -36,7 +40,8 @@ export const FarmerProfileScreen = ({
     completedSales: 23,
     totalEarnings: "Rs. 142k",
     activeListings: "3 Crops",
-  };
+  });
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
 
   // ── Theme tokens ──────────────────────────────────────────────────────────
   const t = {
@@ -60,7 +65,7 @@ export const FarmerProfileScreen = ({
   const handleMenuPress = (itemTitle: string) => {
     switch (itemTitle) {
       case "Edit Profile":
-        Alert.alert("Edit Profile", "Profile editing will be available in the next update.");
+        setEditProfileVisible(true);
         break;
       case "Bank & Payment Details":
         Alert.alert("Bank & Payment Details", "Bank: People's Bank\nAcc No: **** 4521\nStatus: Verified");
@@ -239,6 +244,14 @@ export const FarmerProfileScreen = ({
           </TouchableOpacity>
         </View>
       </SmoothScrollView>
+
+      <FarmerEditProfileModal
+        visible={editProfileVisible}
+        profile={farmerProfile}
+        isDark={isDark}
+        onClose={() => setEditProfileVisible(false)}
+        onSave={setFarmerProfile}
+      />
     </View>
   );
 };
