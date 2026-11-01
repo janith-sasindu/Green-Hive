@@ -16,6 +16,7 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_MY_OFFERS,
   MOCK_TRANSPORTER_PROFILE,
+  DEFAULT_OFFER_NOTE,
   TransportOffer,
   TransporterProfile,
 } from "./data";
@@ -362,7 +363,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
 
                   {/* Title */}
                   <Text className="font-extrabold text-[#111827] dark:text-white text-[16.5px] sm:text-[17.5px] mt-1.5">
-                    {offer.title || "Transportation Offer"}
+                    {offer.title || MOCK_MY_OFFERS[0].title}
                   </Text>
 
                   {/* Cargo info subtitle if available */}
@@ -390,7 +391,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                         Est. Delivery
                       </Text>
                       <Text className="text-[12.5px] sm:text-[13px] font-bold text-[#1F2937] dark:text-slate-200 mt-0.5 text-right">
-                        {offer.estimatedDelivery || "2026-08-31 08:00 AM"}
+                        {offer.estimatedDelivery || MOCK_MY_OFFERS[0].estimatedDelivery}
                       </Text>
                     </View>
                   </View>
@@ -398,15 +399,14 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                   {/* Note Bubble (Italic callout box matching design) */}
                   <View className="mt-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-700/60 p-3 border border-slate-100/90 dark:border-slate-700/40">
                     <Text className="text-[12px] sm:text-[12.5px] italic text-[#4B5563] dark:text-slate-300 leading-relaxed">
-                      {offer.notes ||
-                        "I have refrigerated vehicle available. On-time delivery guaranteed."}
+                      {offer.notes || DEFAULT_OFFER_NOTE}
                     </Text>
                   </View>
 
                   {/* Footer Line: Submitted Date & Actions */}
                   <View className="mt-3 flex-row items-center justify-between pt-1">
                     <Text className="text-[11px] sm:text-[11.5px] font-medium text-[#9CA3AF] dark:text-slate-400">
-                      Submitted {offer.submittedDate || "2026-08-28"}
+                      Submitted {offer.submittedDate || MOCK_MY_OFFERS[0].submittedDate}
                     </Text>
 
                     {/* Action button */}

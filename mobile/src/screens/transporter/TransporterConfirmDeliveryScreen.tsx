@@ -23,6 +23,7 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_ACTIVE_JOB,
   MOCK_TRANSPORTER_PROFILE,
+  SAMPLE_DELIVERY_PROOF_PHOTO_URI,
   ActiveTransportJob,
   TransporterProfile,
 } from "./data";
@@ -233,13 +234,10 @@ export const TransporterConfirmDeliveryScreen: React.FC<
     }
   };
 
-  // Sample photo for quick simulator/demo testing
+  // Sample photo for quick simulator/demo testing from shared mock data
   const handleUseSampleProof = () => {
     setShowSourceModal(false);
-    // High quality delivery handover image (crates of fresh produce delivered at market)
-    setProofPhotoUri(
-      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80"
-    );
+    setProofPhotoUri(SAMPLE_DELIVERY_PROOF_PHOTO_URI);
   };
 
   const handleRemovePhoto = () => {
@@ -351,7 +349,7 @@ export const TransporterConfirmDeliveryScreen: React.FC<
                 />
               ) : (
                 <Text className="font-black text-white text-sm">
-                  {profile.avatarLetter || "R"}
+                  {profile.avatarLetter || MOCK_TRANSPORTER_PROFILE.avatarLetter}
                 </Text>
               )}
             </TouchableOpacity>
@@ -380,7 +378,7 @@ export const TransporterConfirmDeliveryScreen: React.FC<
               </Text>
             </View>
             <Text className="text-[12.5px] sm:text-[13px] font-medium text-[#2563EB] dark:text-blue-300 mt-1 pl-6">
-              {currentJob.dropoff || "Colombo Fresh Market, Colombo 07"}
+              {currentJob.dropoff || MOCK_ACTIVE_JOB.dropoff}
             </Text>
           </View>
 
@@ -404,7 +402,7 @@ export const TransporterConfirmDeliveryScreen: React.FC<
                   Product
                 </Text>
                 <Text className="text-[14.5px] sm:text-[15px] font-bold text-[#1E293B] dark:text-white">
-                  {currentJob.cropName || "Fresh Cabbage"}
+                  {currentJob.cropName || MOCK_ACTIVE_JOB.cropName}
                 </Text>
               </View>
 
@@ -414,7 +412,7 @@ export const TransporterConfirmDeliveryScreen: React.FC<
                   Quantity
                 </Text>
                 <Text className="text-[14.5px] sm:text-[15px] font-bold text-[#1E293B] dark:text-white">
-                  {currentJob.weight || "100 kg"}
+                  {currentJob.weight || MOCK_ACTIVE_JOB.weight}
                 </Text>
               </View>
             </View>

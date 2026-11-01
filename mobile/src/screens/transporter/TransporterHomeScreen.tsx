@@ -153,16 +153,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   };
 
   const handleMakeOffer = (jobId: string, cropInfo: string) => {
+    const defaultJob = MOCK_AVAILABLE_JOBS[0];
     const targetJob = availableJobsList.find((j) => j.id === jobId) || {
+      ...defaultJob,
       id: jobId,
-      cropName: cropInfo.split("·")[0]?.trim() || "Vegetable Cargo",
-      weight: cropInfo.split("·")[1]?.trim() || "100 kg",
-      pickup: "Dambulla Agricultural Hub",
-      dropoff: "Colombo Fresh Market",
-      pickupTime: "Today · 06:00 AM",
-      status: "Open",
-      price: "Rs. 2,200",
-    } as AvailableTransportJob;
+      cropName: cropInfo.split("·")[0]?.trim() || defaultJob.cropName,
+      weight: cropInfo.split("·")[1]?.trim() || defaultJob.weight,
+    };
 
     if (navigation?.navigate) {
       navigation.navigate("TransporterSubmitOffer", { job: targetJob });
@@ -195,35 +192,38 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     }
   };
 
+  const defaultAvailableFallback = MOCK_AVAILABLE_JOBS[0];
+
   const getJobIdDisplay = (id?: string) => {
-    if (!id) return "JOB #GH-T1025";
+    if (!id) return `JOB ${defaultAvailableFallback.id}`;
     const trimmed = id.trim();
     if (trimmed.toUpperCase().startsWith("JOB")) return trimmed;
     return `JOB ${trimmed}`;
   };
 
   const getJobDate = (job?: AvailableTransportJob | null) => {
-    if (!job) return "2026-08-31";
+    if (!job) return defaultAvailableFallback.pickupDate || "";
     if (job.pickupDate) return job.pickupDate;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[0].trim();
     }
-    return "2026-08-31";
+    return defaultAvailableFallback.pickupDate || "";
   };
 
   const getJobTime = (job?: AvailableTransportJob | null) => {
-    if (!job) return "06:00 AM";
+    if (!job) return defaultAvailableFallback.pickupRequiredTime || "";
     if (job.pickupRequiredTime) return job.pickupRequiredTime;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[1].trim();
     }
-    return "06:00 AM";
+    return defaultAvailableFallback.pickupRequiredTime || "";
   };
 
   const getSpecialInstructions = (job?: AvailableTransportJob | null) => {
     return (
       job?.specialInstructions ||
-      "Fragile. Use padded transport. Early morning delivery required."
+      defaultAvailableFallback.specialInstructions ||
+      ""
     );
   };
 
@@ -231,7 +231,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     return (
       job?.pickupLocationDetail ||
       job?.pickup ||
-      "Dambulla Agricultural Zone, Plot 14"
+      defaultAvailableFallback.pickup
     );
   };
 
@@ -239,7 +239,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     return (
       job?.dropoffLocationDetail ||
       job?.dropoff ||
-      "Colombo Fresh Market, Colombo 03"
+      defaultAvailableFallback.dropoff
     );
   };
 
@@ -1582,7 +1582,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getPickupAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Farmer: {selectedAvailableJob.farmerName || "Kamal Jayasinghe"}
+                        Farmer: {selectedAvailableJob.farmerName || defaultAvailableFallback.farmerName}
                       </Text>
                     </View>
 
@@ -1601,7 +1601,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getDeliveryAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Seller: {selectedAvailableJob.sellerName || "Colombo Fresh Market"}
+                        Seller: {selectedAvailableJob.sellerName || defaultAvailableFallback.sellerName}
                       </Text>
                     </View>
 

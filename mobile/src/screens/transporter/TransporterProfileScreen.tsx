@@ -23,6 +23,7 @@ import { TransporterNotificationSettingsScreen } from "./TransporterNotification
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_TRANSPORTER_STATS,
+  MOCK_TRANSPORTER_SUPPORT_CONTACT,
   TransporterProfile,
   TransporterStats,
 } from "./data";
@@ -257,7 +258,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         } else {
           Alert.alert(
             "Help & Support",
-            "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
+            MOCK_TRANSPORTER_SUPPORT_CONTACT.message
           );
         }
         break;
@@ -420,7 +421,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                       : "text-sm"
                   }`}
                 >
-                  {profile.avatarLetter || "R"}
+                  {profile.avatarLetter || MOCK_TRANSPORTER_PROFILE.avatarLetter}
                 </Text>
               )}
             </TouchableOpacity>
@@ -484,7 +485,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                       isExtraSmall ? "text-3xl" : "text-4xl"
                     }`}
                   >
-                    {profile.avatarLetter || "R"}
+                    {profile.avatarLetter || MOCK_TRANSPORTER_PROFILE.avatarLetter}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -574,7 +575,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   adjustsFontSizeToFit
                   className="font-black text-white text-base sm:text-lg text-center"
                 >
-                  {profile.totalEarnings || "Rs. 320k"}
+                  {profile.totalEarnings || MOCK_TRANSPORTER_PROFILE.totalEarnings}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
                   Earned
@@ -591,7 +592,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   adjustsFontSizeToFit
                   className="font-black text-white text-base sm:text-lg text-center"
                 >
-                  {profile.onTimeDeliveryRate || "98%"}
+                  {profile.onTimeDeliveryRate || MOCK_TRANSPORTER_PROFILE.onTimeDeliveryRate}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
                   On Time
@@ -679,7 +680,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                     numberOfLines={1}
                     className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
-                    {profile.baseLocation || "Colombo"}
+                    {profile.baseLocation || MOCK_TRANSPORTER_PROFILE.baseLocation}
                   </Text>
                 </View>
               </View>
