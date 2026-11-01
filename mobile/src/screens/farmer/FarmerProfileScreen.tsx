@@ -1,10 +1,11 @@
 ﻿import React, { useState } from "react";
 import {
-  View, Text, TouchableOpacity, StatusBar,
+  Image, View, Text, TouchableOpacity, StatusBar,
   Alert, Switch, useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import {
   FarmerEditProfileModal,
@@ -12,6 +13,7 @@ import {
 } from "./FarmerEditProfileModal";
 import { FarmerNotificationSettingsModal } from "./FarmerNotificationSettingsModal";
 import { FarmerHelpSupportModal } from "./FarmerHelpSupportModal";
+import { FarmerPhotoSourceModal } from "./FarmerPhotoSourceModal";
 import type { NotificationSettings } from "../../types/seller";
 
 interface FarmerProfileScreenProps {
@@ -47,6 +49,7 @@ export const FarmerProfileScreen = ({
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [notificationSettingsVisible, setNotificationSettingsVisible] = useState(false);
   const [helpSupportVisible, setHelpSupportVisible] = useState(false);
+  const [photoSourceVisible, setPhotoSourceVisible] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     orders: true,
     payments: true,
@@ -94,11 +97,59 @@ export const FarmerProfileScreen = ({
   };
 
   const handleEditAvatar = () => {
-    Alert.alert("Profile Photo", "Choose an option to update your profile photo:", [
-      { text: "Take Photo", onPress: () => {} },
-      { text: "Choose from Library", onPress: () => {} },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    setPhotoSourceVisible(true);
+  };
+
+  const handleTakePhoto = async () => {
+    setPhotoSourceVisible(false);
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Camera Permission Required",
+          "Allow camera access in your device settings to take a profile photo."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        setFarmerProfile((current) => ({ ...current, avatarUri: result.assets[0].uri }));
+      }
+    } catch {
+      Alert.alert("Camera Error", "Could not open the camera. Please try again.");
+    }
+  };
+
+  const handleChoosePhoto = async () => {
+    setPhotoSourceVisible(false);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Gallery Permission Required",
+          "Allow photo library access in your device settings to choose a profile photo."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        setFarmerProfile((current) => ({ ...current, avatarUri: result.assets[0].uri }));
+      }
+    } catch {
+      Alert.alert("Gallery Error", "Could not open the photo library. Please try again.");
+    }
   };
 
   const handleSignOut = () => {
@@ -138,9 +189,17 @@ export const FarmerProfileScreen = ({
             </TouchableOpacity>
             <View style={{ backgroundColor: "#166534" }}
               className={`rounded-full items-center justify-center shadow-xs ${isExtraSmall ? "h-8 w-8" : "h-9 w-9"}`}>
-              <Text style={{ color: "#FFFFFF" }} className={`font-bold ${isExtraSmall ? "text-[11px]" : "text-sm"}`}>
-                {farmerProfile.avatarLetter}
-              </Text>
+              {farmerProfile.avatarUri ? (
+                <Image
+                  source={{ uri: farmerProfile.avatarUri }}
+                  className="h-full w-full rounded-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={{ color: "#FFFFFF" }} className={`font-bold ${isExtraSmall ? "text-[11px]" : "text-sm"}`}>
+                  {farmerProfile.avatarLetter}
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -159,7 +218,17 @@ export const FarmerProfileScreen = ({
             <View className="relative mt-1">
               <View className="rounded-full bg-white/20 border-2 border-white/40 items-center justify-center"
                 style={{ width: isExtraSmall ? 80 : isSmallDevice ? 88 : 96, height: isExtraSmall ? 80 : isSmallDevice ? 88 : 96 }}>
-                <Text className={`font-black text-white ${isExtraSmall ? "text-3xl" : "text-4xl"}`}>{farmerProfile.avatarLetter}</Text>
+                {farmerProfile.avatarUri ? (
+                  <Image
+                    source={{ uri: farmerProfile.avatarUri }}
+                    className="h-full w-full rounded-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text className={`font-black text-white ${isExtraSmall ? "text-3xl" : "text-4xl"}`}>
+                    {farmerProfile.avatarLetter}
+                  </Text>
+                )}
               </View>
               <TouchableOpacity activeOpacity={0.85} onPress={handleEditAvatar} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white items-center justify-center border border-gray-100"
@@ -263,6 +332,7 @@ export const FarmerProfileScreen = ({
         profile={farmerProfile}
         isDark={isDark}
         onClose={() => setEditProfileVisible(false)}
+        onReopen={() => setEditProfileVisible(true)}
         onSave={setFarmerProfile}
       />
       <FarmerNotificationSettingsModal
@@ -276,6 +346,20 @@ export const FarmerProfileScreen = ({
         visible={helpSupportVisible}
         isDark={isDark}
         onClose={() => setHelpSupportVisible(false)}
+      />
+      <FarmerPhotoSourceModal
+        visible={photoSourceVisible}
+        isDark={isDark}
+        title="Profile Photo"
+        subtitle="Choose an option to update your photo"
+        hasPhoto={Boolean(farmerProfile.avatarUri)}
+        onClose={() => setPhotoSourceVisible(false)}
+        onCamera={handleTakePhoto}
+        onGallery={handleChoosePhoto}
+        onRemove={() => {
+          setPhotoSourceVisible(false);
+          setFarmerProfile((current) => ({ ...current, avatarUri: undefined }));
+        }}
       />
     </View>
   );
