@@ -496,3 +496,51 @@ export const SAMPLE_DELIVERY_PROOF_PHOTO_URI =
  */
 export const DEFAULT_OFFER_NOTE =
     "I have refrigerated vehicle available. On-time delivery guaranteed.";
+
+
+/**
+ * Transporter Bank Account & Payout Details
+ */
+export interface TransporterBankAccount {
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    branchCode: string;
+    accountNumber: string;
+    accountType: "Savings" | "Current" | string;
+    isVerified: boolean;
+    verificationStatus: "Verified" | "Pending" | "Rejected";
+    payoutMethod: string;
+    notes?: string;
+}
+
+export const MOCK_TRANSPORTER_BANK_ACCOUNT: TransporterBankAccount = {
+    accountHolderName: "Ruwan Bandara",
+    bankName: "Commercial Bank of Ceylon",
+    branchName: "Colombo Fort Branch",
+    branchCode: "016",
+    accountNumber: "8204918234",
+    accountType: "Savings",
+    isVerified: true,
+    verificationStatus: "Verified",
+    payoutMethod: "Direct Bank Transfer (LANKAQR / SLIPS)",
+    notes: "Primary account for Green-Hive trip payouts and toll reimbursements.",
+};
+
+export const POPULAR_SRI_LANKAN_BANKS: string[] = [
+    "Commercial Bank of Ceylon",
+    "Bank of Ceylon (BOC)",
+    "People's Bank",
+    "Hatton National Bank (HNB)",
+    "Sampath Bank",
+    "Seylan Bank",
+    "Nations Trust Bank (NTB)",
+    "National Development Bank (NDB)",
+    "DFCC Bank",
+    "Pan Asia Bank",
+];
+
+export const BANK_ACCOUNT_TYPES: string[] = [
+    "Savings",
+    "Current",
+];

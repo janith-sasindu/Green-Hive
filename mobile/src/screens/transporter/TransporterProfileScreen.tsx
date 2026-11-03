@@ -19,6 +19,7 @@ import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import { TransporterEditProfileScreen } from "./TransporterEditProfileScreen";
+import { TransporterBankDetailsScreen } from "./TransporterBankDetailsScreen";
 import { TransporterNotificationSettingsScreen } from "./TransporterNotificationSettingsScreen";
 import {
   MOCK_TRANSPORTER_PROFILE,
@@ -60,6 +61,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
   // Screen Modals
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
 
   // Photo upload and preview state
@@ -267,6 +269,13 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           navigation.navigate("TransporterEditProfile");
         } else {
           setShowEditProfileModal(true);
+        }
+        break;
+      case "Bank Details":
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterBankDetails");
+        } else {
+          setShowBankDetailsModal(true);
         }
         break;
       default:
@@ -734,6 +743,18 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
 
+            {/* Bank Details */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Bank Details")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
+                Bank Details
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
+            </TouchableOpacity>
+
             {/* Vehicle & License */}
             <TouchableOpacity
               activeOpacity={0.7}
@@ -1188,6 +1209,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             setProfile({ ...updated });
             setShowEditProfileModal(false);
           }}
+        />
+      </Modal>
+
+      {/* Bank Details Full-Screen Modal Fallback */}
+      <Modal
+        visible={showBankDetailsModal}
+        animationType="slide"
+        onRequestClose={() => setShowBankDetailsModal(false)}
+      >
+        <TransporterBankDetailsScreen
+          onBack={() => setShowBankDetailsModal(false)}
         />
       </Modal>
 
