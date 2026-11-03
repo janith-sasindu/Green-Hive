@@ -37,6 +37,7 @@ import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
 import { TransporterProfileScreen } from "./TransporterProfileScreen";
 import { TransporterMyOffersScreen } from "./TransporterMyOffersScreen";
+import { TransporterBankDetailsScreen } from "./TransporterBankDetailsScreen";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import { CommonActions } from "@react-navigation/native";
 
@@ -60,6 +61,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [showNotifications, setShowNotifications] = useState(false);
   const [showOffersModal, setShowOffersModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
   const [selectedAvailableJob, setSelectedAvailableJob] = useState<AvailableTransportJob | null>(null);
 
@@ -864,6 +866,43 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 minimumFontScale={0.8}
               >
                 Profile
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Row 3: Bank Details */}
+          <View className="mt-2 sm:mt-2.5">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterBankDetails");
+                } else {
+                  setShowBankDetailsModal(true);
+                }
+              }}
+              className={`w-full items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-2xs px-3 ${
+                isExtraSmall
+                  ? "h-[68px]"
+                  : isSmallDevice
+                  ? "h-[74px]"
+                  : "h-[88px]"
+              }`}
+            >
+              <Text className={isSmallDevice ? "text-lg mb-0" : "text-2xl mb-0.5"}>🏦</Text>
+              <Text
+                className={`font-bold text-[#1F2937] dark:text-white ${
+                  isExtraSmall
+                    ? "text-[10.5px]"
+                    : isSmallDevice
+                    ? "text-[11.5px]"
+                    : "text-[13px]"
+                }`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                Bank Details
               </Text>
             </TouchableOpacity>
           </View>
@@ -1907,6 +1946,18 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </View>
           </SmoothScrollView>
         </SafeAreaView>
+      </Modal>
+
+      {/* ================= MODAL: BANK DETAILS ================= */}
+      <Modal
+        visible={showBankDetailsModal}
+        animationType="slide"
+        onRequestClose={() => setShowBankDetailsModal(false)}
+      >
+        <TransporterBankDetailsScreen
+          onBack={() => setShowBankDetailsModal(false)}
+          navigation={navigation}
+        />
       </Modal>
     </View>
   );
