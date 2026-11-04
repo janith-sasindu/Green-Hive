@@ -108,35 +108,38 @@ export const TransporterAvailableJobsScreen = ({
     handleSubmitOffer(job);
   };
 
+  const defaultFallbackJob = MOCK_AVAILABLE_JOBS[0];
+
   const getJobIdDisplay = (id?: string) => {
-    if (!id) return "JOB #GH-T1025";
+    if (!id) return `JOB ${defaultFallbackJob.id}`;
     const trimmed = id.trim();
     if (trimmed.toUpperCase().startsWith("JOB")) return trimmed;
     return `JOB ${trimmed}`;
   };
 
   const getJobDate = (job?: AvailableTransportJob | null) => {
-    if (!job) return "2026-08-31";
+    if (!job) return defaultFallbackJob.pickupDate || "";
     if (job.pickupDate) return job.pickupDate;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[0].trim();
     }
-    return "2026-08-31";
+    return defaultFallbackJob.pickupDate || "";
   };
 
   const getJobTime = (job?: AvailableTransportJob | null) => {
-    if (!job) return "06:00 AM";
+    if (!job) return defaultFallbackJob.pickupRequiredTime || "";
     if (job.pickupRequiredTime) return job.pickupRequiredTime;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[1].trim();
     }
-    return "06:00 AM";
+    return defaultFallbackJob.pickupRequiredTime || "";
   };
 
   const getSpecialInstructions = (job?: AvailableTransportJob | null) => {
     return (
       job?.specialInstructions ||
-      "Fragile. Use padded transport. Early morning delivery required."
+      defaultFallbackJob.specialInstructions ||
+      ""
     );
   };
 
@@ -144,7 +147,7 @@ export const TransporterAvailableJobsScreen = ({
     return (
       job?.pickupLocationDetail ||
       job?.pickup ||
-      "Dambulla Agricultural Zone, Plot 14"
+      defaultFallbackJob.pickup
     );
   };
 
@@ -152,15 +155,15 @@ export const TransporterAvailableJobsScreen = ({
     return (
       job?.dropoffLocationDetail ||
       job?.dropoff ||
-      "Colombo Fresh Market, Colombo 03"
+      defaultFallbackJob.dropoff
     );
   };
 
   const handleCallFarmer = (job: AvailableTransportJob) => {
     Alert.alert(
       "Contact Farmer",
-      `Call ${job.farmerName || "Farmer"} at ${
-        job.farmerPhone || "+94 77 123 4567"
+      `Call ${job.farmerName || defaultFallbackJob.farmerName || "Farmer"} at ${
+        job.farmerPhone || defaultFallbackJob.farmerPhone || ""
       }?`,
       [
         { text: "Cancel", style: "cancel" },
@@ -704,7 +707,7 @@ export const TransporterAvailableJobsScreen = ({
                         {getPickupAddress(selectedJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Farmer: {selectedJob.farmerName || "Kamal Jayasinghe"}
+                        Farmer: {selectedJob.farmerName || defaultFallbackJob.farmerName}
                       </Text>
                     </View>
 
@@ -723,7 +726,7 @@ export const TransporterAvailableJobsScreen = ({
                         {getDeliveryAddress(selectedJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Seller: {selectedJob.sellerName || "Colombo Fresh Market"}
+                        Seller: {selectedJob.sellerName || defaultFallbackJob.sellerName}
                       </Text>
                     </View>
 

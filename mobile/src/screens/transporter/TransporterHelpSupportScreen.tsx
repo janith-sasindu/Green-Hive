@@ -23,8 +23,14 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_ACTIVE_JOB,
+  MOCK_SUPPORT_TICKETS,
+  PROBLEM_CATEGORIES,
+  SAMPLE_SUPPORT_PHOTO_URI,
   TransporterProfile,
+  SupportTicketItem,
 } from "./data";
+
+export { SupportTicketItem };
 
 export interface TransporterHelpSupportScreenProps {
   navigation?: any;
@@ -32,26 +38,6 @@ export interface TransporterHelpSupportScreenProps {
   onSelectTab?: (tab: "home" | "jobs" | "active" | "profile") => void;
   activeTab?: "home" | "jobs" | "active" | "profile";
 }
-
-export interface SupportTicketItem {
-  id: string;
-  category: string;
-  subject: string;
-  message: string;
-  imageUri?: string;
-  status: "Pending" | "In Review" | "Resolved";
-  submittedAt: string;
-  adminReply?: string;
-}
-
-const PROBLEM_CATEGORIES = [
-  { id: "payment", label: "Payment & Wallet", icon: "wallet-outline" },
-  { id: "trip", label: "Trip & Delivery Issue", icon: "bus-outline" },
-  { id: "pickup", label: "Farm Pickup Discrepancy", icon: "cube-outline" },
-  { id: "account", label: "Account & Verification", icon: "shield-checkmark-outline" },
-  { id: "technical", label: "App Bug / Technical", icon: "bug-outline" },
-  { id: "other", label: "Other Inquiry", icon: "help-circle-outline" },
-];
 
 export const TransporterHelpSupportScreen: React.FC<
   TransporterHelpSupportScreenProps
@@ -83,29 +69,9 @@ export const TransporterHelpSupportScreen: React.FC<
     "compose"
   );
 
-  // Mock list of past submitted inquiries
+  // List of submitted inquiries initialized from shared mock data
   const [pastTickets, setPastTickets] = useState<SupportTicketItem[]>([
-    {
-      id: "#SUP-8104",
-      category: "Payment & Wallet",
-      subject: "Highway toll charge reimbursement for Colombo trip",
-      message:
-        "Expressway toll of Rs. 400 was incurred during transit from Nuwara Eliya. Receipt attached.",
-      status: "Resolved",
-      submittedAt: "Oct 28, 2026 · 11:20 AM",
-      adminReply:
-        "Toll fee of Rs. 400 has been credited to your transporter wallet. Thank you!",
-    },
-    {
-      id: "#SUP-7942",
-      category: "Trip & Delivery Issue",
-      subject: "Receiver delayed gate entry at Colombo Fresh Market",
-      message: "Waited 45 mins at unloading bay 3 due to gate security delay.",
-      status: "Resolved",
-      submittedAt: "Oct 19, 2026 · 08:45 AM",
-      adminReply:
-        "Issue acknowledged with destination hub manager. Unloading prioritized.",
-    },
+    ...MOCK_SUPPORT_TICKETS,
   ]);
 
   // Modals
@@ -223,12 +189,10 @@ export const TransporterHelpSupportScreen: React.FC<
     }
   };
 
-  // Sample screenshot / photo for testing
+  // Sample screenshot / photo for testing from shared mock data
   const handleUseSamplePhoto = () => {
     setShowPhotoSourceModal(false);
-    setAttachedPhotoUri(
-      "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80"
-    );
+    setAttachedPhotoUri(SAMPLE_SUPPORT_PHOTO_URI);
   };
 
   const handleRemovePhoto = () => {
@@ -347,14 +311,6 @@ export const TransporterHelpSupportScreen: React.FC<
                 Direct Contact with Green-Hive Admin
               </Text>
             </View>
-          </View>
-
-          {/* Right: Admin Online Status Badge */}
-          <View className="flex-row items-center bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-            <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-            <Text className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-              Admin Online
-            </Text>
           </View>
         </View>
       </SafeAreaView>

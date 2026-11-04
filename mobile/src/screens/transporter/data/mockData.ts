@@ -390,3 +390,157 @@ export const MOCK_TRANSPORTER_VEHICLE_LICENSE: TransporterVehicleAndLicense = {
     verificationStatus: "Verified",
 };
 
+
+
+/**
+ * Vehicle Presets
+ */
+export const VEHICLE_PRESETS: string[] = [
+    "Lorry - 3 Ton",
+    "Mini Lorry - 1.5 Ton",
+    "Pickup Truck",
+    "Van - 1 Ton",
+    "Refrigerated Truck",
+    "Heavy Lorry - 5 Ton",
+];
+
+export const VEHICLE_TYPE_PRESETS = VEHICLE_PRESETS;
+
+/**
+ * Support Problem Categories & Ticket Types
+ */
+export interface SupportProblemCategory {
+    id: string;
+    label: string;
+    icon: string;
+}
+
+export const PROBLEM_CATEGORIES: SupportProblemCategory[] = [
+    { id: "payment", label: "Payment & Wallet", icon: "wallet-outline" },
+    { id: "trip", label: "Trip & Delivery Issue", icon: "bus-outline" },
+    { id: "pickup", label: "Farm Pickup Discrepancy", icon: "cube-outline" },
+    { id: "account", label: "Account & Verification", icon: "shield-checkmark-outline" },
+    { id: "technical", label: "App Bug / Technical", icon: "bug-outline" },
+    { id: "other", label: "Other Inquiry", icon: "help-circle-outline" },
+];
+
+export const TRANSPORTER_PROBLEM_CATEGORIES = PROBLEM_CATEGORIES;
+
+export interface SupportTicketItem {
+    id: string;
+    category: string;
+    subject: string;
+    message: string;
+    imageUri?: string;
+    status: "Pending" | "In Review" | "Resolved";
+    submittedAt: string;
+    adminReply?: string;
+}
+
+/**
+ * Mock Support Tickets
+ */
+export const MOCK_SUPPORT_TICKETS: SupportTicketItem[] = [
+    {
+        id: "#SUP-8104",
+        category: "Payment & Wallet",
+        subject: "Highway toll charge reimbursement for Colombo trip",
+        message:
+            "Expressway toll of Rs. 400 was incurred during transit from Nuwara Eliya. Receipt attached.",
+        status: "Resolved",
+        submittedAt: "Oct 28, 2026 · 11:20 AM",
+        adminReply:
+            "Toll fee of Rs. 400 has been credited to your transporter wallet. Thank you!",
+    },
+    {
+        id: "#SUP-7942",
+        category: "Trip & Delivery Issue",
+        subject: "Receiver delayed gate entry at Colombo Fresh Market",
+        message: "Waited 45 mins at unloading bay 3 due to gate security delay.",
+        status: "Resolved",
+        submittedAt: "Oct 19, 2026 · 08:45 AM",
+        adminReply:
+            "Issue acknowledged with destination hub manager. Unloading prioritized.",
+    },
+];
+
+/**
+ * Transporter Support & Contact Hotline
+ */
+export interface TransporterSupportContact {
+    hotline: string;
+    email: string;
+    message: string;
+}
+
+export const MOCK_TRANSPORTER_SUPPORT_CONTACT: TransporterSupportContact = {
+    hotline: "1920",
+    email: "support@greenhive.lk",
+    message: "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk",
+};
+
+/**
+ * Sample / Demo Evidence & Proof Photo URIs
+ */
+export const SAMPLE_SUPPORT_PHOTO_URI =
+    "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80";
+
+export const SAMPLE_PICKUP_PROOF_PHOTO_URI =
+    "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80";
+
+export const SAMPLE_DELIVERY_PROOF_PHOTO_URI =
+    "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80";
+
+/**
+ * Default Offer Notes
+ */
+export const DEFAULT_OFFER_NOTE =
+    "I have refrigerated vehicle available. On-time delivery guaranteed.";
+
+
+/**
+ * Transporter Bank Account & Payout Details
+ */
+export interface TransporterBankAccount {
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    branchCode: string;
+    accountNumber: string;
+    accountType: "Savings" | "Current" | string;
+    isVerified: boolean;
+    verificationStatus: "Verified" | "Pending" | "Rejected";
+    payoutMethod: string;
+    notes?: string;
+}
+
+export const MOCK_TRANSPORTER_BANK_ACCOUNT: TransporterBankAccount = {
+    accountHolderName: "Ruwan Bandara",
+    bankName: "Commercial Bank of Ceylon",
+    branchName: "Colombo Fort Branch",
+    branchCode: "016",
+    accountNumber: "8204918234",
+    accountType: "Savings",
+    isVerified: true,
+    verificationStatus: "Verified",
+    payoutMethod: "Direct Bank Transfer (LANKAQR / SLIPS)",
+    notes: "Primary account for Green-Hive trip payouts and toll reimbursements.",
+};
+
+export const POPULAR_SRI_LANKAN_BANKS: string[] = [
+    "Commercial Bank of Ceylon",
+    "Bank of Ceylon (BOC)",
+    "People's Bank",
+    "Hatton National Bank (HNB)",
+    "Sampath Bank",
+    "Seylan Bank",
+    "Nations Trust Bank (NTB)",
+    "National Development Bank (NDB)",
+    "DFCC Bank",
+    "Pan Asia Bank",
+];
+
+export const BANK_ACCOUNT_TYPES: string[] = [
+    "Savings",
+    "Current",
+];

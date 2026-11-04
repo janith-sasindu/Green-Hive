@@ -19,10 +19,12 @@ import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import { TransporterEditProfileScreen } from "./TransporterEditProfileScreen";
+import { TransporterBankDetailsScreen } from "./TransporterBankDetailsScreen";
 import { TransporterNotificationSettingsScreen } from "./TransporterNotificationSettingsScreen";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_TRANSPORTER_STATS,
+  MOCK_TRANSPORTER_SUPPORT_CONTACT,
   TransporterProfile,
   TransporterStats,
 } from "./data";
@@ -59,6 +61,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
   // Screen Modals
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
 
   // Photo upload and preview state
@@ -257,7 +260,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
         } else {
           Alert.alert(
             "Help & Support",
-            "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk"
+            MOCK_TRANSPORTER_SUPPORT_CONTACT.message
           );
         }
         break;
@@ -266,6 +269,13 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           navigation.navigate("TransporterEditProfile");
         } else {
           setShowEditProfileModal(true);
+        }
+        break;
+      case "Bank Details":
+        if (navigation?.navigate) {
+          navigation.navigate("TransporterBankDetails");
+        } else {
+          setShowBankDetailsModal(true);
         }
         break;
       default:
@@ -420,7 +430,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                       : "text-sm"
                   }`}
                 >
-                  {profile.avatarLetter || "R"}
+                  {profile.avatarLetter || MOCK_TRANSPORTER_PROFILE.avatarLetter}
                 </Text>
               )}
             </TouchableOpacity>
@@ -484,7 +494,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                       isExtraSmall ? "text-3xl" : "text-4xl"
                     }`}
                   >
-                    {profile.avatarLetter || "R"}
+                    {profile.avatarLetter || MOCK_TRANSPORTER_PROFILE.avatarLetter}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -574,7 +584,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   adjustsFontSizeToFit
                   className="font-black text-white text-base sm:text-lg text-center"
                 >
-                  {profile.totalEarnings || "Rs. 320k"}
+                  {profile.totalEarnings || MOCK_TRANSPORTER_PROFILE.totalEarnings}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
                   Earned
@@ -591,7 +601,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   adjustsFontSizeToFit
                   className="font-black text-white text-base sm:text-lg text-center"
                 >
-                  {profile.onTimeDeliveryRate || "98%"}
+                  {profile.onTimeDeliveryRate || MOCK_TRANSPORTER_PROFILE.onTimeDeliveryRate}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
                   On Time
@@ -679,7 +689,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                     numberOfLines={1}
                     className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5"
                   >
-                    {profile.baseLocation || "Colombo"}
+                    {profile.baseLocation || MOCK_TRANSPORTER_PROFILE.baseLocation}
                   </Text>
                 </View>
               </View>
@@ -729,6 +739,18 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
                 Edit Profile
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
+            </TouchableOpacity>
+
+            {/* Bank Details */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => handleMenuPress("Bank Details")}
+              className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
+            >
+              <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
+                Bank Details
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -1187,6 +1209,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             setProfile({ ...updated });
             setShowEditProfileModal(false);
           }}
+        />
+      </Modal>
+
+      {/* Bank Details Full-Screen Modal Fallback */}
+      <Modal
+        visible={showBankDetailsModal}
+        animationType="slide"
+        onRequestClose={() => setShowBankDetailsModal(false)}
+      >
+        <TransporterBankDetailsScreen
+          onBack={() => setShowBankDetailsModal(false)}
         />
       </Modal>
 
