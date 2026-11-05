@@ -1,0 +1,242 @@
+import { Request, Response } from 'express';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { pool } from '../config/db';
+
+export interface AuthenticatedRequest extends Request {
+    user?: {
+        id: number;
+        role: string;
+        email: string;
+    };
+}
+
+/**
+ * GET /api/transporter/home
+ * Fetches all data required by TransporterHomeScreen
+ */
+export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        // If auth middleware is used, use req.user.id. Default to a test ID (e.g., 7) if testing without token.
+        const transporterId = req.user?.id || 7;
+
+        // 1. Fetch Transporter Profile Details
+        const [userRows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, name, email, phone, location, verified FROM users WHERE id = ? AND role = 'transporter'`,
+            [transporterId]
+        );
+
+        if (userRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Transporter profile not found' });
+        }
+        const user = userRows[0];
+
+        // Helper for time-based greeting
+        const currentHour = new Date().getHours();
+        const greeting =
+            currentHour < 12 ? 'Good morning,' : currentHour < 17 ? 'Good afternoon,' : 'Good evening,';
+
+        // 2. Transporter Stats & Job Counts
+        const [statsRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+        (SELECT COUNT(*) FROM transport_jobs WHERE status = 'Open') AS openJobsCount,
+        (SELECT COUNT(*) FROM transport_jobs WHERE transporter_id = ? AND status IN ('Assigned', 'In Transit')) AS activeJobsCount,
+        (SELECT COUNT(*) FROM transport_jobs WHERE transporter_id = ? AND status = 'Delivered') AS completedJobsCount`,
+            [transporterId, transporterId]
+        );
+        const statsData = statsRows[0] || { openJobsCount: 0, activeJobsCount: 0, completedJobsCount: 0 };
+
+        // 3. Payment Summary (Pending Escrow & This Month's Earnings)
+        const [paymentRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+        COALESCE(SUM(CASE WHEN status = 'Held in Escrow' THEN amount ELSE 0 END), 0) AS pendingRelease,
+        COALESCE(SUM(CASE WHEN status = 'Released' AND MONTH(released_at) = MONTH(CURRENT_DATE()) AND YEAR(released_at) = YEAR(CURRENT_DATE()) THEN amount ELSE 0 END), 0) AS thisMonth
+       FROM payments 
+       WHERE payee_id = ? AND payment_type = 'transport_fee'`,
+            [transporterId]
+        );
+        const payments = paymentRows[0] || { pendingRelease: 0, thisMonth: 0 };
+
+        // 4. Current Active Job (In Transit or Assigned)
+        const [activeJobRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+        tj.id,
+        tj.job_code,
+        tj.status,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.fee,
+        tj.vehicle_type,
+        tj.scheduled_date,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+       FROM transport_jobs tj
+       LEFT JOIN orders o ON tj.order_id = o.id
+       LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+       LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+       WHERE tj.transporter_id = ? AND tj.status IN ('Assigned', 'In Transit')
+       ORDER BY tj.scheduled_date ASC
+       LIMIT 1`,
+            [transporterId]
+        );
+
+        let activeJob = null;
+        if (activeJobRows.length > 0) {
+            const row = activeJobRows[0];
+            activeJob = {
+                id: row.job_code || `#TR-${row.id}`,
+                dbId: row.id,
+                cropName: row.product_name || 'Agricultural Produce',
+                weight: row.quantity ? `${row.quantity} kg` : 'Standard Load',
+                status: row.status === 'In Transit' ? 'In Progress' : row.status,
+                pickup: row.pickup_location,
+                dropoff: row.drop_location,
+                distance: 'Approx. 85 km',
+                price: `Rs. ${Number(row.fee).toLocaleString()}`,
+                farmerName: row.farmer_name || 'Farmer',
+                farmerPhone: row.farmer_phone || '+94 77 000 0000',
+                sellerName: row.seller_name || 'Green Hive Buyer',
+                pickupDate: row.scheduled_date
+                    ? new Date(row.scheduled_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })
+                    : 'Today',
+            };
+        }
+
+        // 5. Available Jobs (Top 2 for Home Preview)
+        const [availableRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+        tj.id,
+        tj.job_code,
+        tj.status,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.fee,
+        tj.scheduled_date,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone
+       FROM transport_jobs tj
+       LEFT JOIN orders o ON tj.order_id = o.id
+       LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+       WHERE tj.status = 'Open'
+       ORDER BY tj.created_at DESC
+       LIMIT 5`
+        );
+
+        const availableJobs = availableRows.map((row) => ({
+            id: row.job_code || `#TR-${row.id}`,
+            dbId: row.id,
+            cropName: row.product_name || 'Fresh Produce',
+            weight: row.quantity ? `${row.quantity} kg` : 'Standard Load',
+            status: 'Open',
+            pickup: row.pickup_location,
+            dropoff: row.drop_location,
+            price: `Rs. ${Number(row.fee).toLocaleString()}`,
+            pickupTime: row.scheduled_date
+                ? new Date(row.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                : 'Tomorrow · 07:00 AM',
+            farmerName: row.farmer_name || 'Farmer',
+            farmerPhone: row.farmer_phone,
+        }));
+
+        // Formatted Profile for Screen Header & Banner Card
+        const profile = {
+            name: user.name,
+            greeting,
+            avatarLetter: user.name ? user.name.charAt(0).toUpperCase() : 'T',
+            email: user.email,
+            phone: user.phone || '',
+            vehicleType: 'Lorry - 3 Ton',
+            vehiclePlate: 'WP-LH-4821',
+            isVerified: Boolean(user.verified),
+            rating: 4.8,
+            completedJobs: Number(statsData.completedJobsCount) || 0,
+            baseLocation: user.location || 'Colombo',
+        };
+
+        // 2x2 Stats Card Object
+        const stats = {
+            openJobsCount: Number(statsData.openJobsCount) || 0,
+            myOffersCount: 2, // offers count or dynamic count
+            activeJobsCount: Number(statsData.activeJobsCount) || 0,
+            thisMonthEarnings: `Rs. ${(Number(payments.thisMonth) / 1000).toFixed(0)}k`,
+        };
+
+        // Payment Summary Card Object
+        const paymentSummary = {
+            pendingRelease: `Rs. ${Number(payments.pendingRelease).toLocaleString()}`,
+            thisMonth: `Rs. ${Number(payments.thisMonth).toLocaleString()}`,
+        };
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                profile,
+                stats,
+                activeJob,
+                availableJobs,
+                paymentSummary,
+            },
+        });
+    } catch (error: any) {
+        console.error('Error fetching transporter home data:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch home screen data',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * PATCH /api/transporter/jobs/:id/status
+ * Updates delivery status (e.g., 'In Transit', 'Delivered')
+ */
+export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const validStatuses = ['Open', 'Assigned', 'In Transit', 'Delivered', 'Cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const [result] = await pool.query<ResultSetHeader>(
+            `UPDATE transport_jobs SET status = ? WHERE (id = ? OR job_code = ?)`,
+            [status, id, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Job not found' });
+        }
+
+        // If marked Delivered, automatically release payment to transporter in payments table
+        if (status === 'Delivered') {
+            await pool.query(
+                `UPDATE payments p
+         JOIN transport_jobs tj ON p.order_id = tj.order_id
+         SET p.status = 'Released', p.released_at = NOW()
+         WHERE (tj.id = ? OR tj.job_code = ?) AND p.payment_type = 'transport_fee'`,
+                [id, id]
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Job status updated to ${status}`,
+        });
+    } catch (error: any) {
+        console.error('Error updating job status:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
