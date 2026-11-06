@@ -452,3 +452,86 @@ export const getJobById = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+/**
+ * POST /api/transporter/jobs/:id/offers
+ * Submits a bid/quote for an available transport job
+ */
+export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const transporterId = req.user?.id || 7;
+    const { quotePrice, estimatedDelivery, notes } = req.body;
+
+    const numericPrice = Number(quotePrice);
+    if (!quotePrice || isNaN(numericPrice) || numericPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid quote price (greater than 0) is required',
+      });
+    }
+
+    // 1. Verify that job exists and is Open
+    const [jobRows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, job_code, status FROM transport_jobs WHERE (id = ? OR job_code = ?)`,
+      [id, id]
+    );
+
+    if (jobRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Transport job not found' });
+    }
+
+    const job = jobRows[0];
+    if (job.status !== 'Open') {
+      return res.status(400).json({
+        success: false,
+        message: `Job is no longer open for offers (Current status: ${job.status})`,
+      });
+    }
+
+    // 2. Check for duplicate pending offer
+    const [existingOffer] = await pool.query<RowDataPacket[]>(
+      `SELECT id FROM transport_offers WHERE job_id = ? AND transporter_id = ? AND status IN ('Submitted', 'Accepted', 'Under Review')`,
+      [job.id, transporterId]
+    );
+
+    if (existingOffer.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'You have already submitted an active offer for this job',
+      });
+    }
+
+    // 3. Insert offer record
+    const [insertResult] = await pool.query<ResultSetHeader>(
+      `INSERT INTO transport_offers (job_id, transporter_id, quote_price, estimated_delivery, notes, status)
+       VALUES (?, ?, ?, ?, ?, 'Submitted')`,
+      [
+        job.id,
+        transporterId,
+        numericPrice,
+        estimatedDelivery || 'Standard Delivery Window',
+        notes || '',
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Transport offer submitted successfully to farmer',
+      data: {
+        offerId: insertResult.insertId,
+        jobId: job.job_code || `#TR-${job.id}`,
+        quotePrice: `Rs. ${numericPrice.toLocaleString()}`,
+        status: 'Submitted',
+      },
+    });
+  } catch (error: any) {
+    console.error('Error submitting transport offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit transport offer',
+      error: error.message,
+    });
+  }
+};
