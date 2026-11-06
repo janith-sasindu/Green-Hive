@@ -535,3 +535,96 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     });
   }
 };
+
+
+/**
+ * GET /api/transporter/jobs/active
+ * Fetches the current active job assigned to the logged-in transporter (status: 'Assigned' or 'In Transit')
+ */
+export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        tj.id,
+        tj.job_code,
+        tj.status,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee,
+        tj.scheduled_date,
+        tj.created_at,
+        o.id AS order_id,
+        o.order_code,
+        o.product_name,
+        o.quantity,
+        o.unit_price,
+        o.total_amount,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_farmer.location AS farmer_location,
+        u_seller.name AS seller_name,
+        u_seller.phone AS seller_phone,
+        u_seller.location AS seller_location
+      FROM transport_jobs tj
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tj.transporter_id = ? AND tj.status IN ('Assigned', 'In Transit')
+      ORDER BY tj.scheduled_date ASC
+      LIMIT 1`,
+      [transporterId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: 'No active job currently assigned',
+      });
+    }
+
+    const row = rows[0];
+    const schedule = formatJobSchedule(row.scheduled_date);
+
+    const activeJob = {
+      id: row.job_code || `#TR-${row.id}`,
+      dbId: row.id,
+      orderId: row.order_id,
+      orderCode: row.order_code,
+      cropName: row.product_name || 'Agricultural Produce',
+      weight: row.quantity ? `${row.quantity} kg` : 'Standard Load',
+      status: row.status === 'In Transit' ? 'In Progress' : row.status,
+      rawStatus: row.status,
+      pickup: row.pickup_location,
+      dropoff: row.drop_location,
+      distance: 'Approx. 85 km',
+      price: `Rs. ${Number(row.fee).toLocaleString()}`,
+      rawFee: Number(row.fee),
+      vehicleType: row.vehicle_type || 'Light Truck (1.5T)',
+      farmerName: row.farmer_name || 'Sunil Perera',
+      farmerPhone: row.farmer_phone || '+94 77 123 4567',
+      farmerLocation: row.farmer_location,
+      sellerName: row.seller_name || 'Colombo Fresh Market',
+      sellerPhone: row.seller_phone,
+      sellerLocation: row.seller_location,
+      pickupDate: schedule.combinedStr,
+      specialInstructions: 'Handle with care. Keep cool. Arrive on schedule for market opening.',
+      createdAt: row.created_at,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: activeJob,
+    });
+  } catch (error: any) {
+    console.error('Error fetching active job:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch active job',
+      error: error.message,
+    });
+  }
+};
