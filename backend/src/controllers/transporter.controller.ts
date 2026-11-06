@@ -204,11 +204,19 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
 export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        let { status } = req.body;
+
+        // Map mobile UI statuses to database ENUM values
+        if (status === 'In Progress' || status === 'At Pickup') {
+            status = 'In Transit';
+        }
 
         const validStatuses = ['Open', 'Assigned', 'In Transit', 'Delivered', 'Cancelled'];
         if (!validStatuses.includes(status)) {
-            return res.status(400).json({ success: false, message: 'Invalid status' });
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status. Valid values: ${validStatuses.join(', ')}`,
+            });
         }
 
         const [result] = await pool.query<ResultSetHeader>(
@@ -220,13 +228,23 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
             return res.status(404).json({ success: false, message: 'Job not found' });
         }
 
-        // If marked Delivered, automatically release payment to transporter in payments table
+        // If marked Delivered, complete the linked order and release escrow payment
         if (status === 'Delivered') {
+            // 1. Update order status to Completed
+            await pool.query(
+                `UPDATE orders o
+                 JOIN transport_jobs tj ON o.id = tj.order_id
+                 SET o.order_status = 'Completed', o.payment_status = 'Completed'
+                 WHERE (tj.id = ? OR tj.job_code = ?)`,
+                [id, id]
+            );
+
+            // 2. Release transport fee escrow payment
             await pool.query(
                 `UPDATE payments p
-         JOIN transport_jobs tj ON p.order_id = tj.order_id
-         SET p.status = 'Released', p.released_at = NOW()
-         WHERE (tj.id = ? OR tj.job_code = ?) AND p.payment_type = 'transport_fee'`,
+                 JOIN transport_jobs tj ON p.order_id = tj.order_id
+                 SET p.status = 'Released', p.released_at = NOW()
+                 WHERE (tj.id = ? OR tj.job_code = ?) AND p.payment_type = 'transport_fee'`,
                 [id, id]
             );
         }
@@ -234,6 +252,7 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
         return res.status(200).json({
             success: true,
             message: `Job status updated to ${status}`,
+            data: { id, status },
         });
     } catch (error: any) {
         console.error('Error updating job status:', error);

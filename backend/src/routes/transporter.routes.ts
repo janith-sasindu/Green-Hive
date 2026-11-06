@@ -3,6 +3,7 @@ import {
   getHomeScreenData,
   updateJobStatus,
   getAvailableJobs,
+  getActiveJob,
   getJobById,
   submitJobOffer,
 } from '../controllers/transporter.controller';
@@ -13,8 +14,13 @@ const router = Router();
 // Dashboard Home Screen
 router.get('/home', authenticateToken, getHomeScreenData);
 
+// Active Job Endpoint (Must be registered before :id route)
+router.get('/jobs/active', authenticateToken, getActiveJob);
+
 // Available Jobs Endpoints
 router.get('/jobs/available', getAvailableJobs);
+
+// Single Job Details & Offers
 router.get('/jobs/:id', getJobById);
 router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
