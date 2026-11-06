@@ -240,3 +240,215 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
         return res.status(500).json({ success: false, error: error.message });
     }
 };
+
+
+/**
+ * Helper to format date nicely
+ */
+function formatJobSchedule(date: Date | string | null) {
+  if (!date) return { dateStr: 'Today', timeStr: '07:00 AM', combinedStr: 'Today · 07:00 AM' };
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return { dateStr, timeStr, combinedStr: `${dateStr} · ${timeStr}` };
+}
+
+/**
+ * GET /api/transporter/jobs/available
+ * Fetches all available transport jobs open for bids/assignment
+ * Query params: search, vehicle_type, sort (date_asc, date_desc, fee_desc, fee_asc)
+ */
+export const getAvailableJobs = async (req: Request, res: Response) => {
+  try {
+    const { search, vehicle_type, sort } = req.query;
+
+    let query = `
+      SELECT 
+        tj.id,
+        tj.job_code,
+        tj.status,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee,
+        tj.scheduled_date,
+        tj.created_at,
+        o.id AS order_id,
+        o.order_code,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+      FROM transport_jobs tj
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tj.status = 'Open'
+    `;
+
+    const params: any[] = [];
+
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      query += ` AND (
+        o.product_name LIKE ? OR 
+        tj.pickup_location LIKE ? OR 
+        tj.drop_location LIKE ? OR 
+        tj.job_code LIKE ?
+      )`;
+      const searchTerm = `%${search.trim()}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    if (vehicle_type && typeof vehicle_type === 'string' && vehicle_type.trim() !== '') {
+      query += ` AND tj.vehicle_type LIKE ?`;
+      params.push(`%${vehicle_type.trim()}%`);
+    }
+
+    if (sort === 'fee_desc') {
+      query += ` ORDER BY tj.fee DESC`;
+    } else if (sort === 'fee_asc') {
+      query += ` ORDER BY tj.fee ASC`;
+    } else if (sort === 'date_asc') {
+      query += ` ORDER BY tj.scheduled_date ASC`;
+    } else {
+      query += ` ORDER BY tj.created_at DESC, tj.scheduled_date ASC`;
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    const availableJobs = rows.map((row) => {
+      const schedule = formatJobSchedule(row.scheduled_date);
+      return {
+        id: row.job_code || `#TR-${row.id}`,
+        dbId: row.id,
+        orderId: row.order_id,
+        cropName: row.product_name || 'Agricultural Produce',
+        weight: row.quantity ? `${row.quantity} kg` : 'Standard Load',
+        status: 'Open',
+        pickup: row.pickup_location,
+        pickupLocationDetail: row.pickup_location,
+        dropoff: row.drop_location,
+        dropoffLocationDetail: row.drop_location,
+        pickupDate: schedule.dateStr,
+        pickupRequiredTime: schedule.timeStr,
+        pickupTime: schedule.combinedStr,
+        price: `Rs. ${Number(row.fee).toLocaleString()}`,
+        rawFee: Number(row.fee),
+        distance: 'Approx. 95 km',
+        vehicleType: row.vehicle_type || 'Standard Truck',
+        farmerName: row.farmer_name || 'Farmer',
+        farmerPhone: row.farmer_phone || '+94 77 123 4567',
+        sellerName: row.seller_name || 'Market Buyer',
+        specialInstructions: 'Handle with care. Keep covered during transport.',
+        createdAt: row.created_at,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalCount: availableJobs.length,
+      data: availableJobs,
+    });
+  } catch (error: any) {
+    console.error('Error fetching available jobs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch available transport jobs',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/jobs/:id
+ * Fetches complete details of a single transport job
+ */
+export const getJobById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        tj.id,
+        tj.job_code,
+        tj.status,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee,
+        tj.scheduled_date,
+        tj.created_at,
+        o.id AS order_id,
+        o.order_code,
+        o.product_name,
+        o.quantity,
+        o.unit_price,
+        o.total_amount,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_farmer.location AS farmer_location,
+        u_seller.name AS seller_name,
+        u_seller.phone AS seller_phone,
+        u_seller.location AS seller_location
+      FROM transport_jobs tj
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tj.id = ? OR tj.job_code = ?
+      LIMIT 1`,
+      [id, id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transport job not found',
+      });
+    }
+
+    const row = rows[0];
+    const schedule = formatJobSchedule(row.scheduled_date);
+
+    const job = {
+      id: row.job_code || `#TR-${row.id}`,
+      dbId: row.id,
+      orderId: row.order_id,
+      orderCode: row.order_code,
+      cropName: row.product_name,
+      weight: row.quantity ? `${row.quantity} kg` : 'Standard Load',
+      status: row.status,
+      pickup: row.pickup_location,
+      pickupLocationDetail: row.pickup_location,
+      dropoff: row.drop_location,
+      dropoffLocationDetail: row.drop_location,
+      pickupDate: schedule.dateStr,
+      pickupRequiredTime: schedule.timeStr,
+      pickupTime: schedule.combinedStr,
+      price: `Rs. ${Number(row.fee).toLocaleString()}`,
+      rawFee: Number(row.fee),
+      vehicleType: row.vehicle_type,
+      distance: 'Approx. 95 km',
+      farmerName: row.farmer_name || 'Farmer',
+      farmerPhone: row.farmer_phone || '+94 77 123 4567',
+      farmerLocation: row.farmer_location,
+      sellerName: row.seller_name || 'Green Hive Buyer',
+      sellerPhone: row.seller_phone,
+      sellerLocation: row.seller_location,
+      specialInstructions: 'Handle with care. Keep covered during transport.',
+      createdAt: row.created_at,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: job,
+    });
+  } catch (error: any) {
+    console.error('Error fetching job details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job details',
+      error: error.message,
+    });
+  }
+};
