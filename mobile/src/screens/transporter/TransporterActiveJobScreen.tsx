@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Modal,
   Switch,
   useWindowDimensions,
+  Platform,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -68,6 +70,43 @@ export const TransporterActiveJobScreen: React.FC<
       setCurrentJob(route.params.job);
     }
   }, [route?.params?.job]);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  // API URL for Active Job
+  const BACKEND_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:5000/api/transporter/jobs/active"
+      : "http://localhost:5000/api/transporter/jobs/active";
+
+  const fetchActiveJob = useCallback(async () => {
+    try {
+      const response = await fetch(BACKEND_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setCurrentJob((prev) => ({
+          ...prev,
+          ...json.data,
+          proofPhotoUri: prev.proofPhotoUri || json.data.proofPhotoUri,
+          deliveryProofPhotoUri: prev.deliveryProofPhotoUri || json.data.deliveryProofPhotoUri,
+        }));
+      }
+    } catch (error) {
+      console.log("Error loading active job from backend, using fallback:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    fetchActiveJob();
+  }, [fetchActiveJob]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchActiveJob();
+  };
+
   const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
   const [notificationsList] =
@@ -377,6 +416,14 @@ export const TransporterActiveJobScreen: React.FC<
           paddingBottom: 28,
           alignItems: "center",
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FF8C00"
+            colors={["#FF8C00"]}
+          />
+        }
       >
         <View style={{ maxWidth: 540, width: "100%" }}>
           {/* Status Row: • In Progress and #GH-T1024 */}
