@@ -8,7 +8,8 @@
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "seed:jobs": "ts-node src/scripts/seed-available-jobs.ts",
-    "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts"
+    "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
+    "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
