@@ -1090,3 +1090,119 @@ export const markAllNotificationsRead = async (req: AuthenticatedRequest, res: R
     });
   }
 };
+
+
+/**
+ * GET /api/transporter/notification-settings
+ * Fetches the push notification and sound preferences for the logged-in transporter
+ */
+export const getNotificationSettings = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT new_jobs_push, current_job_updates_push, offer_status_push, payment_push, sound_and_vibration
+       FROM transporter_notification_settings
+       WHERE transporter_id = ?`,
+      [transporterId]
+    );
+
+    if (rows.length === 0) {
+      // Return default preferences if not yet configured
+      return res.status(200).json({
+        success: true,
+        data: {
+          newJobsPush: true,
+          currentJobUpdatesPush: true,
+          offerStatusPush: true,
+          paymentPush: true,
+          soundAndVibration: true,
+        },
+      });
+    }
+
+    const row = rows[0];
+    const settings = {
+      newJobsPush: Boolean(row.new_jobs_push),
+      currentJobUpdatesPush: Boolean(row.current_job_updates_push),
+      offerStatusPush: Boolean(row.offer_status_push),
+      paymentPush: Boolean(row.payment_push),
+      soundAndVibration: Boolean(row.sound_and_vibration),
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: settings,
+    });
+  } catch (error: any) {
+    console.error('Error fetching notification settings:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch notification settings',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/transporter/notification-settings
+ * Updates the push notification and sound preferences for the logged-in transporter
+ */
+export const updateNotificationSettings = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+    const {
+      newJobsPush = true,
+      currentJobUpdatesPush = true,
+      offerStatusPush = true,
+      paymentPush = true,
+      soundAndVibration = true,
+    } = req.body;
+
+    await pool.query(
+      `INSERT INTO transporter_notification_settings (
+        transporter_id,
+        new_jobs_push,
+        current_job_updates_push,
+        offer_status_push,
+        payment_push,
+        sound_and_vibration
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        new_jobs_push = VALUES(new_jobs_push),
+        current_job_updates_push = VALUES(current_job_updates_push),
+        offer_status_push = VALUES(offer_status_push),
+        payment_push = VALUES(payment_push),
+        sound_and_vibration = VALUES(sound_and_vibration)`,
+      [
+        transporterId,
+        newJobsPush ? 1 : 0,
+        currentJobUpdatesPush ? 1 : 0,
+        offerStatusPush ? 1 : 0,
+        paymentPush ? 1 : 0,
+        soundAndVibration ? 1 : 0,
+      ]
+    );
+
+    const updatedSettings = {
+      newJobsPush: Boolean(newJobsPush),
+      currentJobUpdatesPush: Boolean(currentJobUpdatesPush),
+      offerStatusPush: Boolean(offerStatusPush),
+      paymentPush: Boolean(paymentPush),
+      soundAndVibration: Boolean(soundAndVibration),
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notification preferences updated successfully',
+      data: updatedSettings,
+    });
+  } catch (error: any) {
+    console.error('Error updating notification settings:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update notification settings',
+      error: error.message,
+    });
+  }
+};
