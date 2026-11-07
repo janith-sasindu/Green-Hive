@@ -13,7 +13,8 @@
     "test:profile": "ts-node src/scripts/test-profile-api.ts",
     "db:profile": "ts-node src/scripts/setup-profile-db.ts",
     "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
-    "test:notifications": "ts-node src/scripts/test-notifications-api.ts"
+    "test:notifications": "ts-node src/scripts/test-notifications-api.ts",
+    "db:notification-settings": "ts-node src/scripts/setup-notification-settings-db.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
