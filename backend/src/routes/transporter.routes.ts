@@ -6,6 +6,12 @@ import {
   getActiveJob,
   getJobById,
   submitJobOffer,
+  getProfile,
+  updateProfile,
+  updateAvatar,
+  removeAvatar,
+  getBankDetails,
+  updateBankDetails,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -26,5 +32,17 @@ router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
 // Update Status (Confirm pickup / Confirm delivery)
 router.patch('/jobs/:id/status', authenticateToken, updateJobStatus);
+
+// Profile Endpoints
+router.get('/profile', authenticateToken, getProfile);
+router.put('/profile', authenticateToken, updateProfile);
+
+// Avatar Endpoints
+router.post('/profile/avatar', authenticateToken, updateAvatar);
+router.delete('/profile/avatar', authenticateToken, removeAvatar);
+
+// Bank Details Endpoints
+router.get('/bank-details', authenticateToken, getBankDetails);
+router.put('/bank-details', authenticateToken, updateBankDetails);
 
 export default router;
