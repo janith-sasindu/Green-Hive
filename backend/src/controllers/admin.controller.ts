@@ -467,17 +467,146 @@ export const getDashboardCharts = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const adminLogin = async (req: Request, res: Response):
-Promise<void> => {
+/**
+ * 13. Admin Login
+ * POST /api/admin/login
+ * Body: { email, password }
+ */
+export const adminLogin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {email, password} = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !password){
+    if (!email || !password) {
       res.status(400).json({
         success: false,
-        message: "Please provide both email and password",
+        message: 'Please provide both email and password',
       });
       return;
     }
+
+    // 1. Find user in the database
+    const [users] = await pool.query<RowDataPacket[]>(
+      `SELECT id, name, email, phone, password_hash, role, location, status
+       FROM users 
+       WHERE email = ?`,
+      [email]
+    );
+
+    if (users.length === 0) {
+      res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return;
+    }
+
+    const user = users[0];
+
+    // 2. Verify role is admin
+    if (user.role !== 'admin') {
+      res.status(403).json({ success: false, message: 'Access denied. You are not an admin.' });
+      return;
+    }
+
+    // 3. Verify user status
+    if (user.status !== 'active') {
+      res.status(403).json({ success: false, message: 'Your admin account has been suspended.' });
+      return;
+    }
+
+    // 4. Compare password with bcrypt hash
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return;
+    }
+
+    // 5. Fetch admin-specific details
+    const [adminDetails] = await pool.query<RowDataPacket[]>(
+      `SELECT admin_role, is_super_admin FROM admin_accounts WHERE user_id = ?`,
+      [user.id]
+    );
+
+    const adminRole = adminDetails.length > 0 ? adminDetails[0].admin_role : 'Moderator';
+    const isSuperAdmin = adminDetails.length > 0 ? Boolean(adminDetails[0].is_super_admin) : false;
+
+    // 6. Generate signed JWT token (expires in 7 days)
+    const secret = process.env.JWT_SECRET || 'green_hive_super_secret_key_2026';
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        admin_role: adminRole,
+        is_super_admin: isSuperAdmin,
+      },
+      secret,
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful!',
+      token,
+      admin: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        role: user.role,
+        admin_role: adminRole,
+        is_super_admin: isSuperAdmin,
+      },
+    });
+  } catch (error) {
+    console.error('Error in adminLogin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Login failed due to a server error',
+      error: (error as Error).message,
+    });
   }
-}
+};
+
+/**
+ * 14. Get Current Logged-in Admin Profile
+ * GET /api/admin/me
+ * Requires: Authorization: Bearer <token>
+ */
+export const getAdminProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const adminId = req.user?.id;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.phone, 
+        u.role, 
+        u.location, 
+        u.created_at,
+        a.admin_role, 
+        a.is_super_admin
+       FROM users u
+       LEFT JOIN admin_accounts a ON u.id = a.user_id
+       WHERE u.id = ?`,
+      [adminId]
+    );
+
+    if (rows.length === 0) {
+      res.status(404).json({ success: false, message: 'Admin profile not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      admin: rows[0],
+    });
+  } catch (error) {
+    console.error('Error fetching admin profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve admin profile',
+      error: (error as Error).message,
+    });
+  }
+};
