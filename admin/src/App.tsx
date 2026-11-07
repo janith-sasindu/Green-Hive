@@ -7,7 +7,7 @@ import ApprovalsPage from "./pages/ApprovalsPage";
 import ManageAdminsPage from "./pages/ManageAdminsPage";
 import AdsManagementPage from "./pages/AdsManagementPage";
 import OperationsPage from "./pages/OperationsPage";
-
+import PaymentsPage from "./pages/PaymentsPage";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("Dashboard");
@@ -25,6 +25,8 @@ export default function App() {
         return "Ads Management";
       case "Operations":
         return "Operations";
+      case "Payments":
+        return "Payments";
       default:
         return "Admin Dashboard";
     }
@@ -49,6 +51,7 @@ export default function App() {
           {currentPage === "Manage Admins" && <ManageAdminsPage />}
           {currentPage === "Ads Management" && <AdsManagementPage />}
           {currentPage === "Operations" && <OperationsPage />}
+          {currentPage === "Payments" && <PaymentsPage />}
           {currentPage === "Dashboard" && <DashboardPage />}
         </main>
       </div>
