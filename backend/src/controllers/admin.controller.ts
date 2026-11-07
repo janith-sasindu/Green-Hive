@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import {Request,Response} from "express";
 import {RowDataPacket} from 'mysql2';
 import {pool} from "../config/db";
