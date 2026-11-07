@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import {Request,Response} from "express";
-import {RowDataPacket} from 'mysql2';
+import {RowDataPacket, ResultSetHeader} from 'mysql2';
 import {pool} from "../config/db";
 import jwt from "jsonwebtoken";
 import { AuthRequest } from '../middleware/auth.middleware';
@@ -608,5 +608,250 @@ export const getAdminProfile = async (req: AuthRequest, res: Response): Promise<
       message: 'Failed to retrieve admin profile',
       error: (error as Error).message,
     });
+  }
+};/**
+ * 9. Verify Identity Document (Approve or Reject)
+ * PATCH /api/admin/approvals/:id/status
+ */
+export const updateApprovalStatus = async (req: Request, res: Response): Promise<void> => {
+  const connection = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { status, rejection_reason } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      res.status(400).json({
+        success: false,
+        message: 'Status must be either "approved" or "rejected"',
+      });
+      return;
+    }
+
+    await connection.beginTransaction();
+
+    const [docs] = await connection.query<RowDataPacket[]>(
+      `SELECT id, user_id FROM identity_documents WHERE id = ?`,
+      [id]
+    );
+
+    if (docs.length === 0) {
+      await connection.rollback();
+      res.status(404).json({ success: false, message: 'Identity document not found' });
+      return;
+    }
+
+    const userId = docs[0].user_id;
+
+    await connection.query(
+      `UPDATE identity_documents 
+       SET status = ?, rejection_reason = ?, reviewed_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [status, status === 'rejected' ? (rejection_reason || 'Document does not meet requirements') : null, id]
+    );
+
+    if (status === 'approved') {
+      await connection.query(
+        `UPDATE users SET verified = TRUE, status = 'active' WHERE id = ?`,
+        [userId]
+      );
+    } else {
+      await connection.query(
+        `UPDATE users SET verified = FALSE WHERE id = ?`,
+        [userId]
+      );
+    }
+
+    await connection.commit();
+
+    res.status(200).json({
+      success: true,
+      message: `Document has been ${status} successfully.`,
+      documentId: id,
+      userId,
+      newStatus: status,
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error updating approval status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update approval status',
+      error: (error as Error).message,
+    });
+  } finally {
+    connection.release();
+  }
+};
+
+/**
+ * 10. Delete an Ad (Selling or Requirement Ad)
+ * DELETE /api/admin/ads/:id?type=selling (or ?type=requirement)
+ */
+export const deleteAd = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { type } = req.query; // 'selling' or 'requirement'
+
+    const tableName = type === 'requirement' ? 'requirement_ads' : 'selling_ads';
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `DELETE FROM ${tableName} WHERE id = ?`,
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      res.status(404).json({
+        success: false,
+        message: `Ad with ID ${id} not found in ${tableName}`,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Ad deleted successfully from ${tableName}`,
+      deletedId: id,
+    });
+  } catch (error) {
+    console.error('Error deleting ad:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete ad',
+      error: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * 11. Release Payment from Escrow
+ * PATCH /api/admin/payments/:id/release
+ */
+export const releasePayment = async (req: Request, res: Response): Promise<void> => {
+  const connection = await pool.getConnection();
+  try {
+    const { id } = req.params;
+
+    await connection.beginTransaction();
+
+    const [payments] = await connection.query<RowDataPacket[]>(
+      `SELECT id, order_id, amount, status FROM payments WHERE id = ?`,
+      [id]
+    );
+
+    if (payments.length === 0) {
+      await connection.rollback();
+      res.status(404).json({ success: false, message: 'Payment record not found' });
+      return;
+    }
+
+    if (payments[0].status === 'Released') {
+      await connection.rollback();
+      res.status(400).json({ success: false, message: 'This payment has already been released' });
+      return;
+    }
+
+    await connection.query(
+      `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [id]
+    );
+
+    await connection.query(
+      `UPDATE orders SET payment_status = 'Completed' WHERE id = ?`,
+      [payments[0].order_id]
+    );
+
+    await connection.commit();
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment released from escrow successfully',
+      paymentId: id,
+      orderId: payments[0].order_id,
+      amount: payments[0].amount,
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error releasing payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to release payment',
+      error: (error as Error).message,
+    });
+  } finally {
+    connection.release();
+  }
+};
+
+/**
+ * 12. Create New Admin Account
+ * POST /api/admin/create-admin
+ */
+export const createAdmin = async (req: Request, res: Response): Promise<void> => {
+  const connection = await pool.getConnection();
+  try {
+    const { name, email, phone, password, admin_role, location } = req.body;
+
+    if (!name || !email || !password) {
+      res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required',
+      });
+      return;
+    }
+
+    const [existing] = await connection.query<RowDataPacket[]>(
+      `SELECT id FROM users WHERE email = ?`,
+      [email]
+    );
+
+    if (existing.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: 'A user with this email already exists',
+      });
+      return;
+    }
+
+    await connection.beginTransaction();
+
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    const [userResult] = await connection.query<ResultSetHeader>(
+      `INSERT INTO users (name, email, phone, password_hash, role, location, verified, status)
+       VALUES (?, ?, ?, ?, 'admin', ?, TRUE, 'active')`,
+      [name, email, phone || '', passwordHash, location || 'Headquarters']
+    );
+
+    const newUserId = userResult.insertId;
+
+    await connection.query(
+      `INSERT INTO admin_accounts (user_id, admin_role, is_super_admin, status)
+       VALUES (?, ?, FALSE, 'active')`,
+      [newUserId, admin_role || 'Moderator']
+    );
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin account created successfully',
+      admin: {
+        id: newUserId,
+        name,
+        email,
+        admin_role: admin_role || 'Moderator',
+      },
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create admin account',
+      error: (error as Error).message,
+    });
+  } finally {
+    connection.release();
   }
 };
