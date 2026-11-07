@@ -29,6 +29,7 @@ import {
   MOCK_TRANSPORTER_SUPPORT_CONTACT,
   TransporterProfile,
   TransporterStats,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterProfileScreenProps {
@@ -55,11 +56,8 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
   const [refreshing, setRefreshing] = useState(false);
 
-  // API URL for Profile
-  const BACKEND_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/profile"
-      : "http://localhost:5000/api/transporter/profile";
+  // Centralized API Endpoint from data folder
+  const BACKEND_URL = TRANSPORTER_API_ENDPOINTS.profile;
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -228,10 +226,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     setTempPhotoUri(null);
 
     // Sync avatar to backend database
-    const AVATAR_API =
-      Platform.OS === "android"
-        ? "http://10.0.2.2:5000/api/transporter/profile/avatar"
-        : "http://localhost:5000/api/transporter/profile/avatar";
+    const AVATAR_API = TRANSPORTER_API_ENDPOINTS.avatar;
 
     fetch(AVATAR_API, {
       method: "POST",
@@ -271,10 +266,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           delete MOCK_TRANSPORTER_PROFILE.avatarUri;
 
           // Remove avatar from backend database
-          const AVATAR_API =
-            Platform.OS === "android"
-              ? "http://10.0.2.2:5000/api/transporter/profile/avatar"
-              : "http://localhost:5000/api/transporter/profile/avatar";
+          const AVATAR_API = TRANSPORTER_API_ENDPOINTS.avatar;
 
           fetch(AVATAR_API, { method: "DELETE" }).catch((e) =>
             console.log("Failed to delete avatar from backend:", e)

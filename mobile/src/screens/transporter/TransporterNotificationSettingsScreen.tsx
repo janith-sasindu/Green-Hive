@@ -18,6 +18,7 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_NOTIFICATION_SETTINGS,
   TransporterNotificationSettings,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterNotificationSettingsScreenProps {
@@ -35,11 +36,8 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
   const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
 
-  // Backend API URL
-  const SETTINGS_API_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/notification-settings"
-      : "http://localhost:5000/api/transporter/notification-settings";
+  // Centralized Backend API URL from data folder
+  const SETTINGS_API_URL = TRANSPORTER_API_ENDPOINTS.notificationSettings;
 
   // Local settings state cloned from mock settings as default
   const [settings, setSettings] = useState<TransporterNotificationSettings>({

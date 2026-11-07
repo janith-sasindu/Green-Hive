@@ -28,6 +28,7 @@ import {
   ActiveTransportJob,
   TransporterProfile,
   TransporterNotificationItem,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterActiveJobScreenProps {
@@ -73,11 +74,8 @@ export const TransporterActiveJobScreen: React.FC<
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // API URL for Active Job
-  const BACKEND_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/jobs/active"
-      : "http://localhost:5000/api/transporter/jobs/active";
+  // Centralized API Endpoint from data folder
+  const BACKEND_URL = TRANSPORTER_API_ENDPOINTS.activeJob;
 
   const fetchActiveJob = useCallback(async () => {
     try {

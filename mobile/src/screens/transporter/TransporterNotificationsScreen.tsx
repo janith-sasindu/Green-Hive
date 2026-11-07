@@ -28,6 +28,7 @@ import {
   MOCK_DETAILED_NOTIFICATIONS,
   TransporterNotificationItem,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterNotificationsScreenProps {
@@ -49,16 +50,9 @@ export const TransporterNotificationsScreen = ({
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
-  // Backend Endpoints
-  const NOTIFICATIONS_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/notifications"
-      : "http://localhost:5000/api/transporter/notifications";
-
-  const PROFILE_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/profile"
-      : "http://localhost:5000/api/transporter/profile";
+  // Backend Endpoints from centralized data config
+  const NOTIFICATIONS_URL = TRANSPORTER_API_ENDPOINTS.notifications;
+  const PROFILE_URL = TRANSPORTER_API_ENDPOINTS.profile;
 
   // State
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
