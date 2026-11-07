@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,15 +6,19 @@ import {
   StatusBar,
   Switch,
   useWindowDimensions,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_NOTIFICATION_SETTINGS,
   TransporterNotificationSettings,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterNotificationSettingsScreenProps {
@@ -32,10 +36,15 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
   const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
 
-  // Local settings state cloned from mock settings
+  // Centralized Backend API URL from data folder
+  const SETTINGS_API_URL = TRANSPORTER_API_ENDPOINTS.notificationSettings;
+
+  // Local settings state cloned from mock settings as default
   const [settings, setSettings] = useState<TransporterNotificationSettings>({
     ...MOCK_TRANSPORTER_NOTIFICATION_SETTINGS,
   });
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
 
   // Themed Alert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -64,6 +73,34 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
     });
   };
 
+  // Fetch settings from backend
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch(SETTINGS_API_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setSettings({
+          newJobsPush: Boolean(json.data.newJobsPush),
+          currentJobUpdatesPush: Boolean(json.data.currentJobUpdatesPush),
+          offerStatusPush: Boolean(json.data.offerStatusPush),
+          paymentPush: Boolean(json.data.paymentPush),
+          soundAndVibration: Boolean(json.data.soundAndVibration),
+        });
+      }
+    } catch (error) {
+      console.log("Error fetching notification settings from backend:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [SETTINGS_API_URL]);
+
+  // Refresh settings whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchSettings();
+    }, [fetchSettings])
+  );
+
   const handleGoBack = () => {
     if (onBack) {
       onBack();
@@ -83,27 +120,54 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
   const handleToggle = (key: keyof TransporterNotificationSettings, value: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, [key]: value };
-      // Keep shared mock updated
+      // Keep shared mock updated for fallback
       MOCK_TRANSPORTER_NOTIFICATION_SETTINGS[key] = value;
       return next;
     });
   };
 
-  const handleSavePreferences = () => {
-    // Persist to shared mock data
-    Object.assign(MOCK_TRANSPORTER_NOTIFICATION_SETTINGS, settings);
+  const handleSavePreferences = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(SETTINGS_API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      const json = await response.json();
 
-    showAlert(
-      "Notification Settings Saved",
-      "Your notification preferences have been saved successfully.",
-      {
-        type: "success",
-        primaryButtonText: "Done",
-        onPrimaryPress: () => {
-          handleGoBack();
-        },
+      if (json.success) {
+        // Persist to shared mock data for offline fallback
+        Object.assign(MOCK_TRANSPORTER_NOTIFICATION_SETTINGS, settings);
+
+        showAlert(
+          "Notification Settings Saved",
+          "Your notification preferences have been saved successfully.",
+          {
+            type: "success",
+            primaryButtonText: "Done",
+            onPrimaryPress: () => {
+              handleGoBack();
+            },
+          }
+        );
+      } else {
+        showAlert(
+          "Save Failed",
+          json.message || "Failed to save notification preferences. Please try again.",
+          { type: "error" }
+        );
       }
-    );
+    } catch (error) {
+      console.log("Error saving notification settings:", error);
+      showAlert(
+        "Connection Error",
+        "Could not connect to the backend server. Please verify your connection.",
+        { type: "error" }
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -294,7 +358,7 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
             </View>
           </View>
 
-          {/* ================= 3. SOUND & VIBRATION ================= */}
+          {/* ================= 2. SOUND & VIBRATION ================= */}
           <View className="rounded-3xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
             <Text className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-3">
               Alert Sounds
@@ -333,8 +397,11 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
           {/* ================= 3. SAVE BUTTON ================= */}
           <TouchableOpacity
             activeOpacity={0.85}
+            disabled={saving}
             onPress={handleSavePreferences}
-            className="w-full py-4 rounded-2xl sm:rounded-3xl bg-[#E68A00] flex-row items-center justify-center shadow-md mb-3"
+            className={`w-full py-4 rounded-2xl sm:rounded-3xl bg-[#E68A00] flex-row items-center justify-center shadow-md mb-3 ${
+              saving ? "opacity-80" : ""
+            }`}
             style={{
               shadowColor: "#E68A00",
               shadowOffset: { width: 0, height: 4 },
@@ -343,9 +410,13 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
               elevation: 4,
             }}
           >
-            <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
+            {saving ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
+            )}
             <Text className="text-sm sm:text-base font-bold text-white ml-2">
-              Save Notification Preferences
+              {saving ? "Saving Preferences..." : "Save Notification Preferences"}
             </Text>
           </TouchableOpacity>
 

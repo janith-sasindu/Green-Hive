@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,21 +10,25 @@ import {
   Switch,
   useWindowDimensions,
   Platform,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   SmoothScrollView,
   SMOOTH_SCROLL_PROPS,
 } from "../../components/common/SmoothScrollView";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 
-// Mock Data imported from dedicated transporter data folder
+// Mock Data imported from dedicated transporter data folder as fallback
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_DETAILED_NOTIFICATIONS,
   TransporterNotificationItem,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterNotificationsScreenProps {
@@ -46,16 +50,78 @@ export const TransporterNotificationsScreen = ({
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
+  // Backend Endpoints from centralized data config
+  const NOTIFICATIONS_URL = TRANSPORTER_API_ENDPOINTS.notifications;
+  const PROFILE_URL = TRANSPORTER_API_ENDPOINTS.profile;
+
   // State
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
-  const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
-  const [notifications, setNotifications] = useState<
-    TransporterNotificationItem[]
-  >(MOCK_DETAILED_NOTIFICATIONS);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [notifications, setNotifications] = useState<TransporterNotificationItem[]>(
+    MOCK_DETAILED_NOTIFICATIONS
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+
+  const avatarUri = profile.avatarUri || MOCK_TRANSPORTER_PROFILE.avatarUri;
 
   // Derived state
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Fetch Notifications from Backend
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch(NOTIFICATIONS_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setNotifications(Array.isArray(json.data) ? json.data : json.data.notifications || []);
+      }
+    } catch (error) {
+      console.log("Error fetching notifications from backend:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [NOTIFICATIONS_URL]);
+
+  // Fetch Profile for top avatar and modal details
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch(PROFILE_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setProfile((prev) => ({
+          ...prev,
+          name: json.data.name || prev.name,
+          email: json.data.email || prev.email,
+          phone: json.data.phone || prev.phone,
+          vehicleType: json.data.vehicleType || prev.vehicleType,
+          vehiclePlate: json.data.vehiclePlate || prev.vehiclePlate,
+          avatarUri: json.data.avatarUri || prev.avatarUri,
+          avatarLetter: json.data.avatarLetter || json.data.name?.charAt(0) || "T",
+          rating: json.data.rating ?? prev.rating,
+          completedJobs: json.data.completedJobs ?? prev.completedJobs,
+        }));
+      }
+    } catch (error) {
+      console.log("Error fetching profile in notifications screen:", error);
+    }
+  }, [PROFILE_URL]);
+
+  // Auto-fetch data whenever screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+      fetchProfile();
+    }, [fetchNotifications, fetchProfile])
+  );
+
+  // Pull-to-refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
+    fetchProfile();
+  };
 
   // Handlers
   const handleGoBack = () => {
@@ -68,7 +134,7 @@ export const TransporterNotificationsScreen = ({
     }
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     if (unreadCount === 0) {
       Alert.alert(
         "All Caught Up",
@@ -76,14 +142,37 @@ export const TransporterNotificationsScreen = ({
       );
       return;
     }
+
+    // Optimistic UI update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    Alert.alert("Success", "All notifications marked as read.");
+
+    try {
+      const response = await fetch(`${NOTIFICATIONS_URL}/read-all`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await response.json();
+      if (json.success) {
+        Alert.alert("Success", "All notifications marked as read.");
+      }
+    } catch (error) {
+      console.log("Error marking all notifications read:", error);
+      Alert.alert("Success", "All notifications marked as read.");
+    }
   };
 
   const handleNotificationPress = (item: TransporterNotificationItem) => {
-    // Mark as read
+    // Optimistically mark as read in local state
     setNotifications((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+    );
+
+    // Call backend API to persist read state
+    fetch(`${NOTIFICATIONS_URL}/${item.id}/read`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    }).catch((e) =>
+      console.log("Failed to mark notification read on backend:", e)
     );
 
     if (item.jobId) {
@@ -292,116 +381,139 @@ export const TransporterNotificationsScreen = ({
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#E68A00"]}
+            tintColor="#E68A00"
+          />
+        }
       >
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
           <View className="px-4 sm:px-5 space-y-2.5 sm:space-y-3 gap-2.5 sm:gap-3">
-          {notifications.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.8}
-              onPress={() => handleNotificationPress(item)}
-              className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs flex-row items-start ${
-                isExtraSmall ? "p-3" : isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
-              }`}
-              style={{
-                elevation: 1.5,
-                shadowColor: "#000",
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                shadowOffset: { width: 0, height: 2 },
-              }}
-            >
-              {/* Left icon badge container */}
-              <View
-                className={`rounded-2xl bg-[#FEF3C7] dark:bg-amber-950/60 items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
-                  isExtraSmall
-                    ? "h-9 w-9"
-                    : isSmallDevice
-                    ? "h-10 w-10"
-                    : isTablet
-                    ? "h-14 w-14"
-                    : "h-12 w-12"
-                }`}
-              >
-                <Text
-                  className={
-                    isExtraSmall
-                      ? "text-base"
-                      : isSmallDevice
-                      ? "text-lg"
-                      : isTablet
-                      ? "text-3xl"
-                      : "text-2xl"
-                  }
-                >
-                  {item.iconEmoji || "🚚"}
+            {loading && notifications.length === 0 ? (
+              <View className="py-20 items-center justify-center">
+                <ActivityIndicator size="large" color="#E68A00" />
+                <Text className="text-xs font-semibold text-gray-400 dark:text-slate-500 mt-3">
+                  Loading notifications...
                 </Text>
               </View>
-
-              {/* Notification text content */}
-              <View className="flex-1 pr-1.5 sm:pr-2">
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.85}
-                  className={`font-extrabold text-gray-900 dark:text-white mb-0.5 ${
-                    isExtraSmall
-                      ? "text-[13px]"
-                      : isSmallDevice
-                      ? "text-[14px]"
-                      : isTablet
-                      ? "text-[17px]"
-                      : "text-[15.5px]"
+            ) : (
+              notifications.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => handleNotificationPress(item)}
+                  className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs flex-row items-start ${
+                    isExtraSmall ? "p-3" : isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
                   }`}
+                  style={{
+                    elevation: 1.5,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.03,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 2 },
+                  }}
                 >
-                  {item.title}
-                </Text>
-                <Text
-                  className={`text-gray-600 dark:text-slate-300 font-medium ${
-                    isSmallDevice
-                      ? "text-[11.5px] leading-[17px]"
-                      : "text-[13px] leading-5"
-                  }`}
-                >
-                  {item.message}
-                </Text>
-                {item.timestamp && (
-                  <Text
-                    className={`font-medium text-gray-400 dark:text-slate-400 mt-1 sm:mt-1.5 ${
-                      isSmallDevice ? "text-[10px]" : "text-[11.5px]"
+                  {/* Left icon badge container */}
+                  <View
+                    className={`rounded-2xl bg-[#FEF3C7] dark:bg-amber-950/60 items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
+                      isExtraSmall
+                        ? "h-9 w-9"
+                        : isSmallDevice
+                        ? "h-10 w-10"
+                        : isTablet
+                        ? "h-14 w-14"
+                        : "h-12 w-12"
                     }`}
                   >
-                    {item.timestamp}
-                  </Text>
-                )}
-              </View>
+                    <Text
+                      className={
+                        isExtraSmall
+                          ? "text-base"
+                          : isSmallDevice
+                          ? "text-lg"
+                          : isTablet
+                          ? "text-3xl"
+                          : "text-2xl"
+                      }
+                    >
+                      {item.iconEmoji || "🚚"}
+                    </Text>
+                  </View>
 
-              {/* Unread indicator dot */}
-              {!item.isRead && (
-                <View
-                  className={`rounded-full bg-[#16A34A] shrink-0 ${
-                    isSmallDevice
-                      ? "h-2 w-2 mt-1"
-                      : "h-2.5 w-2.5 mt-1.5"
-                  }`}
-                />
-              )}
-            </TouchableOpacity>
-          ))}
+                  {/* Notification text content */}
+                  <View className="flex-1 pr-1.5 sm:pr-2">
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                      className={`font-extrabold text-gray-900 dark:text-white mb-0.5 ${
+                        isExtraSmall
+                          ? "text-[13px]"
+                          : isSmallDevice
+                          ? "text-[14px]"
+                          : isTablet
+                          ? "text-[17px]"
+                          : "text-[15.5px]"
+                      }`}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      className={`text-gray-600 dark:text-slate-300 font-medium ${
+                        isSmallDevice
+                          ? "text-[11.5px] leading-[17px]"
+                          : "text-[13px] leading-5"
+                      }`}
+                    >
+                      {item.message}
+                    </Text>
+                    {item.timestamp && (
+                      <Text
+                        className={`font-medium text-gray-400 dark:text-slate-400 mt-1 sm:mt-1.5 ${
+                          isSmallDevice ? "text-[10px]" : "text-[11.5px]"
+                        }`}
+                      >
+                        {item.timestamp}
+                      </Text>
+                    )}
+                  </View>
 
-          {/* Empty state fallback if notifications cleared */}
-          {notifications.length === 0 && (
-            <View className="py-16 items-center justify-center">
-              <View className="h-16 w-16 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center mb-3">
-                <Ionicons name="notifications-off-outline" size={28} color={colors.iconMuted} />
+                  {/* Unread indicator dot */}
+                  {!item.isRead && (
+                    <View
+                      className={`rounded-full bg-[#16A34A] shrink-0 ${
+                        isSmallDevice
+                          ? "h-2 w-2 mt-1"
+                          : "h-2.5 w-2.5 mt-1.5"
+                      }`}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
+
+            {/* Empty state fallback if notifications cleared */}
+            {!loading && notifications.length === 0 && (
+              <View className="py-16 items-center justify-center">
+                <View className="h-16 w-16 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center mb-3">
+                  <Ionicons
+                    name="notifications-off-outline"
+                    size={28}
+                    color={colors.iconMuted}
+                  />
+                </View>
+                <Text className="text-base font-bold text-gray-700 dark:text-slate-200">
+                  No Notifications
+                </Text>
+                <Text className="text-xs text-gray-400 dark:text-slate-400 text-center max-w-[240px] mt-1">
+                  You have caught up with all your transport alerts and updates.
+                </Text>
               </View>
-              <Text className="text-base font-bold text-gray-700 dark:text-slate-200">No Notifications</Text>
-              <Text className="text-xs text-gray-400 dark:text-slate-400 text-center max-w-[240px] mt-1">
-                You have caught up with all your transport alerts and updates.
-              </Text>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
         </View>
       </SmoothScrollView>
 

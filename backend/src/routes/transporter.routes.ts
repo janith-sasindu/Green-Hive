@@ -6,6 +6,17 @@ import {
   getActiveJob,
   getJobById,
   submitJobOffer,
+  getProfile,
+  updateProfile,
+  updateAvatar,
+  removeAvatar,
+  getBankDetails,
+  updateBankDetails,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getNotificationSettings,
+  updateNotificationSettings,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -26,5 +37,26 @@ router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
 // Update Status (Confirm pickup / Confirm delivery)
 router.patch('/jobs/:id/status', authenticateToken, updateJobStatus);
+
+// Profile Endpoints
+router.get('/profile', authenticateToken, getProfile);
+router.put('/profile', authenticateToken, updateProfile);
+
+// Avatar Endpoints
+router.post('/profile/avatar', authenticateToken, updateAvatar);
+router.delete('/profile/avatar', authenticateToken, removeAvatar);
+
+// Bank Details Endpoints
+router.get('/bank-details', authenticateToken, getBankDetails);
+router.put('/bank-details', authenticateToken, updateBankDetails);
+
+// Notification Endpoints
+router.get('/notifications', authenticateToken, getNotifications);
+router.patch('/notifications/read-all', authenticateToken, markAllNotificationsRead);
+router.patch('/notifications/:id/read', authenticateToken, markNotificationRead);
+
+// Notification Settings Endpoints
+router.get('/notification-settings', authenticateToken, getNotificationSettings);
+router.put('/notification-settings', authenticateToken, updateNotificationSettings);
 
 export default router;

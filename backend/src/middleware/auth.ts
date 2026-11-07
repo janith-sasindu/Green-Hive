@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../controllers/transporter.controller';
+import { DEFAULT_DEV_USER } from '../data';
 
 export const authenticateToken = (
     req: AuthenticatedRequest,
@@ -10,9 +11,9 @@ export const authenticateToken = (
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    // In development, if no token is sent, default to test user ID 7 (transporter)
+    // In development, if no token is sent, default to test transporter user
     if (!token) {
-        req.user = { id: 7, role: 'transporter', email: 'ruwan@transport.lk' };
+        req.user = { ...DEFAULT_DEV_USER };
         return next();
     }
 
