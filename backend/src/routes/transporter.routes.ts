@@ -12,6 +12,9 @@ import {
   removeAvatar,
   getBankDetails,
   updateBankDetails,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -44,5 +47,10 @@ router.delete('/profile/avatar', authenticateToken, removeAvatar);
 // Bank Details Endpoints
 router.get('/bank-details', authenticateToken, getBankDetails);
 router.put('/bank-details', authenticateToken, updateBankDetails);
+
+// Notification Endpoints
+router.get('/notifications', authenticateToken, getNotifications);
+router.patch('/notifications/read-all', authenticateToken, markAllNotificationsRead);
+router.patch('/notifications/:id/read', authenticateToken, markNotificationRead);
 
 export default router;

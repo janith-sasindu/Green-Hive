@@ -961,3 +961,132 @@ export const updateBankDetails = async (req: AuthenticatedRequest, res: Response
     });
   }
 };
+
+
+/**
+ * GET /api/transporter/notifications
+ * Retrieves all notification alerts for the logged-in transporter
+ */
+export const getNotifications = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, title, message, type, is_read, icon_emoji, job_id, created_at
+       FROM transporter_notifications
+       WHERE transporter_id = ?
+       ORDER BY created_at DESC`,
+      [transporterId]
+    );
+
+    const notifications = rows.map((row) => ({
+      id: String(row.id),
+      title: row.title,
+      message: row.message,
+      type: row.type,
+      isRead: Boolean(row.is_read),
+      iconEmoji:
+        row.icon_emoji ||
+        (row.type === 'payment'
+          ? '💰'
+          : row.type === 'pickup'
+          ? '📦'
+          : row.type === 'request'
+          ? '🔔'
+          : '🚚'),
+      jobId: row.job_id || undefined,
+      timestamp: new Date(row.created_at).toLocaleString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }),
+    }));
+
+    const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+    return res.status(200).json({
+      success: true,
+      data: notifications,
+      unreadCount,
+    });
+  } catch (error: any) {
+    console.error('Error fetching notifications:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch notifications',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PATCH /api/transporter/notifications/:id/read
+ * Marks a specific notification as read
+ */
+export const markNotificationRead = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+    const { id } = req.params;
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE transporter_notifications
+       SET is_read = 1
+       WHERE id = ? AND transporter_id = ?`,
+      [id, transporterId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found or unauthorized',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notification marked as read',
+      data: { id, isRead: true },
+    });
+  } catch (error: any) {
+    console.error('Error marking notification as read:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update notification',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PATCH /api/transporter/notifications/read-all
+ * Marks all notifications for the logged-in transporter as read
+ */
+export const markAllNotificationsRead = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE transporter_notifications
+       SET is_read = 1
+       WHERE transporter_id = ? AND is_read = 0`,
+      [transporterId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'All notifications marked as read',
+      data: { updatedCount: result.affectedRows },
+    });
+  } catch (error: any) {
+    console.error('Error marking all notifications as read:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to mark notifications as read',
+      error: error.message,
+    });
+  }
+};
