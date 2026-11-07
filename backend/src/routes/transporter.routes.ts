@@ -15,6 +15,8 @@ import {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  getNotificationSettings,
+  updateNotificationSettings,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -52,5 +54,9 @@ router.put('/bank-details', authenticateToken, updateBankDetails);
 router.get('/notifications', authenticateToken, getNotifications);
 router.patch('/notifications/read-all', authenticateToken, markAllNotificationsRead);
 router.patch('/notifications/:id/read', authenticateToken, markNotificationRead);
+
+// Notification Settings Endpoints
+router.get('/notification-settings', authenticateToken, getNotificationSettings);
+router.put('/notification-settings', authenticateToken, updateNotificationSettings);
 
 export default router;
