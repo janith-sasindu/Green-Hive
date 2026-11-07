@@ -446,7 +446,7 @@ export const TransporterActiveJobScreen: React.FC<
                 </Text>
               </View>
               <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827] dark:text-slate-100">
-                {currentJob.sellerName || "Colombo Fresh Market"}
+                {currentJob.sellerName || MOCK_ACTIVE_JOB.sellerName}
               </Text>
               <Text className="text-[11.5px] sm:text-xs text-[#6B7280] dark:text-slate-400 font-normal mt-0.5">
                 {currentJob.dropoff}

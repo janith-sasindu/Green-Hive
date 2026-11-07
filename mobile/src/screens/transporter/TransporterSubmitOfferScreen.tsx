@@ -27,6 +27,7 @@ import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_AVAILABLE_JOBS,
   MOCK_MY_OFFERS,
+  DEFAULT_OFFER_NOTE,
   AvailableTransportJob,
   TransporterProfile,
   TransportOffer,
@@ -149,9 +150,11 @@ export const TransporterSubmitOfferScreen: React.FC<
     };
   }, []);
 
+  const defaultFallbackJob = MOCK_AVAILABLE_JOBS[0];
+
   // Helper formatting functions
   const getJobIdDisplay = (id?: string) => {
-    if (!id) return "JOB #GH-T1025";
+    if (!id) return `JOB ${defaultFallbackJob.id}`;
     const trimmed = id.trim();
     if (trimmed.toUpperCase().startsWith("JOB")) return trimmed;
     return `JOB ${trimmed}`;
@@ -164,14 +167,14 @@ export const TransporterSubmitOfferScreen: React.FC<
     if (targetJob.pickupTime) {
       return targetJob.pickupTime.replace("·", "at").trim();
     }
-    return "2026-08-31 at 06:00 AM";
+    return `${defaultFallbackJob.pickupDate} at ${defaultFallbackJob.pickupRequiredTime}`;
   };
 
   const getPickupAddress = (targetJob: AvailableTransportJob) => {
     return (
       targetJob.pickupLocationDetail ||
       targetJob.pickup ||
-      "Dambulla Agricultural Zone, Plot 14"
+      defaultFallbackJob.pickup
     );
   };
 
@@ -179,14 +182,15 @@ export const TransporterSubmitOfferScreen: React.FC<
     return (
       targetJob.dropoffLocationDetail ||
       targetJob.dropoff ||
-      "Colombo Fresh Market, Colombo 03"
+      defaultFallbackJob.dropoff
     );
   };
 
   const getSpecialInstructions = (targetJob: AvailableTransportJob) => {
     return (
       targetJob.specialInstructions ||
-      "Fragile. Use padded transport. Early morning delivery required."
+      defaultFallbackJob.specialInstructions ||
+      ""
     );
   };
 
@@ -258,7 +262,7 @@ export const TransporterSubmitOfferScreen: React.FC<
       route: `${job.pickup?.split(",")[0] || "Origin"} → ${job.dropoff?.split(",")[0] || "Destination"}`,
       quotePrice: trimmedCost.startsWith("Rs.") ? trimmedCost : `Rs. ${trimmedCost}`,
       estimatedDelivery: deliveryTime.trim() || getTimeString(job),
-      notes: notes.trim() || "I have refrigerated vehicle available. On-time delivery guaranteed.",
+      notes: notes.trim() || DEFAULT_OFFER_NOTE,
       submittedDate: new Date().toISOString().split("T")[0],
       status: "Submitted",
       sellerName: job.sellerName,

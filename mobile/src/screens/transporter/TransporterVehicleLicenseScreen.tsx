@@ -25,9 +25,12 @@ import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_TRANSPORTER_VEHICLE_LICENSE,
+  VEHICLE_TYPE_PRESETS,
   TransporterProfile,
   TransporterVehicleAndLicense,
 } from "./data";
+
+export { VEHICLE_TYPE_PRESETS };
 
 export interface TransporterVehicleLicenseScreenProps {
   navigation?: any;
@@ -35,15 +38,6 @@ export interface TransporterVehicleLicenseScreenProps {
   onSelectTab?: (tab: "home" | "jobs" | "active" | "profile") => void;
   activeTab?: "home" | "jobs" | "active" | "profile";
 }
-
-const VEHICLE_TYPE_PRESETS = [
-  "Lorry - 3 Ton",
-  "Mini Lorry - 1.5 Ton",
-  "Pickup Truck",
-  "Van - 1 Ton",
-  "Refrigerated Truck",
-  "Heavy Lorry - 5 Ton",
-];
 
 export const TransporterVehicleLicenseScreen: React.FC<
   TransporterVehicleLicenseScreenProps
@@ -695,7 +689,10 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     <View className="flex-row items-center">
                       <View className="bg-amber-400 px-2 py-1 rounded-md mr-2.5 items-center justify-center">
                         <Text className="text-xs font-black text-black">
-                          {data.vehiclePlate.split("-")[0] || "WP"}
+                          {data.vehiclePlate.split("-")[0] ||
+                            MOCK_TRANSPORTER_VEHICLE_LICENSE.vehiclePlate.split(
+                              "-"
+                            )[0]}
                         </Text>
                       </View>
                       <Text className="text-xl sm:text-2xl font-black text-white tracking-widest font-mono">

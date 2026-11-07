@@ -37,6 +37,7 @@ import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
 import { TransporterProfileScreen } from "./TransporterProfileScreen";
 import { TransporterMyOffersScreen } from "./TransporterMyOffersScreen";
+import { TransporterBankDetailsScreen } from "./TransporterBankDetailsScreen";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
 import { CommonActions } from "@react-navigation/native";
 
@@ -60,6 +61,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [showNotifications, setShowNotifications] = useState(false);
   const [showOffersModal, setShowOffersModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
   const [selectedAvailableJob, setSelectedAvailableJob] = useState<AvailableTransportJob | null>(null);
 
@@ -153,16 +155,13 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   };
 
   const handleMakeOffer = (jobId: string, cropInfo: string) => {
+    const defaultJob = MOCK_AVAILABLE_JOBS[0];
     const targetJob = availableJobsList.find((j) => j.id === jobId) || {
+      ...defaultJob,
       id: jobId,
-      cropName: cropInfo.split("·")[0]?.trim() || "Vegetable Cargo",
-      weight: cropInfo.split("·")[1]?.trim() || "100 kg",
-      pickup: "Dambulla Agricultural Hub",
-      dropoff: "Colombo Fresh Market",
-      pickupTime: "Today · 06:00 AM",
-      status: "Open",
-      price: "Rs. 2,200",
-    } as AvailableTransportJob;
+      cropName: cropInfo.split("·")[0]?.trim() || defaultJob.cropName,
+      weight: cropInfo.split("·")[1]?.trim() || defaultJob.weight,
+    };
 
     if (navigation?.navigate) {
       navigation.navigate("TransporterSubmitOffer", { job: targetJob });
@@ -195,35 +194,38 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     }
   };
 
+  const defaultAvailableFallback = MOCK_AVAILABLE_JOBS[0];
+
   const getJobIdDisplay = (id?: string) => {
-    if (!id) return "JOB #GH-T1025";
+    if (!id) return `JOB ${defaultAvailableFallback.id}`;
     const trimmed = id.trim();
     if (trimmed.toUpperCase().startsWith("JOB")) return trimmed;
     return `JOB ${trimmed}`;
   };
 
   const getJobDate = (job?: AvailableTransportJob | null) => {
-    if (!job) return "2026-08-31";
+    if (!job) return defaultAvailableFallback.pickupDate || "";
     if (job.pickupDate) return job.pickupDate;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[0].trim();
     }
-    return "2026-08-31";
+    return defaultAvailableFallback.pickupDate || "";
   };
 
   const getJobTime = (job?: AvailableTransportJob | null) => {
-    if (!job) return "06:00 AM";
+    if (!job) return defaultAvailableFallback.pickupRequiredTime || "";
     if (job.pickupRequiredTime) return job.pickupRequiredTime;
     if (job.pickupTime && job.pickupTime.includes("·")) {
       return job.pickupTime.split("·")[1].trim();
     }
-    return "06:00 AM";
+    return defaultAvailableFallback.pickupRequiredTime || "";
   };
 
   const getSpecialInstructions = (job?: AvailableTransportJob | null) => {
     return (
       job?.specialInstructions ||
-      "Fragile. Use padded transport. Early morning delivery required."
+      defaultAvailableFallback.specialInstructions ||
+      ""
     );
   };
 
@@ -231,7 +233,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     return (
       job?.pickupLocationDetail ||
       job?.pickup ||
-      "Dambulla Agricultural Zone, Plot 14"
+      defaultAvailableFallback.pickup
     );
   };
 
@@ -239,7 +241,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     return (
       job?.dropoffLocationDetail ||
       job?.dropoff ||
-      "Colombo Fresh Market, Colombo 03"
+      defaultAvailableFallback.dropoff
     );
   };
 
@@ -864,6 +866,43 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 minimumFontScale={0.8}
               >
                 Profile
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Row 3: Bank Details */}
+          <View className="mt-2 sm:mt-2.5">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterBankDetails");
+                } else {
+                  setShowBankDetailsModal(true);
+                }
+              }}
+              className={`w-full items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-2xs px-3 ${
+                isExtraSmall
+                  ? "h-[68px]"
+                  : isSmallDevice
+                  ? "h-[74px]"
+                  : "h-[88px]"
+              }`}
+            >
+              <Text className={isSmallDevice ? "text-lg mb-0" : "text-2xl mb-0.5"}>🏦</Text>
+              <Text
+                className={`font-bold text-[#1F2937] dark:text-white ${
+                  isExtraSmall
+                    ? "text-[10.5px]"
+                    : isSmallDevice
+                    ? "text-[11.5px]"
+                    : "text-[13px]"
+                }`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                Bank Details
               </Text>
             </TouchableOpacity>
           </View>
@@ -1582,7 +1621,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getPickupAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Farmer: {selectedAvailableJob.farmerName || "Kamal Jayasinghe"}
+                        Farmer: {selectedAvailableJob.farmerName || defaultAvailableFallback.farmerName}
                       </Text>
                     </View>
 
@@ -1601,7 +1640,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getDeliveryAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Seller: {selectedAvailableJob.sellerName || "Colombo Fresh Market"}
+                        Seller: {selectedAvailableJob.sellerName || defaultAvailableFallback.sellerName}
                       </Text>
                     </View>
 
@@ -1907,6 +1946,18 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             </View>
           </SmoothScrollView>
         </SafeAreaView>
+      </Modal>
+
+      {/* ================= MODAL: BANK DETAILS ================= */}
+      <Modal
+        visible={showBankDetailsModal}
+        animationType="slide"
+        onRequestClose={() => setShowBankDetailsModal(false)}
+      >
+        <TransporterBankDetailsScreen
+          onBack={() => setShowBankDetailsModal(false)}
+          navigation={navigation}
+        />
       </Modal>
     </View>
   );

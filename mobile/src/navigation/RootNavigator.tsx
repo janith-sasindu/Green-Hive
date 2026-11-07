@@ -15,6 +15,7 @@ import {
   TransporterActiveJobScreen,
   TransporterProfileScreen,
   TransporterEditProfileScreen,
+  TransporterBankDetailsScreen,
   TransporterNotificationSettingsScreen,
   TransporterMyOffersScreen,
   TransporterConfirmPickupScreen,
@@ -43,6 +44,7 @@ export type RootStackParamList = {
   TransporterActiveJob: { job?: any } | undefined;
   TransporterProfile: undefined;
   TransporterEditProfile: undefined;
+  TransporterBankDetails: undefined;
   TransporterNotificationSettings: undefined;
   TransporterMyOffers: undefined;
   TransporterConfirmPickup: { job?: any } | undefined;
@@ -120,6 +122,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterEditProfile"
         component={TransporterEditProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterBankDetails"
+        component={TransporterBankDetailsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

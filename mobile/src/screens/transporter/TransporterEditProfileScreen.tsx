@@ -17,21 +17,19 @@ import * as ImagePicker from "expo-image-picker";
 import { SmoothScrollView } from "../../components/common/SmoothScrollView";
 import { ThemedAlertModal, ThemedAlertModalType } from "../../components/common";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
-import { MOCK_TRANSPORTER_PROFILE, TransporterProfile } from "./data";
+import {
+  MOCK_TRANSPORTER_PROFILE,
+  VEHICLE_PRESETS,
+  TransporterProfile,
+} from "./data";
+
+export { VEHICLE_PRESETS };
 
 export interface TransporterEditProfileScreenProps {
   navigation?: any;
   onBack?: () => void;
   onSave?: (updatedProfile: TransporterProfile) => void;
 }
-
-const VEHICLE_PRESETS = [
-  "Lorry - 3 Ton",
-  "Mini Lorry - 1.5 Ton",
-  "Pickup Truck",
-  "Van - 1 Ton",
-  "Refrigerated Truck",
-];
 
 export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreenProps> = ({
   navigation,
@@ -49,9 +47,9 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
   const [name, setName] = useState(MOCK_TRANSPORTER_PROFILE.name || "");
   const [phone, setPhone] = useState(MOCK_TRANSPORTER_PROFILE.phone || "");
   const [email, setEmail] = useState(MOCK_TRANSPORTER_PROFILE.email || "");
-  const [baseLocation, setBaseLocation] = useState(MOCK_TRANSPORTER_PROFILE.baseLocation || "Colombo");
-  const [vehicleType, setVehicleType] = useState(MOCK_TRANSPORTER_PROFILE.vehicleType || "Lorry - 3 Ton");
-  const [vehiclePlate, setVehiclePlate] = useState(MOCK_TRANSPORTER_PROFILE.vehiclePlate || "WP-LH-4821");
+  const [baseLocation, setBaseLocation] = useState(MOCK_TRANSPORTER_PROFILE.baseLocation || "");
+  const [vehicleType, setVehicleType] = useState(MOCK_TRANSPORTER_PROFILE.vehicleType || VEHICLE_PRESETS[0]);
+  const [vehiclePlate, setVehiclePlate] = useState(MOCK_TRANSPORTER_PROFILE.vehiclePlate || "");
   const [avatarUri, setAvatarUri] = useState<string | undefined>(MOCK_TRANSPORTER_PROFILE.avatarUri);
 
   // Photo Modals & Processing State
