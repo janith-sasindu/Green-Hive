@@ -6,7 +6,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "seed:jobs": "ts-node src/scripts/seed-available-jobs.ts",
+    "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
+    "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -22,6 +25,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.7",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   }

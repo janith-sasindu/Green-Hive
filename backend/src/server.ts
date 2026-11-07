@@ -1,26 +1,28 @@
+
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { pool } from './config/db';
 import adminRoutes from './routes/admin.routes';
+import transporterRoutes from './routes/transporter.routes';
 
-// Load environment variables from .env
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
-// ==========================================
 // Middleware
-// ==========================================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==========================================
-// Base Routes
-// ==========================================
-// General Health Check
+// Admin Routes
+app.use('/api/admin', adminRoutes);
+
+// Transporter Routes
+app.use('/api/transporter', transporterRoutes);
+
+// Health Check
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
@@ -29,24 +31,24 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Mount Admin Routes under /api/admin
-app.use('/api/admin', adminRoutes);
+// Legacy Health Check
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'green-hive-backend',
+  });
+});
 
-// ==========================================
-// Start Server & Test Aiven DB Connection
-// ==========================================
+// Start Server & Test Database Connection
 app.listen(PORT, async () => {
-  console.log(`\n==================================================`);
-  console.log(`🚀 Green Hive Backend Server running on port ${PORT}`);
-  console.log(`🔗 Local URL: http://localhost:${PORT}`);
-  console.log(`==================================================`);
+  console.log(`🚀 Green Hive Backend running on http://localhost:${PORT}`);
 
   try {
     const connection = await pool.getConnection();
-    console.log(`✅ [Database]: Successfully connected to Aiven MySQL Cloud!`);
+    console.log('✅ Successfully connected to Aiven MySQL Cloud!');
     connection.release();
   } catch (error) {
-    console.error(`❌ [Database]: Connection failed! Check .env credentials.`);
-    console.error(`   Error Details: ${(error as Error).message}`);
+    console.error('❌ Database connection failed!');
+    console.error((error as Error).message);
   }
 });

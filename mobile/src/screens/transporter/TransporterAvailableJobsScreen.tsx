@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   Switch,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -57,6 +58,36 @@ export const TransporterAvailableJobsScreen = ({
     useState<AvailableTransportJob[]>(MOCK_AVAILABLE_JOBS);
   const [notifications] =
     useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // API URL: auto-selects 10.0.2.2 for Android emulator or localhost for iOS/web
+  const BACKEND_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:5000/api/transporter/jobs/available"
+      : "http://localhost:5000/api/transporter/jobs/available";
+
+  const fetchAvailableJobs = useCallback(async () => {
+    try {
+      const response = await fetch(BACKEND_URL);
+      const json = await response.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setAvailableJobs(json.data);
+      }
+    } catch (error) {
+      console.log("Error loading available jobs, using mock fallback:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    fetchAvailableJobs();
+  }, [fetchAvailableJobs]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAvailableJobs();
+  };
 
   // Modals
   const [selectedJob, setSelectedJob] = useState<AvailableTransportJob | null>(
@@ -311,6 +342,14 @@ export const TransporterAvailableJobsScreen = ({
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#E68A00"
+            colors={["#E68A00"]}
+          />
+        }
       >
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
           {/* Subtitle count banner */}

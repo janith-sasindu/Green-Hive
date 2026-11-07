@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -66,14 +66,40 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   const [selectedAvailableJob, setSelectedAvailableJob] = useState<AvailableTransportJob | null>(null);
 
   // Dynamic state loaded from mock data
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
-  const [stats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
+  const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
   const [activeJob, setActiveJob] = useState<ActiveTransportJob>(MOCK_ACTIVE_JOB);
-  const [availableJobsList] = useState<AvailableTransportJob[]>(MOCK_AVAILABLE_JOBS);
-  const [myOffersList] = useState<TransportOffer[]>(MOCK_MY_OFFERS);
-  const [paymentSummary] = useState<PaymentSummaryData>(MOCK_PAYMENT_SUMMARY);
-  const [notificationsList] = useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [availableJobsList, setAvailableJobsList] = useState<AvailableTransportJob[]>(MOCK_AVAILABLE_JOBS);
+  const [myOffersList, setMyOffersList] = useState<TransportOffer[]>(MOCK_MY_OFFERS);
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryData>(MOCK_PAYMENT_SUMMARY);
+  const [notificationsList, setNotificationsList] = useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
+
+  // API URL: auto-selects 10.0.2.2 for Android emulator or localhost for iOS/web
+  const BACKEND_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:5000/api/transporter/home"
+      : "http://localhost:5000/api/transporter/home";
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch(BACKEND_URL);
+        const json = await response.json();
+        if (json.success && json.data) {
+          if (json.data.profile) setProfile(json.data.profile);
+          if (json.data.stats) setStats(json.data.stats);
+          if (json.data.activeJob) setActiveJob(json.data.activeJob);
+          if (json.data.availableJobs) setAvailableJobsList(json.data.availableJobs);
+          if (json.data.paymentSummary) setPaymentSummary(json.data.paymentSummary);
+        }
+      } catch (error) {
+        console.log("Error loading dashboard data, falling back to cached/mock data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const handleConfirmPickup = () => {
     if (activeJob.status === "In Transit" || activeJob.status === "Delivered") {
