@@ -837,3 +837,127 @@ export const removeAvatar = async (req: AuthenticatedRequest, res: Response) => 
     });
   }
 };
+
+
+/**
+ * GET /api/transporter/bank-details
+ * Fetches payout bank account details of the logged-in transporter
+ */
+export const getBankDetails = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        tbd.account_holder_name,
+        tbd.bank_name,
+        tbd.branch_name,
+        tbd.branch_code,
+        tbd.account_number,
+        tbd.account_type,
+        tbd.is_verified,
+        u.name AS user_name
+      FROM users u
+      LEFT JOIN transporter_bank_details tbd ON u.id = tbd.transporter_id
+      WHERE u.id = ?`,
+      [transporterId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Transporter not found' });
+    }
+
+    const row = rows[0];
+
+    const bankAccount = {
+      accountHolderName: row.account_holder_name || row.user_name || 'Transporter',
+      bankName: row.bank_name || 'Commercial Bank of Ceylon',
+      branchName: row.branch_name || 'Colombo Main Branch',
+      branchCode: row.branch_code || '014',
+      accountNumber: row.account_number || '8004529104',
+      accountType: row.account_type || 'Savings Account',
+      isVerified: Boolean(row.is_verified ?? true),
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: bankAccount,
+    });
+  } catch (error: any) {
+    console.error('Error fetching bank details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch bank account details',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/transporter/bank-details
+ * Updates payout bank account details of the logged-in transporter
+ */
+export const updateBankDetails = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+    const {
+      accountHolderName,
+      bankName,
+      branchName,
+      branchCode,
+      accountNumber,
+      accountType,
+    } = req.body;
+
+    if (!accountHolderName || !bankName || !accountNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account holder name, bank name, and account number are required',
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO transporter_bank_details (
+        transporter_id, account_holder_name, bank_name, branch_name, branch_code, account_number, account_type, is_verified
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+      ON DUPLICATE KEY UPDATE
+        account_holder_name = VALUES(account_holder_name),
+        bank_name = VALUES(bank_name),
+        branch_name = VALUES(branch_name),
+        branch_code = VALUES(branch_code),
+        account_number = VALUES(account_number),
+        account_type = VALUES(account_type),
+        is_verified = 1`,
+      [
+        transporterId,
+        accountHolderName.trim(),
+        bankName.trim(),
+        branchName ? branchName.trim() : 'Main Branch',
+        branchCode ? branchCode.trim() : '001',
+        accountNumber.trim(),
+        accountType || 'Savings Account',
+      ]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Bank details saved successfully',
+      data: {
+        accountHolderName: accountHolderName.trim(),
+        bankName: bankName.trim(),
+        branchName: branchName ? branchName.trim() : 'Main Branch',
+        branchCode: branchCode ? branchCode.trim() : '001',
+        accountNumber: accountNumber.trim(),
+        accountType: accountType || 'Savings Account',
+        isVerified: true,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating bank details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update bank details',
+      error: error.message,
+    });
+  }
+};
