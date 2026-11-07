@@ -855,3 +855,124 @@ export const createAdmin = async (req: Request, res: Response): Promise<void> =>
     connection.release();
   }
 };
+
+/**
+ * 15. Get All Admin Accounts (for Manage Admins page)
+ * GET /api/admin/admins
+ */
+export const getAllAdmins = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.phone,
+        a.admin_role,
+        a.is_super_admin,
+        a.status,
+        u.created_at
+      FROM users u
+      JOIN admin_accounts a ON u.id = a.user_id
+      ORDER BY u.created_at DESC
+    `);
+
+    res.status(200).json({
+      success: true,
+      count: rows.length,
+      admins: rows,
+    });
+  } catch (error) {
+    console.error('Error fetching admins:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve admin accounts',
+      error: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * 16. Update User Status (Activate, Suspend, Pending)
+ * PATCH /api/admin/users/:id/status
+ * Body: { status: 'active' | 'suspended' | 'pending' }
+ */
+export const updateUserStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['active', 'suspended', 'pending'].includes(status)) {
+      res.status(400).json({
+        success: false,
+        message: 'Status must be active, suspended, or pending',
+      });
+      return;
+    }
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE users SET status = ? WHERE id = ?`,
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User status updated to ${status}`,
+      userId: id,
+      newStatus: status,
+    });
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update user status',
+      error: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * 17. Manually Add User (from Admin "+ Add User" modal)
+ * POST /api/admin/users
+ */
+export const createUserManually = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, email, phone, role, location, status } = req.body;
+
+    if (!name || !email || !role) {
+      res.status(400).json({
+        success: false,
+        message: 'Name, email, and role are required',
+      });
+      return;
+    }
+
+    // Default password for manually created users: Welcome123!
+    const defaultPassword = 'Welcome123!';
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `INSERT INTO users (name, email, phone, password_hash, role, location, verified, status)
+       VALUES (?, ?, ?, ?, ?, ?, FALSE, ?)`,
+      [name, email, phone || '', passwordHash, role, location || '', status || 'active']
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      userId: result.insertId,
+    });
+  } catch (error) {
+    console.error('Error creating user manually:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create user',
+      error: (error as Error).message,
+    });
+  }
+};
