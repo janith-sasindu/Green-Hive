@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Switch,
   Modal,
   ActivityIndicator,
+  Platform,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,16 +50,45 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
-  // Profile and stats state from mock data
+  // Profile and stats state
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // API URL for Profile
+  const BACKEND_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:5000/api/transporter/profile"
+      : "http://localhost:5000/api/transporter/profile";
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch(BACKEND_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setProfile((prev) => ({
+          ...prev,
+          ...json.data,
+        }));
+      }
+    } catch (error) {
+      console.log("Error loading profile from backend, using fallback:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [BACKEND_URL]);
 
   // Sync profile when screen is focused
   useFocusEffect(
-    React.useCallback(() => {
-      setProfile({ ...MOCK_TRANSPORTER_PROFILE });
-    }, [])
+    useCallback(() => {
+      fetchProfile();
+    }, [fetchProfile])
   );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProfile();
+  };
 
   // Screen Modals
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -187,13 +218,26 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
   const handleConfirmUpload = () => {
     if (!tempPhotoUri) return;
+    const uploadedUri = tempPhotoUri;
     setProfile((prev) => ({
       ...prev,
-      avatarUri: tempPhotoUri,
+      avatarUri: uploadedUri,
     }));
-    MOCK_TRANSPORTER_PROFILE.avatarUri = tempPhotoUri;
+    MOCK_TRANSPORTER_PROFILE.avatarUri = uploadedUri;
     setShowPreviewModal(false);
     setTempPhotoUri(null);
+
+    // Sync avatar to backend database
+    const AVATAR_API =
+      Platform.OS === "android"
+        ? "http://10.0.2.2:5000/api/transporter/profile/avatar"
+        : "http://localhost:5000/api/transporter/profile/avatar";
+
+    fetch(AVATAR_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatarUrl: uploadedUri }),
+    }).catch((e) => console.log("Failed to sync avatar with backend:", e));
 
     showAlert(
       "Profile Picture Updated",
@@ -225,6 +269,17 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             return next;
           });
           delete MOCK_TRANSPORTER_PROFILE.avatarUri;
+
+          // Remove avatar from backend database
+          const AVATAR_API =
+            Platform.OS === "android"
+              ? "http://10.0.2.2:5000/api/transporter/profile/avatar"
+              : "http://localhost:5000/api/transporter/profile/avatar";
+
+          fetch(AVATAR_API, { method: "DELETE" }).catch((e) =>
+            console.log("Failed to delete avatar from backend:", e)
+          );
+
           showAlert("Picture Removed", "Your profile picture has been reset to default.", {
             type: "info",
             primaryButtonText: "Done",
@@ -446,6 +501,14 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
           paddingTop: 8,
           paddingBottom: 40,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#E68A00"
+            colors={["#E68A00"]}
+          />
+        }
       >
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
           {/* ================= 1. PROFILE HERO BANNER ================= */}
