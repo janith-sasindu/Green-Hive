@@ -647,3 +647,130 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
     });
   }
 };
+
+
+/**
+ * GET /api/transporter/profile
+ * Fetches the full profile of the logged-in transporter including vehicle and performance stats
+ */
+export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.phone,
+        u.location,
+        u.verified,
+        tp.avatar_url,
+        tp.vehicle_type,
+        tp.vehicle_plate,
+        tp.rating,
+        tp.on_time_rate,
+        (SELECT COUNT(*) FROM transport_jobs WHERE transporter_id = u.id AND status = 'Delivered') AS completed_jobs,
+        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payee_id = u.id AND payment_type = 'transport_fee' AND status = 'Released') AS total_earnings
+      FROM users u
+      LEFT JOIN transporter_profiles tp ON u.id = tp.user_id
+      WHERE u.id = ? AND u.role = 'transporter'`,
+      [transporterId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Transporter profile not found' });
+    }
+
+    const row = rows[0];
+    const currentHour = new Date().getHours();
+    const greeting =
+      currentHour < 12 ? 'Good morning,' : currentHour < 17 ? 'Good afternoon,' : 'Good evening,';
+
+    const rawEarnings = Number(row.total_earnings) || 0;
+    const formattedEarnings =
+      rawEarnings >= 1000 ? `Rs. ${(rawEarnings / 1000).toFixed(0)}k` : `Rs. ${rawEarnings.toLocaleString()}`;
+
+    const profile = {
+      name: row.name,
+      greeting,
+      avatarLetter: row.name ? row.name.charAt(0).toUpperCase() : 'T',
+      avatarUri: row.avatar_url || undefined,
+      email: row.email,
+      phone: row.phone || '',
+      baseLocation: row.location || 'Colombo',
+      vehicleType: row.vehicle_type || 'Lorry - 3 Ton',
+      vehiclePlate: row.vehicle_plate || 'WP-LH-4821',
+      isVerified: Boolean(row.verified),
+      rating: Number(row.rating) || 4.8,
+      completedJobs: Number(row.completed_jobs) || 0,
+      totalEarnings: formattedEarnings,
+      onTimeDeliveryRate: row.on_time_rate || '98%',
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: profile,
+    });
+  } catch (error: any) {
+    console.error('Error fetching profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transporter profile',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/transporter/profile
+ * Updates transporter profile contact details and vehicle specifications
+ */
+export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+    const { name, phone, email, baseLocation, vehicleType, vehiclePlate } = req.body;
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Full name is required' });
+    }
+
+    // 1. Update basic user details in users table
+    await pool.query(
+      `UPDATE users 
+       SET name = ?, phone = COALESCE(?, phone), email = COALESCE(?, email), location = COALESCE(?, location)
+       WHERE id = ? AND role = 'transporter'`,
+      [name.trim(), phone, email, baseLocation, transporterId]
+    );
+
+    // 2. Update vehicle specifications in transporter_profiles table
+    await pool.query(
+      `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE 
+         vehicle_type = COALESCE(VALUES(vehicle_type), vehicle_type),
+         vehicle_plate = COALESCE(VALUES(vehicle_plate), vehicle_plate)`,
+      [transporterId, vehicleType || 'Lorry - 3 Ton', vehiclePlate || 'WP-LH-4821']
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        name: name.trim(),
+        phone,
+        email,
+        baseLocation,
+        vehicleType,
+        vehiclePlate,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+      error: error.message,
+    });
+  }
+};
