@@ -774,3 +774,66 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     });
   }
 };
+
+
+/**
+ * POST /api/transporter/profile/avatar
+ * Updates or sets the profile picture avatar URL
+ */
+export const updateAvatar = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+    const { avatarUrl } = req.body;
+
+    if (!avatarUrl) {
+      return res.status(400).json({ success: false, message: 'avatarUrl is required' });
+    }
+
+    await pool.query(
+      `INSERT INTO transporter_profiles (user_id, avatar_url)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE avatar_url = VALUES(avatar_url)`,
+      [transporterId, avatarUrl]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile picture updated successfully',
+      data: { avatarUrl },
+    });
+  } catch (error: any) {
+    console.error('Error updating avatar:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update avatar',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /api/transporter/profile/avatar
+ * Removes the profile picture and restores the default letter avatar
+ */
+export const removeAvatar = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || 7;
+
+    await pool.query(
+      `UPDATE transporter_profiles SET avatar_url = NULL WHERE user_id = ?`,
+      [transporterId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile picture removed successfully',
+    });
+  } catch (error: any) {
+    console.error('Error removing avatar:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to remove avatar',
+      error: error.message,
+    });
+  }
+};
