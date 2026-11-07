@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import {Request,Response} from "express";
 import {RowDataPacket} from 'mysql2';
 import {pool} from "../config/db";
+import jwt from "jsonwebtoken";
+import { AuthRequest } from '../middleware/auth.middleware';
 
 export const getAdminHealth = async(
     req:Request,
@@ -464,3 +466,18 @@ export const getDashboardCharts = async (req: Request, res: Response): Promise<v
     });
   }
 };
+
+export const adminLogin = async (req: Request, res: Response):
+Promise<void> => {
+  try {
+    const {email, password} = req.body;
+
+    if (!email || !password){
+      res.status(400).json({
+        success: false,
+        message: "Please provide both email and password",
+      });
+      return;
+    }
+  }
+}
