@@ -10,6 +10,7 @@
     "seed:jobs": "ts-node src/scripts/seed-available-jobs.ts",
     "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
     "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts",
+    "test:profile": "ts-node src/scripts/test-profile-api.ts",
     "db:profile": "ts-node src/scripts/setup-profile-db.ts"
   },
   "dependencies": {
