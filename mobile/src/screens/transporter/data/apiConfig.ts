@@ -5,7 +5,9 @@ import { Platform } from "react-native";
  * Centralized API URLs separated from UI screen components.
  */
 export const TRANSPORTER_API_BASE_URL =
-  Platform.OS === "android"
+  process.env.EXPO_PUBLIC_API_URL
+    ? `${process.env.EXPO_PUBLIC_API_URL}/transporter`
+    : Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/transporter"
     : "http://localhost:5000/api/transporter";
 
