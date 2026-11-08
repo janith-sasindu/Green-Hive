@@ -9,6 +9,8 @@ import AdsManagementPage from "./pages/AdsManagementPage";
 import OperationsPage from "./pages/OperationsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import LoginPage from "./pages/LoginPage";
+import ReportsPage from "./pages/ReportPage";
+
 
 export default function App() {
   // Check if admin token exists in localStorage
@@ -80,6 +82,7 @@ export default function App() {
           {currentPage === "Operations" && <OperationsPage />}
           {currentPage === "Payments" && <PaymentsPage />}
           {currentPage === "Dashboard" && <DashboardPage />}
+          {currentPage === "Reports" && <ReportsPage />}
         </main>
       </div>
     </div>
