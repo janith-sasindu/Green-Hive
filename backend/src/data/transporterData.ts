@@ -20,6 +20,23 @@ export const DEFAULT_TRANSPORTER_PROFILE = {
   baseLocation: 'Colombo',
 };
 
+export const VEHICLE_TYPE_PRESETS: string[] = [
+  'Lorry - 3 Ton',
+  'Mini Lorry - 1.5 Ton',
+  'Pickup Truck',
+  'Van - 1 Ton',
+  'Refrigerated Truck',
+  'Heavy Lorry - 5 Ton',
+];
+
+export const PROFILE_VALIDATION_MESSAGES = {
+  missingName: 'Full name is required',
+  invalidPhone: 'Valid contact phone number is required (min 9 digits)',
+  invalidEmail: 'Valid email address is required',
+  missingVehicleType: 'Vehicle type is required',
+  missingVehiclePlate: 'Vehicle license plate is required',
+};
+
 export const DEFAULT_BANK_DETAILS = {
   accountHolderName: 'Transporter',
   bankName: 'Commercial Bank of Ceylon',
@@ -67,4 +84,3 @@ export const DEFAULT_SUPPORT_CONTACT = {
   email: 'support@greenhive.lk',
   message: 'For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk',
 };
-

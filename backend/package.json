@@ -15,7 +15,8 @@
     "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
     "test:notifications": "ts-node src/scripts/test-notifications-api.ts",
     "db:notification-settings": "ts-node src/scripts/setup-notification-settings-db.ts",
-    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts"
+    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts",
+    "test:edit-profile": "ts-node src/scripts/test-edit-profile-api.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

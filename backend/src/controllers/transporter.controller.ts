@@ -8,6 +8,7 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_JOB_METADATA,
   DEFAULT_STAT_FALLBACKS,
+  PROFILE_VALIDATION_MESSAGES,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -819,51 +820,107 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * PUT /api/transporter/profile
- * Updates transporter profile contact details and vehicle specifications
+ * Updates transporter profile contact details, vehicle specifications, and optional avatar
  */
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
-    const { name, phone, email, baseLocation, vehicleType, vehiclePlate } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      baseLocation,
+      vehicleType,
+      vehiclePlate,
+      avatarUrl,
+      avatarUri,
+    } = req.body;
 
     if (!name || name.trim() === '') {
-      return res.status(400).json({ success: false, message: 'Full name is required' });
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.missingName });
     }
+
+    if (phone && phone.trim().length < 9) {
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.invalidPhone });
+    }
+
+    if (email && (!email.includes('@') || !email.includes('.'))) {
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.invalidEmail });
+    }
+
+    const trimmedName = name.trim();
+    const trimmedPhone = phone ? phone.trim() : '';
+    const trimmedEmail = email ? email.trim() : '';
+    const trimmedLocation = baseLocation ? baseLocation.trim() : DEFAULT_TRANSPORTER_PROFILE.baseLocation;
+    const trimmedVehicle = vehicleType ? vehicleType.trim() : DEFAULT_TRANSPORTER_PROFILE.vehicleType;
+    const trimmedPlate = vehiclePlate ? vehiclePlate.trim().toUpperCase() : DEFAULT_TRANSPORTER_PROFILE.vehiclePlate;
 
     // 1. Update basic user details in users table
     await pool.query(
       `UPDATE users 
        SET name = ?, phone = COALESCE(?, phone), email = COALESCE(?, email), location = COALESCE(?, location)
        WHERE id = ? AND role = 'transporter'`,
-      [name.trim(), phone, email, baseLocation, transporterId]
+      [trimmedName, trimmedPhone || null, trimmedEmail || null, trimmedLocation, transporterId]
     );
 
-    // 2. Update vehicle specifications in transporter_profiles table
-    await pool.query(
-      `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE 
-         vehicle_type = COALESCE(?, vehicle_type),
-         vehicle_plate = COALESCE(?, vehicle_plate)`,
-      [
-        transporterId,
-        vehicleType || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
-        vehiclePlate || DEFAULT_TRANSPORTER_PROFILE.vehiclePlate,
-        vehicleType || null,
-        vehiclePlate || null,
-      ]
+    // 2. Update vehicle specifications & avatar in transporter_profiles table
+    const targetAvatar = avatarUrl !== undefined ? avatarUrl : avatarUri;
+    if (targetAvatar !== undefined) {
+      await pool.query(
+        `INSERT INTO transporter_profiles (user_id, avatar_url, vehicle_type, vehicle_plate)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+           avatar_url = VALUES(avatar_url),
+           vehicle_type = COALESCE(?, vehicle_type),
+           vehicle_plate = COALESCE(?, vehicle_plate)`,
+        [
+          transporterId,
+          targetAvatar || null,
+          trimmedVehicle,
+          trimmedPlate,
+          trimmedVehicle,
+          trimmedPlate,
+        ]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+           vehicle_type = COALESCE(?, vehicle_type),
+           vehicle_plate = COALESCE(?, vehicle_plate)`,
+        [
+          transporterId,
+          trimmedVehicle,
+          trimmedPlate,
+          trimmedVehicle,
+          trimmedPlate,
+        ]
+      );
+    }
+
+    // Fetch the final avatar_url to return in the response
+    const [profRows] = await pool.query<RowDataPacket[]>(
+      `SELECT avatar_url, rating, on_time_rate FROM transporter_profiles WHERE user_id = ?`,
+      [transporterId]
     );
+    const finalProf = profRows[0] || {};
 
     return res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        name: name.trim(),
-        phone,
-        email,
-        baseLocation,
-        vehicleType: vehicleType || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
-        vehiclePlate: vehiclePlate || DEFAULT_TRANSPORTER_PROFILE.vehiclePlate,
+        name: trimmedName,
+        greeting: 'Good morning,',
+        avatarLetter: trimmedName.charAt(0).toUpperCase(),
+        avatarUri: finalProf.avatar_url || undefined,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        baseLocation: trimmedLocation,
+        vehicleType: trimmedVehicle,
+        vehiclePlate: trimmedPlate,
+        rating: Number(finalProf.rating) || DEFAULT_TRANSPORTER_PROFILE.rating,
+        onTimeDeliveryRate: finalProf.on_time_rate || DEFAULT_TRANSPORTER_PROFILE.onTimeRate,
       },
     });
   } catch (error: any) {
