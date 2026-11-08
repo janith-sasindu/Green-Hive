@@ -26,6 +26,7 @@ import {
   AvailableTransportJob,
   TransporterProfile,
   TransporterNotificationItem,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 import { TransporterNotificationsScreen } from "./TransporterNotificationsScreen";
 import { TransporterSubmitOfferScreen } from "./TransporterSubmitOfferScreen";
@@ -60,11 +61,8 @@ export const TransporterAvailableJobsScreen = ({
     useState<TransporterNotificationItem[]>(MOCK_NOTIFICATIONS);
   const [refreshing, setRefreshing] = useState(false);
 
-  // API URL: auto-selects 10.0.2.2 for Android emulator or localhost for iOS/web
-  const BACKEND_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:5000/api/transporter/jobs/available"
-      : "http://localhost:5000/api/transporter/jobs/available";
+  // Centralized API Endpoint from data folder
+  const BACKEND_URL = TRANSPORTER_API_ENDPOINTS.availableJobs;
 
   const fetchAvailableJobs = useCallback(async () => {
     try {
