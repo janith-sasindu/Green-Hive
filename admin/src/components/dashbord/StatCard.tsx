@@ -18,8 +18,7 @@ export default function StatCard({
   iconColor,
 }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
-      <div>
+<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-md shadow-slate-200/50 dark:shadow-none flex items-start justify-between">      <div>
         <p className="text-xs font-medium text-slate-400 mb-1">{title}</p>
         <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
         {subtext && (
