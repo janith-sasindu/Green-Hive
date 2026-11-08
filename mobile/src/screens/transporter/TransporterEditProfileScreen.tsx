@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,10 @@ import {
   MOCK_TRANSPORTER_PROFILE,
   VEHICLE_PRESETS,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
+  EDIT_PROFILE_MESSAGES,
+  EDIT_PROFILE_PLACEHOLDERS,
+  EDIT_PROFILE_TEXTS,
 } from "./data";
 
 export { VEHICLE_PRESETS };
@@ -51,6 +56,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
   const [vehicleType, setVehicleType] = useState(MOCK_TRANSPORTER_PROFILE.vehicleType || VEHICLE_PRESETS[0]);
   const [vehiclePlate, setVehiclePlate] = useState(MOCK_TRANSPORTER_PROFILE.vehiclePlate || "");
   const [avatarUri, setAvatarUri] = useState<string | undefined>(MOCK_TRANSPORTER_PROFILE.avatarUri);
+
+  // Loading & Saving States
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Photo Modals & Processing State
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -91,6 +100,38 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
     });
   };
 
+  // Fetch initial profile from live backend API
+  useEffect(() => {
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(TRANSPORTER_API_ENDPOINTS.profile);
+        const json = await response.json();
+        if (isMounted && json.success && json.data) {
+          const d = json.data;
+          if (d.name) setName(d.name);
+          if (d.phone) setPhone(d.phone);
+          if (d.email) setEmail(d.email);
+          if (d.baseLocation !== undefined) setBaseLocation(d.baseLocation || "");
+          if (d.vehicleType) setVehicleType(d.vehicleType);
+          if (d.vehiclePlate) setVehiclePlate(d.vehiclePlate);
+          if (d.avatarUrl || d.avatarUri) setAvatarUri(d.avatarUrl || d.avatarUri);
+        }
+      } catch (err) {
+        console.log("Error loading profile from API:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleGoBack = () => {
     if (onBack) {
       onBack();
@@ -108,8 +149,8 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Camera Permission Required",
-          "GreenHive needs camera access to capture a picture for your profile. Please enable camera permission in your phone settings.",
+          EDIT_PROFILE_MESSAGES.permissions.cameraRequired.title,
+          EDIT_PROFILE_MESSAGES.permissions.cameraRequired.message,
           { type: "warning" }
         );
         return;
@@ -129,8 +170,8 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
       }
     } catch (err) {
       showAlert(
-        "Camera Error",
-        "Could not launch camera. Please check your device settings and try again.",
+        EDIT_PROFILE_MESSAGES.permissions.cameraError.title,
+        EDIT_PROFILE_MESSAGES.permissions.cameraError.message,
         { type: "error" }
       );
     } finally {
@@ -144,8 +185,8 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Gallery Permission Required",
-          "GreenHive needs photo library access to select a profile picture. Please enable gallery access in your device settings.",
+          EDIT_PROFILE_MESSAGES.permissions.galleryRequired.title,
+          EDIT_PROFILE_MESSAGES.permissions.galleryRequired.message,
           { type: "warning" }
         );
         return;
@@ -165,8 +206,8 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
       }
     } catch (err) {
       showAlert(
-        "Gallery Error",
-        "Could not open photo library. Please check your permissions and try again.",
+        EDIT_PROFILE_MESSAGES.permissions.galleryError.title,
+        EDIT_PROFILE_MESSAGES.permissions.galleryError.message,
         { type: "error" }
       );
     } finally {
@@ -184,21 +225,23 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
   const handleRemovePhoto = () => {
     setShowSourceModal(false);
     showAlert(
-      "Remove Photo",
-      "Are you sure you want to remove your profile photo and restore the initial letter?",
+      EDIT_PROFILE_MESSAGES.photo.removeConfirm.title,
+      EDIT_PROFILE_MESSAGES.photo.removeConfirm.message,
       {
         type: "warning",
-        primaryButtonText: "Remove",
+        primaryButtonText: EDIT_PROFILE_MESSAGES.photo.removeConfirm.removeButton,
         onPrimaryPress: () => {
           setAvatarUri(undefined);
         },
-        secondaryButtonText: "Cancel",
+        secondaryButtonText: EDIT_PROFILE_MESSAGES.photo.removeConfirm.cancelButton,
       }
     );
   };
 
-  // Form Submission
-  const handleSaveProfile = () => {
+  // Form Submission via PUT API
+  const handleSaveProfile = async () => {
+    if (isSaving) return;
+
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
     const trimmedEmail = email.trim();
@@ -207,61 +250,130 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
     const trimmedPlate = vehiclePlate.trim().toUpperCase();
 
     if (!trimmedName) {
-      showAlert("Missing Name", "Please enter your full driver name.", { type: "warning" });
+      showAlert(
+        EDIT_PROFILE_MESSAGES.validation.missingName.title,
+        EDIT_PROFILE_MESSAGES.validation.missingName.message,
+        { type: "warning" }
+      );
       return;
     }
 
     if (!trimmedPhone || trimmedPhone.length < 9) {
-      showAlert("Invalid Phone Number", "Please enter a valid contact phone number.", { type: "warning" });
+      showAlert(
+        EDIT_PROFILE_MESSAGES.validation.invalidPhone.title,
+        EDIT_PROFILE_MESSAGES.validation.invalidPhone.message,
+        { type: "warning" }
+      );
       return;
     }
 
     if (!trimmedEmail || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
-      showAlert("Invalid Email", "Please enter a valid email address.", { type: "warning" });
+      showAlert(
+        EDIT_PROFILE_MESSAGES.validation.invalidEmail.title,
+        EDIT_PROFILE_MESSAGES.validation.invalidEmail.message,
+        { type: "warning" }
+      );
       return;
     }
 
     if (!trimmedVehicle) {
-      showAlert("Missing Vehicle Type", "Please specify your vehicle type.", { type: "warning" });
+      showAlert(
+        EDIT_PROFILE_MESSAGES.validation.missingVehicle.title,
+        EDIT_PROFILE_MESSAGES.validation.missingVehicle.message,
+        { type: "warning" }
+      );
       return;
     }
 
     if (!trimmedPlate) {
-      showAlert("Missing License Plate", "Please enter your vehicle license plate number.", { type: "warning" });
+      showAlert(
+        EDIT_PROFILE_MESSAGES.validation.missingPlate.title,
+        EDIT_PROFILE_MESSAGES.validation.missingPlate.message,
+        { type: "warning" }
+      );
       return;
     }
 
-    // Save to shared mock data
-    MOCK_TRANSPORTER_PROFILE.name = trimmedName;
-    MOCK_TRANSPORTER_PROFILE.avatarLetter = trimmedName.charAt(0).toUpperCase();
-    MOCK_TRANSPORTER_PROFILE.phone = trimmedPhone;
-    MOCK_TRANSPORTER_PROFILE.email = trimmedEmail;
-    MOCK_TRANSPORTER_PROFILE.baseLocation = trimmedLocation;
-    MOCK_TRANSPORTER_PROFILE.vehicleType = trimmedVehicle;
-    MOCK_TRANSPORTER_PROFILE.vehiclePlate = trimmedPlate;
-
-    if (avatarUri) {
-      MOCK_TRANSPORTER_PROFILE.avatarUri = avatarUri;
-    } else {
-      delete MOCK_TRANSPORTER_PROFILE.avatarUri;
-    }
-
-    const updatedProfile: TransporterProfile = { ...MOCK_TRANSPORTER_PROFILE };
-
-    showAlert(
-      "Profile Updated!",
-      "Your contact details, vehicle information, and profile picture have been updated successfully.",
-      {
-        type: "success",
-        primaryButtonText: "Done",
-        onPrimaryPress: () => {
-          if (onSave) {
-            onSave(updatedProfile);
-          }
-          handleGoBack();
+    setIsSaving(true);
+    try {
+      const response = await fetch(TRANSPORTER_API_ENDPOINTS.profile, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          name: trimmedName,
+          phone: trimmedPhone,
+          email: trimmedEmail,
+          baseLocation: trimmedLocation,
+          vehicleType: trimmedVehicle,
+          vehiclePlate: trimmedPlate,
+          avatarUrl: avatarUri,
+        }),
+      });
+
+      const json = await response.json();
+
+      if (json.success) {
+        // Sync local mock data for offline resilience
+        MOCK_TRANSPORTER_PROFILE.name = trimmedName;
+        MOCK_TRANSPORTER_PROFILE.avatarLetter = trimmedName.charAt(0).toUpperCase();
+        MOCK_TRANSPORTER_PROFILE.phone = trimmedPhone;
+        MOCK_TRANSPORTER_PROFILE.email = trimmedEmail;
+        MOCK_TRANSPORTER_PROFILE.baseLocation = trimmedLocation;
+        MOCK_TRANSPORTER_PROFILE.vehicleType = trimmedVehicle;
+        MOCK_TRANSPORTER_PROFILE.vehiclePlate = trimmedPlate;
+
+        if (avatarUri) {
+          MOCK_TRANSPORTER_PROFILE.avatarUri = avatarUri;
+        } else {
+          delete MOCK_TRANSPORTER_PROFILE.avatarUri;
+        }
+
+        const updatedProfile: TransporterProfile = {
+          ...MOCK_TRANSPORTER_PROFILE,
+          ...(json.data || {}),
+          name: trimmedName,
+          phone: trimmedPhone,
+          email: trimmedEmail,
+          baseLocation: trimmedLocation,
+          vehicleType: trimmedVehicle,
+          vehiclePlate: trimmedPlate,
+          avatarUri: avatarUri || json.data?.avatarUri || json.data?.avatarUrl,
+          avatarLetter: trimmedName.charAt(0).toUpperCase(),
+        };
+
+        showAlert(
+          EDIT_PROFILE_MESSAGES.api.saveSuccess.title,
+          json.message || EDIT_PROFILE_MESSAGES.api.saveSuccess.message,
+          {
+            type: "success",
+            primaryButtonText: EDIT_PROFILE_MESSAGES.api.saveSuccess.doneButton,
+            onPrimaryPress: () => {
+              if (onSave) {
+                onSave(updatedProfile);
+              }
+              handleGoBack();
+            },
+          }
+        );
+      } else {
+        showAlert(
+          EDIT_PROFILE_MESSAGES.api.saveError.title,
+          json.message || EDIT_PROFILE_MESSAGES.api.saveError.message,
+          { type: "error" }
+        );
       }
-    );
+    } catch (error) {
+      console.log("Error saving profile:", error);
+      showAlert(
+        EDIT_PROFILE_MESSAGES.api.saveError.title,
+        EDIT_PROFILE_MESSAGES.api.saveError.message,
+        { type: "error" }
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -295,10 +407,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
             </TouchableOpacity>
             <View>
               <Text className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                Edit Profile
+                {EDIT_PROFILE_TEXTS.headerTitle}
               </Text>
               <Text className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400">
-                Update your contact & vehicle details
+                {EDIT_PROFILE_TEXTS.headerSubtitle}
               </Text>
             </View>
           </View>
@@ -306,10 +418,20 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
           {/* Quick Save Header Text Button */}
           <TouchableOpacity
             activeOpacity={0.75}
+            disabled={isSaving}
             onPress={handleSaveProfile}
-            className="px-3.5 py-1.5 rounded-full bg-[#E68A00]"
+            className={`px-3.5 py-1.5 rounded-full bg-[#E68A00] flex-row items-center ${
+              isSaving ? "opacity-75" : ""
+            }`}
           >
-            <Text className="text-xs font-bold text-white">Save</Text>
+            {isSaving && (
+              <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 4 }} />
+            )}
+            <Text className="text-xs font-bold text-white">
+              {isSaving
+                ? EDIT_PROFILE_TEXTS.savingHeaderButton
+                : EDIT_PROFILE_TEXTS.saveHeaderButton}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -329,6 +451,16 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
           showsVerticalScrollIndicator={false}
         >
           <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+            {/* Loading Indicator Pill */}
+            {isLoading && (
+              <View className="flex-row items-center justify-center py-2 mb-2 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/50 dark:border-amber-900/40">
+                <ActivityIndicator size="small" color="#E68A00" />
+                <Text className="text-xs font-medium text-[#E68A00] ml-2">
+                  {EDIT_PROFILE_TEXTS.loadingProfileText}
+                </Text>
+              </View>
+            )}
+
             {/* ================= 1. AVATAR EDIT HERO CARD ================= */}
             <View className="items-center py-4 mb-4">
               <View className="relative">
@@ -372,7 +504,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               >
                 <Ionicons name="pencil-outline" size={14} color="#E68A00" />
                 <Text className="text-xs font-bold text-[#E68A00] ml-1">
-                  Change Profile Picture
+                  {EDIT_PROFILE_TEXTS.changePhoto}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -384,21 +516,21 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                   <Ionicons name="person-outline" size={17} color="#E68A00" />
                 </View>
                 <Text className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
-                  Personal & Contact Details
+                  {EDIT_PROFILE_TEXTS.personalSectionTitle}
                 </Text>
               </View>
 
               {/* Full Name */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Full Name
+                  {EDIT_PROFILE_TEXTS.fullNameLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600">
                   <Ionicons name="person-outline" size={18} color={colors.icon} />
                   <TextInput
                     value={name}
                     onChangeText={setName}
-                    placeholder="Enter your name"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.name}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
                   />
@@ -408,7 +540,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               {/* Phone Number */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Phone Number
+                  {EDIT_PROFILE_TEXTS.phoneLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600">
                   <Ionicons name="call-outline" size={18} color={colors.icon} />
@@ -416,7 +548,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
-                    placeholder="+94 7X XXX XXXX"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.phone}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
                   />
@@ -426,7 +558,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               {/* Email Address */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Email Address
+                  {EDIT_PROFILE_TEXTS.emailLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600">
                   <Ionicons name="mail-outline" size={18} color={colors.icon} />
@@ -435,7 +567,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    placeholder="driver@transport.lk"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.email}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
                   />
@@ -445,14 +577,14 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               {/* Base Location */}
               <View>
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Base Location
+                  {EDIT_PROFILE_TEXTS.baseLocationLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600">
                   <Ionicons name="location-outline" size={18} color={colors.icon} />
                   <TextInput
                     value={baseLocation}
                     onChangeText={setBaseLocation}
-                    placeholder="e.g. Colombo, Kandy, Dambulla"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.baseLocation}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
                   />
@@ -468,10 +600,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 </View>
                 <View>
                   <Text className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
-                    Vehicle Details
+                    {EDIT_PROFILE_TEXTS.vehicleSectionTitle}
                   </Text>
                   <Text className="text-[11px] text-gray-400 dark:text-slate-400">
-                    Displayed on your driver profile and transport offers
+                    {EDIT_PROFILE_TEXTS.vehicleSectionSubtitle}
                   </Text>
                 </View>
               </View>
@@ -479,14 +611,14 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               {/* Vehicle Type */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Vehicle Type / Capacity
+                  {EDIT_PROFILE_TEXTS.vehicleTypeLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600 mb-2">
                   <Ionicons name="car-outline" size={18} color={colors.icon} />
                   <TextInput
                     value={vehicleType}
                     onChangeText={setVehicleType}
-                    placeholder="e.g. Lorry - 3 Ton"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.vehicleType}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
                   />
@@ -523,7 +655,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               {/* Vehicle License Plate */}
               <View>
                 <Text className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
-                  Vehicle Registration Plate Number
+                  {EDIT_PROFILE_TEXTS.vehiclePlateLabel}
                 </Text>
                 <View className="flex-row items-center px-3.5 py-2.5 sm:py-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200/70 dark:border-slate-600">
                   <Ionicons name="document-text-outline" size={18} color={colors.icon} />
@@ -531,7 +663,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                     value={vehiclePlate}
                     onChangeText={(val) => setVehiclePlate(val.toUpperCase())}
                     autoCapitalize="characters"
-                    placeholder="e.g. WP-LH-4821"
+                    placeholder={EDIT_PROFILE_PLACEHOLDERS.vehiclePlate}
                     placeholderTextColor="#9CA3AF"
                     className="flex-1 ml-2.5 text-xs sm:text-sm font-bold text-gray-900 dark:text-white p-0 tracking-wider"
                   />
@@ -542,8 +674,11 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
             {/* ================= 4. ACTION BUTTONS ================= */}
             <TouchableOpacity
               activeOpacity={0.85}
+              disabled={isSaving}
               onPress={handleSaveProfile}
-              className="w-full py-4 rounded-2xl sm:rounded-3xl bg-[#E68A00] flex-row items-center justify-center shadow-md mb-3"
+              className={`w-full py-4 rounded-2xl sm:rounded-3xl bg-[#E68A00] flex-row items-center justify-center shadow-md mb-3 ${
+                isSaving ? "opacity-80" : ""
+              }`}
               style={{
                 shadowColor: "#E68A00",
                 shadowOffset: { width: 0, height: 4 },
@@ -552,9 +687,15 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 elevation: 4,
               }}
             >
-              <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+              {isSaving ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+              )}
               <Text className="text-sm sm:text-base font-bold text-white ml-2">
-                Save Profile Changes
+                {isSaving
+                  ? EDIT_PROFILE_TEXTS.submittingButton
+                  : EDIT_PROFILE_TEXTS.submitButton}
               </Text>
             </TouchableOpacity>
 
@@ -564,7 +705,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               className="w-full py-3 items-center justify-center"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-slate-400">
-                Cancel
+                {EDIT_PROFILE_TEXTS.cancelButton}
               </Text>
             </TouchableOpacity>
           </View>
@@ -599,10 +740,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 </View>
                 <View className="ml-3">
                   <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                    Update Photo
+                    {EDIT_PROFILE_TEXTS.photoModalTitle}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400">
-                    Capture or choose a new profile picture
+                    {EDIT_PROFILE_TEXTS.photoModalSubtitle}
                   </Text>
                 </View>
               </View>
@@ -626,10 +767,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Use Camera
+                  {EDIT_PROFILE_TEXTS.useCameraTitle}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Open camera to capture a picture
+                  {EDIT_PROFILE_TEXTS.useCameraSubtitle}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
@@ -647,10 +788,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Choose from Gallery
+                  {EDIT_PROFILE_TEXTS.chooseGalleryTitle}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Select a picture from your device library
+                  {EDIT_PROFILE_TEXTS.chooseGallerySubtitle}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
@@ -668,10 +809,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                    Remove Current Photo
+                    {EDIT_PROFILE_TEXTS.removePhotoTitle}
                   </Text>
                   <Text className="text-xs text-red-400 dark:text-red-300 mt-0.5">
-                    Revert back to default initial letter
+                    {EDIT_PROFILE_TEXTS.removePhotoSubtitle}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#EF4444" />
@@ -684,7 +825,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               className="mt-1 py-3.5 rounded-2xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
             >
               <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200">
-                Cancel
+                {EDIT_PROFILE_TEXTS.cancelButton}
               </Text>
             </TouchableOpacity>
           </View>
@@ -711,10 +852,10 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 <Ionicons name="person-circle-outline" size={28} color="#E68A00" />
               </View>
               <Text className="text-lg font-bold text-gray-900 dark:text-white text-center">
-                Preview Picture
+                {EDIT_PROFILE_TEXTS.previewTitle}
               </Text>
               <Text className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1 px-2">
-                Review your photo before setting it on your profile
+                {EDIT_PROFILE_TEXTS.previewSubtitle}
               </Text>
             </View>
 
@@ -741,7 +882,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               <View className="flex-row items-center mt-3 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full border border-amber-200/50 dark:border-amber-800/40">
                 <Ionicons name="sparkles" size={12} color="#E68A00" />
                 <Text className="text-[11px] font-semibold text-[#E68A00] ml-1.5">
-                  Looking sharp!
+                  {EDIT_PROFILE_TEXTS.previewTag}
                 </Text>
               </View>
             </View>
@@ -754,7 +895,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               >
                 <Ionicons name="cloud-upload-outline" size={18} color="#FFFFFF" />
                 <Text className="text-sm font-bold text-white ml-2">
-                  Use as Profile Picture
+                  {EDIT_PROFILE_TEXTS.confirmPreviewButton}
                 </Text>
               </TouchableOpacity>
 
@@ -768,7 +909,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
               >
                 <Ionicons name="refresh-outline" size={17} color={isDark ? "#CBD5E1" : "#4B5563"} />
                 <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200 ml-2">
-                  Retake or Choose Again
+                  {EDIT_PROFILE_TEXTS.retakePreviewButton}
                 </Text>
               </TouchableOpacity>
 
@@ -781,7 +922,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
                 className="w-full py-2.5 items-center justify-center"
               >
                 <Text className="text-xs font-medium text-gray-400 dark:text-slate-500">
-                  Cancel
+                  {EDIT_PROFILE_TEXTS.cancelButton}
                 </Text>
               </TouchableOpacity>
             </View>
