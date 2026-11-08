@@ -12,8 +12,7 @@ import { mockOrdersOverTime } from '../../data/mockData';
 
 export default function OrdersChart() {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-      <h3 className="text-base font-semibold text-slate-800 mb-6">
+<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-md shadow-slate-200/50 dark:shadow-none">      <h3 className="text-base font-semibold text-slate-800 mb-6">
         Orders Over Time
       </h3>
 

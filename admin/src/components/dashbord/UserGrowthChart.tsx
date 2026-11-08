@@ -12,8 +12,7 @@ import { mockUserGrowth } from '../../data/mockData';
 
 export default function UserGrowthChart() {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-      <h3 className="text-base font-semibold text-slate-800 mb-6">
+<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-md shadow-slate-200/50 dark:shadow-none">      <h3 className="text-base font-semibold text-slate-800 mb-6">
         User Growth
       </h3>
 
