@@ -8,3 +8,4 @@ export * from './confirmPickupData';
 export * from './confirmDeliveryData';
 export * from './bankDetailsData';
 export * from './helpSupportData';
+export * from './vehicleLicenseData';

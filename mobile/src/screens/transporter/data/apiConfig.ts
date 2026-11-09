@@ -32,5 +32,7 @@ export const TRANSPORTER_API_ENDPOINTS = {
   latestOffer: `${TRANSPORTER_API_BASE_URL}/offers/latest`,
   jobOffer: (jobId: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/latest?jobId=${jobId}`,
   supportTickets: `${TRANSPORTER_API_BASE_URL}/support/tickets`,
+  vehicleLicense: `${TRANSPORTER_API_BASE_URL}/vehicle-license`,
+  vehicleLicenseDocument: `${TRANSPORTER_API_BASE_URL}/vehicle-license/documents`,
 };
 
