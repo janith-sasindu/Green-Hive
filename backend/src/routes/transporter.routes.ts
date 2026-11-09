@@ -3,6 +3,7 @@ import {
   getHomeScreenData,
   updateJobStatus,
   confirmJobPickup,
+  confirmJobDelivery,
   getAvailableJobs,
   getActiveJob,
   getJobById,
@@ -48,6 +49,8 @@ router.delete('/offers/:id', authenticateToken, withdrawOffer);
 router.patch('/jobs/:id/status', authenticateToken, updateJobStatus);
 router.patch('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
 router.post('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
+router.patch('/jobs/:id/delivery', authenticateToken, confirmJobDelivery);
+router.post('/jobs/:id/delivery', authenticateToken, confirmJobDelivery);
 
 // Profile Endpoints
 router.get('/profile', authenticateToken, getProfile);

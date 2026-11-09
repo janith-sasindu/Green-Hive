@@ -14,6 +14,8 @@ import {
   OFFER_SUBMITTED_CONSTANTS,
   CONFIRM_PICKUP_MESSAGES,
   DEFAULT_PICKUP_CONSTANTS,
+  CONFIRM_DELIVERY_MESSAGES,
+  DEFAULT_DELIVERY_CONSTANTS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -47,6 +49,35 @@ export async function ensurePickupColumnsExist(): Promise<void> {
     pickupColumnsChecked = true;
   } catch (err) {
     console.warn('Note: Could not verify transport_jobs pickup columns:', err);
+  }
+}
+
+let deliveryColumnsChecked = false;
+export async function ensureDeliveryColumnsExist(): Promise<void> {
+  if (deliveryColumnsChecked) return;
+  try {
+    const [cols] = await pool.query<RowDataPacket[]>(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+         AND TABLE_NAME = 'transport_jobs' 
+         AND COLUMN_NAME IN ('delivery_timestamp', 'delivery_notes', 'delivery_proof_photo_url', 'receiver_name')`
+    );
+    const existing = cols.map((c) => c.COLUMN_NAME);
+    if (!existing.includes('delivery_timestamp')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN delivery_timestamp VARCHAR(100) DEFAULT NULL`);
+    }
+    if (!existing.includes('delivery_notes')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN delivery_notes TEXT DEFAULT NULL`);
+    }
+    if (!existing.includes('delivery_proof_photo_url')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN delivery_proof_photo_url TEXT DEFAULT NULL`);
+    }
+    if (!existing.includes('receiver_name')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN receiver_name VARCHAR(150) DEFAULT NULL`);
+    }
+    deliveryColumnsChecked = true;
+  } catch (err) {
+    console.warn('Note: Could not verify transport_jobs delivery columns:', err);
   }
 }
 
@@ -302,14 +333,14 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
         // If job is delivered, update order delivery status and release payment
         if (status === 'Delivered' && job.order_id) {
             await pool.query(
-                `UPDATE orders SET status = 'Delivered', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                `UPDATE orders SET order_status = 'Delivered' WHERE id = ?`,
                 [job.order_id]
-            );
+            ).catch(() => {});
 
             await pool.query(
-                `UPDATE payments SET status = 'Released', updated_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
+                `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
                 [job.order_id]
-            );
+            ).catch(() => {});
         }
 
         return res.status(200).json({
@@ -461,6 +492,151 @@ export const confirmJobPickup = async (req: AuthenticatedRequest, res: Response)
         return res.status(500).json({
             success: false,
             message: CONFIRM_PICKUP_MESSAGES.failedUpdate,
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * PATCH or POST /api/transporter/jobs/:id/delivery
+ * Confirms cargo delivery at the destination, releases payment, and updates status to 'Delivered'
+ */
+export const confirmJobDelivery = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+        const {
+            timestamp,
+            deliveryTimestamp,
+            receiverName,
+            notes,
+            deliveryNotes,
+            proofPhotoUri,
+            deliveryProofPhotoUri,
+            proofPhotoUrl,
+        } = req.body;
+
+        const finalTimestamp = timestamp || deliveryTimestamp || new Date().toISOString();
+        const finalReceiverName = receiverName || DEFAULT_DELIVERY_CONSTANTS.defaultReceiver;
+        const finalNotes = notes || deliveryNotes || '';
+        const finalProofPhoto = proofPhotoUri || deliveryProofPhotoUri || proofPhotoUrl || null;
+
+        await ensureDeliveryColumnsExist();
+
+        // 1. Fetch the target job
+        const [jobRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+                tj.id,
+                tj.job_code,
+                tj.status,
+                tj.order_id,
+                tj.pickup_location,
+                tj.drop_location,
+                tj.vehicle_type,
+                tj.fee,
+                tj.scheduled_date,
+                tj.created_at,
+                tj.pickup_timestamp,
+                tj.pickup_notes,
+                tj.proof_photo_url,
+                o.order_code,
+                o.product_name,
+                o.quantity,
+                u_farmer.name AS farmer_name,
+                u_farmer.phone AS farmer_phone,
+                u_farmer.location AS farmer_location,
+                u_seller.name AS seller_name,
+                u_seller.phone AS seller_phone,
+                u_seller.location AS seller_location
+            FROM transport_jobs tj
+            JOIN orders o ON tj.order_id = o.id
+            LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+            LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+            WHERE (tj.id = ? OR tj.job_code = ?) AND tj.transporter_id = ?`,
+            [id, id, transporterId]
+        );
+
+        if (jobRows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: CONFIRM_DELIVERY_MESSAGES.jobNotFound,
+            });
+        }
+
+        const job = jobRows[0];
+
+        // 2. Update status to 'Delivered' and store delivery details
+        await pool.query(
+            `UPDATE transport_jobs
+             SET status = 'Delivered',
+                 delivery_timestamp = ?,
+                 delivery_notes = ?,
+                 delivery_proof_photo_url = ?,
+                 receiver_name = ?
+             WHERE id = ?`,
+            [finalTimestamp, finalNotes, finalProofPhoto, finalReceiverName, job.id]
+        );
+
+        // 3. Update linked order to 'Delivered' and release transport fee payment
+        if (job.order_id) {
+            await pool.query(
+                `UPDATE orders SET order_status = 'Delivered' WHERE id = ?`,
+                [job.order_id]
+            ).catch(() => {});
+
+            await pool.query(
+                `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
+                [job.order_id]
+            ).catch(() => {});
+        }
+
+        const schedule = formatJobSchedule(job.scheduled_date);
+
+        const updatedJob = {
+            id: job.job_code || `#TR-${job.id}`,
+            dbId: job.id,
+            orderId: job.order_id,
+            orderCode: job.order_code,
+            cropName: job.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+            weight: job.quantity ? `${job.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+            status: 'Delivered',
+            rawStatus: 'Delivered',
+            pickup: job.pickup_location,
+            dropoff: job.drop_location,
+            distance: 'Approx. 85 km',
+            price: `Rs. ${Number(job.fee).toLocaleString()}`,
+            rawFee: Number(job.fee),
+            vehicleType: job.vehicle_type || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
+            farmerName: job.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+            farmerPhone: job.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+            farmerLocation: job.farmer_location,
+            sellerName: job.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+            sellerPhone: job.seller_phone,
+            sellerLocation: job.seller_location,
+            receiverName: finalReceiverName,
+            pickupDate: schedule.combinedStr,
+            pickupTimestamp: job.pickup_timestamp || schedule.combinedStr,
+            pickupNotes: job.pickup_notes || undefined,
+            proofPhotoUri: job.proof_photo_url || undefined,
+            deliveryTimestamp: finalTimestamp,
+            deliveryNotes: finalNotes || undefined,
+            deliveryProofPhotoUri: finalProofPhoto || undefined,
+            specialInstructions: 'Handle with care. Keep cool. Arrive on schedule for market opening.',
+            farmerRating: DEFAULT_JOB_METADATA.activeFarmerRating,
+            eta: 'Delivered',
+            createdAt: job.created_at,
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: CONFIRM_DELIVERY_MESSAGES.success,
+            data: updatedJob,
+        });
+    } catch (error: any) {
+        console.error('Error confirming job delivery:', error);
+        return res.status(500).json({
+            success: false,
+            message: CONFIRM_DELIVERY_MESSAGES.failedUpdate,
             error: error.message,
         });
     }
@@ -1119,6 +1295,7 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
     const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
 
     await ensurePickupColumnsExist();
+    await ensureDeliveryColumnsExist();
 
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT 
@@ -1134,6 +1311,10 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
         tj.pickup_timestamp,
         tj.pickup_notes,
         tj.proof_photo_url,
+        tj.delivery_timestamp,
+        tj.delivery_notes,
+        tj.delivery_proof_photo_url,
+        tj.receiver_name,
         o.id AS order_id,
         o.order_code,
         o.product_name,
@@ -1188,10 +1369,14 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
       sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
       sellerPhone: row.seller_phone,
       sellerLocation: row.seller_location,
+      receiverName: row.receiver_name || row.seller_name || undefined,
       pickupDate: schedule.combinedStr,
       pickupTimestamp: row.pickup_timestamp || schedule.combinedStr,
       pickupNotes: row.pickup_notes || undefined,
       proofPhotoUri: row.proof_photo_url || undefined,
+      deliveryTimestamp: row.delivery_timestamp || undefined,
+      deliveryNotes: row.delivery_notes || undefined,
+      deliveryProofPhotoUri: row.delivery_proof_photo_url || undefined,
       specialInstructions: 'Handle with care. Keep cool. Arrive on schedule for market opening.',
       farmerRating: DEFAULT_JOB_METADATA.activeFarmerRating,
       eta: DEFAULT_JOB_METADATA.defaultEta,

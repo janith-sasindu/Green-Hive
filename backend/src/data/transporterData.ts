@@ -124,3 +124,18 @@ export const DEFAULT_PICKUP_CONSTANTS = {
   defaultStatus: 'In Transit',
 };
 
+export const CONFIRM_DELIVERY_MESSAGES = {
+  success: 'Cargo delivery successfully confirmed. Payment has been released.',
+  jobNotFound: 'Transport job not found or not assigned to you',
+  invalidStatus: 'Cannot confirm delivery: Job is already delivered or cancelled',
+  alreadyDelivered: 'This transport job is already marked as delivered',
+  failedUpdate: 'Failed to confirm cargo delivery',
+};
+
+export const DEFAULT_DELIVERY_CONSTANTS = {
+  defaultReceiver: 'Destination Receiving Manager',
+  defaultNotes: 'Cargo delivered and inspected in satisfactory condition.',
+  defaultStatus: 'Delivered',
+};
+
+
