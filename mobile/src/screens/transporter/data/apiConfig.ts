@@ -25,5 +25,7 @@ export const TRANSPORTER_API_ENDPOINTS = {
   notificationsReadAll: `${TRANSPORTER_API_BASE_URL}/notifications/read-all`,
   notificationRead: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/notifications/${id}/read`,
   notificationSettings: `${TRANSPORTER_API_BASE_URL}/notification-settings`,
+  offers: `${TRANSPORTER_API_BASE_URL}/offers`,
+  withdrawOffer: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/${id}`,
 };
 
