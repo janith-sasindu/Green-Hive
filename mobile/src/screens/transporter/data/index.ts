@@ -5,3 +5,4 @@ export * from './myOffersData';
 export * from './offerSubmittedData';
 export * from './submitOfferData';
 export * from './confirmPickupData';
+export * from './confirmDeliveryData';
