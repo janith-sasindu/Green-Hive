@@ -110,3 +110,17 @@ export const OFFER_SUBMITTED_CONSTANTS = {
   successDescription: 'The seller will review your offer and notify you of their decision.',
   noOfferFound: 'No submitted offer found for this job',
 };
+
+export const CONFIRM_PICKUP_MESSAGES = {
+  success: 'Cargo pickup successfully confirmed. Job status updated to In Transit.',
+  jobNotFound: 'Transport job not found or not assigned to you',
+  invalidStatus: 'Cannot confirm pickup: Job is already delivered or cancelled',
+  alreadyInTransit: 'Pickup has already been confirmed for this job',
+  failedUpdate: 'Failed to confirm cargo pickup',
+};
+
+export const DEFAULT_PICKUP_CONSTANTS = {
+  defaultNotes: 'Cargo loaded in good condition.',
+  defaultStatus: 'In Transit',
+};
+
