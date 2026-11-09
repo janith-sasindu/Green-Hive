@@ -9,6 +9,8 @@ import {
   DEFAULT_JOB_METADATA,
   DEFAULT_STAT_FALLBACKS,
   PROFILE_VALIDATION_MESSAGES,
+  OFFER_MESSAGES,
+  DEFAULT_OFFER_CONSTANTS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -570,7 +572,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (!quotePrice) {
       return res.status(400).json({
         success: false,
-        message: 'Quote price is required',
+        message: OFFER_MESSAGES.missingQuotePrice,
       });
     }
 
@@ -581,7 +583,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Valid positive quote price is required',
+        message: OFFER_MESSAGES.invalidQuotePrice,
       });
     }
 
@@ -592,14 +594,14 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     );
 
     if (jobRows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Transport job not found' });
+      return res.status(404).json({ success: false, message: OFFER_MESSAGES.jobNotFound });
     }
 
     const job = jobRows[0];
     if (job.status !== 'Open') {
       return res.status(400).json({
         success: false,
-        message: `Job is no longer open for offers (Current status: ${job.status})`,
+        message: `${OFFER_MESSAGES.jobNotOpen} (Current status: ${job.status})`,
       });
     }
 
@@ -612,7 +614,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (existingOffer.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'You have already submitted an active offer for this job',
+        message: OFFER_MESSAGES.duplicateActiveOffer,
       });
     }
 
@@ -624,14 +626,14 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
         job.id,
         transporterId,
         numericPrice,
-        estimatedDelivery || 'Standard Delivery Window',
+        estimatedDelivery || DEFAULT_OFFER_CONSTANTS.defaultDeliveryWindow,
         notes || '',
       ]
     );
 
     return res.status(201).json({
       success: true,
-      message: 'Transport offer submitted successfully to farmer',
+      message: OFFER_MESSAGES.submitSuccess,
       data: {
         offerId: insertResult.insertId,
         jobId: job.job_code || `#TR-${job.id}`,
@@ -644,6 +646,180 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     return res.status(500).json({
       success: false,
       message: 'Failed to submit transport offer',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/offers
+ * Fetches all transport offers submitted by the logged-in transporter
+ */
+export const getMyOffers = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const { status } = req.query;
+
+    let query = `
+      SELECT 
+        tof.id AS offer_id,
+        tof.job_id,
+        tof.quote_price,
+        tof.estimated_delivery,
+        tof.notes,
+        tof.status AS offer_status,
+        tof.created_at AS offer_created_at,
+        tj.id AS job_db_id,
+        tj.job_code,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee AS job_fee,
+        tj.scheduled_date,
+        tj.status AS job_status,
+        o.id AS order_id,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+      FROM transport_offers tof
+      JOIN transport_jobs tj ON tof.job_id = tj.id
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tof.transporter_id = ?
+    `;
+
+    const params: any[] = [transporterId];
+
+    if (status && typeof status === 'string' && status !== 'All') {
+      if (status === 'Submitted') {
+        query += ` AND tof.status IN ('Submitted', 'Under Review', 'Pending Farmer Approval')`;
+      } else if (status === 'Accepted') {
+        query += ` AND tof.status = 'Accepted'`;
+      } else {
+        query += ` AND tof.status = ?`;
+        params.push(status);
+      }
+    }
+
+    query += ` ORDER BY tof.created_at DESC`;
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    const offers = rows.map((row) => {
+      const schedule = formatJobSchedule(row.scheduled_date);
+      const createdAtDate = row.offer_created_at ? new Date(row.offer_created_at) : new Date();
+      const submittedDate = `${createdAtDate.getFullYear()}-${String(createdAtDate.getMonth() + 1).padStart(2, '0')}-${String(createdAtDate.getDate()).padStart(2, '0')}`;
+
+      return {
+        id: row.job_code || `Job #${row.job_id}`,
+        offerId: row.offer_id,
+        jobId: row.job_id,
+        jobCode: row.job_code,
+        title: DEFAULT_OFFER_CONSTANTS.defaultTitle,
+        cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+        weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+        route: `${row.pickup_location} → ${row.drop_location}`,
+        quotePrice: `Rs. ${Number(row.quote_price).toLocaleString()}`,
+        rawPrice: Number(row.quote_price),
+        estimatedDelivery: row.estimated_delivery || schedule.combinedStr,
+        notes: row.notes || DEFAULT_OFFER_CONSTANTS.defaultOfferNote,
+        submittedDate,
+        status: row.offer_status,
+        sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+        farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+        farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+        pickupLocation: row.pickup_location,
+        dropoffLocation: row.drop_location,
+        jobStatus: row.job_status,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: offers,
+      count: offers.length,
+    });
+  } catch (error: any) {
+    console.error('Error fetching transporter offers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transport offers',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /api/transporter/offers/:id
+ * Transporter withdraws a submitted offer
+ */
+export const withdrawOffer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+
+    // Search by offer id or matching job_id or job_code
+    let [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT tof.id, tof.status, tof.job_id, tj.job_code 
+       FROM transport_offers tof
+       JOIN transport_jobs tj ON tof.job_id = tj.id
+       WHERE tof.id = ? AND tof.transporter_id = ?`,
+      [id, transporterId]
+    );
+
+    // If not found by direct offer id, try by job_id or job_code
+    if (rows.length === 0) {
+      const cleanId = String(id).replace(/[^0-9]/g, '');
+      const jobCode = String(id).trim();
+
+      [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT tof.id, tof.status, tof.job_id, tj.job_code 
+         FROM transport_offers tof
+         JOIN transport_jobs tj ON tof.job_id = tj.id
+         WHERE (tof.job_id = ? OR tj.job_code = ? OR tj.id = ?) AND tof.transporter_id = ?`,
+        [cleanId || id, jobCode, cleanId || id, transporterId]
+      );
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: OFFER_MESSAGES.notFound,
+      });
+    }
+
+    const offer = rows[0];
+
+    if (offer.status === 'Accepted') {
+      return res.status(400).json({
+        success: false,
+        message: OFFER_MESSAGES.cannotWithdrawAccepted,
+      });
+    }
+
+    // Delete the offer record
+    await pool.query(
+      `DELETE FROM transport_offers WHERE id = ? AND transporter_id = ?`,
+      [offer.id, transporterId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: OFFER_MESSAGES.withdrawSuccess,
+      data: {
+        offerId: offer.id,
+        jobId: offer.job_id,
+        jobCode: offer.job_code,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error withdrawing transport offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to withdraw transport offer',
       error: error.message,
     });
   }

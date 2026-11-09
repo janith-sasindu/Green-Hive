@@ -84,3 +84,21 @@ export const DEFAULT_SUPPORT_CONTACT = {
   email: 'support@greenhive.lk',
   message: 'For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk',
 };
+
+export const OFFER_MESSAGES = {
+  notFound: 'Transport offer not found or not owned by you',
+  withdrawSuccess: 'Transport offer withdrawn successfully',
+  cannotWithdrawAccepted: 'Cannot withdraw an offer that has already been accepted',
+  submitSuccess: 'Transport offer submitted successfully to farmer',
+  duplicateActiveOffer: 'You have already submitted an active offer for this job',
+  jobNotOpen: 'Job is no longer open for offers',
+  jobNotFound: 'Transport job not found',
+  missingQuotePrice: 'Quote price is required',
+  invalidQuotePrice: 'Valid positive quote price is required',
+};
+
+export const DEFAULT_OFFER_CONSTANTS = {
+  defaultTitle: 'Transportation Offer',
+  defaultDeliveryWindow: 'Standard Delivery Window',
+  defaultOfferNote: 'I have vehicle ready for safe agricultural transit.',
+};
