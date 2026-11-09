@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Alert,
   useWindowDimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +29,9 @@ import {
   VEHICLE_TYPE_PRESETS,
   TransporterProfile,
   TransporterVehicleAndLicense,
+  TRANSPORTER_API_ENDPOINTS,
+  VEHICLE_LICENSE_LOADING,
+  VEHICLE_LICENSE_ALERTS,
 } from "./data";
 
 export { VEHICLE_TYPE_PRESETS };
@@ -60,10 +64,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
   >("all");
 
   // State
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
   const [data, setData] = useState<TransporterVehicleAndLicense>({
     ...MOCK_TRANSPORTER_VEHICLE_LICENSE,
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -73,6 +79,59 @@ export const TransporterVehicleLicenseScreen: React.FC<
   const [editVehicleType, setEditVehicleType] = useState(data.vehicleType);
   const [editMakeModel, setEditMakeModel] = useState(data.vehicleMakeModel);
   const [editCapacity, setEditCapacity] = useState(String(data.maxCapacityKg));
+
+  // Hydrate vehicle license and transporter profile from backend
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchVehicleLicenseAndProfile = async () => {
+      try {
+        const [vlRes, profileRes] = await Promise.allSettled([
+          fetch(TRANSPORTER_API_ENDPOINTS.vehicleLicense),
+          fetch(TRANSPORTER_API_ENDPOINTS.profile),
+        ]);
+
+        if (isMounted && vlRes.status === "fulfilled" && vlRes.value.ok) {
+          const json = await vlRes.value.json();
+          if (json.success && json.data) {
+            const liveData: TransporterVehicleAndLicense = {
+              ...MOCK_TRANSPORTER_VEHICLE_LICENSE,
+              ...json.data,
+            };
+            setData(liveData);
+            setEditLicenseNo(liveData.licenseNumber);
+            setEditLicenseExpiry(liveData.licenseExpiry);
+            setEditPlate(liveData.vehiclePlate);
+            setEditVehicleType(liveData.vehicleType);
+            setEditMakeModel(liveData.vehicleMakeModel);
+            setEditCapacity(String(liveData.maxCapacityKg));
+          }
+        }
+
+        if (isMounted && profileRes.status === "fulfilled" && profileRes.value.ok) {
+          const profileJson = await profileRes.value.json();
+          if (profileJson.success && profileJson.data) {
+            setProfile((prev) => ({
+              ...prev,
+              ...profileJson.data,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load vehicle license or profile:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchVehicleLicenseAndProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Photo viewer modal
   const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
@@ -151,8 +210,8 @@ export const TransporterVehicleLicenseScreen: React.FC<
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Camera Permission Required",
-          "Please grant camera access to photograph your license or vehicle document.",
+          VEHICLE_LICENSE_ALERTS.cameraPermission.title,
+          VEHICLE_LICENSE_ALERTS.cameraPermission.message,
           { type: "warning" }
         );
         return;
@@ -167,9 +226,11 @@ export const TransporterVehicleLicenseScreen: React.FC<
         updatePhoto(result.assets[0].uri);
       }
     } catch {
-      showAlert("Camera Error", "Could not open camera on this device.", {
-        type: "error",
-      });
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.cameraError.title,
+        VEHICLE_LICENSE_ALERTS.cameraError.message,
+        { type: "error" }
+      );
     }
   };
 
@@ -180,8 +241,8 @@ export const TransporterVehicleLicenseScreen: React.FC<
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Gallery Permission Required",
-          "Please allow photo library access to upload documents.",
+          VEHICLE_LICENSE_ALERTS.galleryPermission.title,
+          VEHICLE_LICENSE_ALERTS.galleryPermission.message,
           { type: "warning" }
         );
         return;
@@ -196,31 +257,62 @@ export const TransporterVehicleLicenseScreen: React.FC<
         updatePhoto(result.assets[0].uri);
       }
     } catch {
-      showAlert("Gallery Error", "Could not open photo library.", {
-        type: "error",
-      });
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.galleryError.title,
+        VEHICLE_LICENSE_ALERTS.galleryError.message,
+        { type: "error" }
+      );
     }
   };
 
-  const updatePhoto = (uri: string) => {
+  const updatePhoto = async (uri: string) => {
     if (!photoUploadTarget) return;
 
-    setData((prev) => {
-      const next = { ...prev };
-      if (photoUploadTarget === "licenseFront") next.licenseFrontPhotoUri = uri;
-      if (photoUploadTarget === "licenseBack") next.licenseBackPhotoUri = uri;
-      if (photoUploadTarget === "vehicle") next.vehiclePhotoUri = uri;
+    setIsUploadingPhoto(true);
 
-      // Update shared mock
-      Object.assign(MOCK_TRANSPORTER_VEHICLE_LICENSE, next);
-      return next;
-    });
+    try {
+      const res = await fetch(TRANSPORTER_API_ENDPOINTS.vehicleLicenseDocument, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          target: photoUploadTarget,
+          uri,
+        }),
+      });
 
-    showAlert(
-      "Document Uploaded",
-      "Your document has been updated and sent to verification.",
-      { type: "success" }
-    );
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || VEHICLE_LICENSE_ALERTS.documentUploadError.message);
+      }
+
+      setData((prev) => {
+        const next = { ...prev };
+        if (photoUploadTarget === "licenseFront") next.licenseFrontPhotoUri = uri;
+        if (photoUploadTarget === "licenseBack") next.licenseBackPhotoUri = uri;
+        if (photoUploadTarget === "vehicle") next.vehiclePhotoUri = uri;
+
+        // Update shared mock
+        Object.assign(MOCK_TRANSPORTER_VEHICLE_LICENSE, next);
+        return next;
+      });
+
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.documentUploaded.title,
+        VEHICLE_LICENSE_ALERTS.documentUploaded.message,
+        { type: "success" }
+      );
+    } catch (err: any) {
+      console.error("Failed to upload document photo:", err);
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.documentUploadError.title,
+        err?.message || VEHICLE_LICENSE_ALERTS.documentUploadError.message,
+        { type: "error" }
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   // Save Edits Handler
@@ -317,16 +409,24 @@ export const TransporterVehicleLicenseScreen: React.FC<
       </SafeAreaView>
 
       {/* ================= 2. MAIN SCROLLABLE CONTENT ================= */}
-      <SmoothScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: screenWidth < 360 ? 12 : 16,
-          paddingTop: 8,
-          paddingBottom: 28,
-          alignItems: "center",
-        }}
-      >
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center p-6">
+          <ActivityIndicator size="large" color="#16A34A" />
+          <Text className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-3">
+            {VEHICLE_LICENSE_LOADING.message}
+          </Text>
+        </View>
+      ) : (
+        <SmoothScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: screenWidth < 360 ? 12 : 16,
+            paddingTop: 8,
+            paddingBottom: 28,
+            alignItems: "center",
+          }}
+        >
         <View style={{ maxWidth: 640, width: "100%" }}>
           {/* Top Verified Status Banner */}
           <View className="rounded-2xl bg-[#EDFAF2] dark:bg-emerald-950/30 border border-[#B9F0D2] dark:border-emerald-800/50 p-3.5 sm:p-4 mb-3.5">
@@ -816,6 +916,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
           </TouchableOpacity>
         </View>
       </SmoothScrollView>
+      )}
 
       {/* ================= 3. BOTTOM TAB NAVIGATION ================= */}
       <SafeAreaView
