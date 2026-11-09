@@ -7,9 +7,7 @@ import {
   Image,
   StatusBar,
   Modal,
-  Alert,
   useWindowDimensions,
-  Platform,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,8 +28,18 @@ import {
   TransporterProfile,
   TransporterVehicleAndLicense,
   TRANSPORTER_API_ENDPOINTS,
-  VEHICLE_LICENSE_LOADING,
+  VEHICLE_LICENSE_HEADER,
+  VEHICLE_LICENSE_BANNER,
+  VEHICLE_LICENSE_FILTERS,
+  VEHICLE_LICENSE_LICENSE_SECTION,
+  VEHICLE_LICENSE_VEHICLE_SECTION,
+  VEHICLE_LICENSE_PERMITS_SECTION,
+  VEHICLE_LICENSE_EDIT_MODAL,
+  VEHICLE_LICENSE_PHOTO_MODAL,
+  VEHICLE_LICENSE_PREVIEW_MODAL,
+  VEHICLE_LICENSE_NAV_TABS,
   VEHICLE_LICENSE_ALERTS,
+  VEHICLE_LICENSE_LOADING,
 } from "./data";
 
 export { VEHICLE_TYPE_PRESETS };
@@ -69,6 +77,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
     ...MOCK_TRANSPORTER_VEHICLE_LICENSE,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSavingSpecs, setIsSavingSpecs] = useState<boolean>(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
 
   // Edit Modal State
@@ -316,39 +325,74 @@ export const TransporterVehicleLicenseScreen: React.FC<
   };
 
   // Save Edits Handler
-  const handleSaveEdits = () => {
+  const handleSaveEdits = async () => {
     if (!editPlate.trim() || !editLicenseNo.trim() || !editVehicleType.trim()) {
       showAlert(
-        "Missing Information",
-        "Vehicle Plate Number, Vehicle Type, and Driving License Number are required.",
+        VEHICLE_LICENSE_ALERTS.missingInfo.title,
+        VEHICLE_LICENSE_ALERTS.missingInfo.message,
         { type: "warning" }
       );
       return;
     }
 
-    const updatedData: TransporterVehicleAndLicense = {
-      ...data,
-      licenseNumber: editLicenseNo.trim().toUpperCase(),
-      licenseExpiry: editLicenseExpiry.trim(),
-      vehiclePlate: editPlate.trim().toUpperCase(),
-      vehicleType: editVehicleType.trim(),
-      vehicleMakeModel: editMakeModel.trim(),
-      maxCapacityKg: parseInt(editCapacity) || data.maxCapacityKg,
-    };
+    setIsSavingSpecs(true);
 
-    // Keep global mocks updated
-    Object.assign(MOCK_TRANSPORTER_VEHICLE_LICENSE, updatedData);
-    MOCK_TRANSPORTER_PROFILE.vehiclePlate = updatedData.vehiclePlate;
-    MOCK_TRANSPORTER_PROFILE.vehicleType = updatedData.vehicleType;
+    try {
+      const payload = {
+        licenseNumber: editLicenseNo.trim().toUpperCase(),
+        licenseExpiry: editLicenseExpiry.trim(),
+        vehiclePlate: editPlate.trim().toUpperCase(),
+        vehicleType: editVehicleType.trim(),
+        vehicleMakeModel: editMakeModel.trim(),
+        maxCapacityKg: parseInt(editCapacity, 10) || data.maxCapacityKg,
+      };
 
-    setData(updatedData);
-    setShowEditModal(false);
+      const res = await fetch(TRANSPORTER_API_ENDPOINTS.vehicleLicense, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    showAlert(
-      "Details Updated!",
-      "Your vehicle specifications and driving license information have been successfully updated.",
-      { type: "success" }
-    );
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || VEHICLE_LICENSE_ALERTS.updateError.message);
+      }
+
+      const updatedData: TransporterVehicleAndLicense = {
+        ...data,
+        ...json.data,
+      };
+
+      // Keep global mocks updated
+      Object.assign(MOCK_TRANSPORTER_VEHICLE_LICENSE, updatedData);
+      MOCK_TRANSPORTER_PROFILE.vehiclePlate = updatedData.vehiclePlate;
+      MOCK_TRANSPORTER_PROFILE.vehicleType = updatedData.vehicleType;
+
+      setData(updatedData);
+      setProfile((prev) => ({
+        ...prev,
+        vehiclePlate: updatedData.vehiclePlate,
+        vehicleType: updatedData.vehicleType,
+      }));
+      setShowEditModal(false);
+
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.detailsUpdated.title,
+        VEHICLE_LICENSE_ALERTS.detailsUpdated.message,
+        { type: "success" }
+      );
+    } catch (err: any) {
+      console.error("Failed to update vehicle and license:", err);
+      showAlert(
+        VEHICLE_LICENSE_ALERTS.updateError.title,
+        err?.message || VEHICLE_LICENSE_ALERTS.updateError.message,
+        { type: "error" }
+      );
+    } finally {
+      setIsSavingSpecs(false);
+    }
   };
 
   return (
@@ -372,6 +416,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
               activeOpacity={0.7}
               onPress={handleGoBack}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={VEHICLE_LICENSE_HEADER.backAccessibilityLabel}
               className="p-1 -ml-1 mr-2.5 rounded-full"
             >
               <Ionicons
@@ -386,15 +431,15 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   isExtraSmall ? "text-lg" : "text-xl"
                 }`}
               >
-                Vehicle & License
+                {VEHICLE_LICENSE_HEADER.title}
               </Text>
               <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
-                Official Registered Documents
+                {VEHICLE_LICENSE_HEADER.subtitle}
               </Text>
             </View>
           </View>
 
-          {/* Right: Edit Button & Verified Shield */}
+          {/* Right: Edit Button */}
           <View className="flex-row items-center space-x-2 gap-2">
             <TouchableOpacity
               activeOpacity={0.8}
@@ -402,7 +447,9 @@ export const TransporterVehicleLicenseScreen: React.FC<
               className="flex-row items-center bg-[#FF8C00]/10 dark:bg-amber-950/40 px-3 py-1.5 rounded-full border border-[#FF8C00]/30"
             >
               <Ionicons name="pencil" size={13} color="#FF8C00" />
-              <Text className="text-xs font-bold text-[#FF8C00] ml-1">Edit</Text>
+              <Text className="text-xs font-bold text-[#FF8C00] ml-1">
+                {VEHICLE_LICENSE_HEADER.editButton}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -437,16 +484,16 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 </View>
                 <View className="flex-1">
                   <Text className="text-[13.5px] sm:text-[14.5px] font-bold text-[#166534] dark:text-emerald-400">
-                    Carrier Documents Verified
+                    {VEHICLE_LICENSE_BANNER.title}
                   </Text>
                   <Text className="text-[11px] sm:text-[11.5px] text-[#16A34A] dark:text-emerald-300 mt-0.5">
-                    Verified on {data.verificationDate} · Green-Hive Fleet Safety
+                    {VEHICLE_LICENSE_BANNER.agencySubtitle(data.verificationDate)}
                   </Text>
                 </View>
               </View>
               <View className="px-2.5 py-1 rounded-full bg-[#16A34A] items-center justify-center">
                 <Text className="text-[10.5px] font-bold text-white uppercase tracking-wider">
-                  Active
+                  {VEHICLE_LICENSE_BANNER.activeBadge}
                 </Text>
               </View>
             </View>
@@ -470,7 +517,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     : "text-gray-600 dark:text-slate-300"
                 }`}
               >
-                All Details
+                {VEHICLE_LICENSE_FILTERS.all}
               </Text>
             </TouchableOpacity>
 
@@ -490,7 +537,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     : "text-gray-600 dark:text-slate-300"
                 }`}
               >
-                Driver License
+                {VEHICLE_LICENSE_FILTERS.license}
               </Text>
             </TouchableOpacity>
 
@@ -510,7 +557,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     : "text-gray-600 dark:text-slate-300"
                 }`}
               >
-                Vehicle Specs
+                {VEHICLE_LICENSE_FILTERS.vehicle}
               </Text>
             </TouchableOpacity>
           </View>
@@ -522,7 +569,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 <View className="flex-row items-center">
                   <Ionicons name="card-outline" size={18} color="#FF8C00" />
                   <Text className="text-sm font-bold text-gray-900 dark:text-white ml-2">
-                    Sri Lanka Driving Licence
+                    {VEHICLE_LICENSE_LICENSE_SECTION.sectionTitle}
                   </Text>
                 </View>
                 <View className="flex-row items-center bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
@@ -550,10 +597,10 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 <View className="flex-row items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-700">
                   <View className="flex-1 pr-2">
                     <Text className="text-[10px] sm:text-[10.5px] uppercase font-bold text-[#64748B] dark:text-slate-400 tracking-wider">
-                      DEMOCRATIC SOCIALIST REPUBLIC OF SRI LANKA
+                      {VEHICLE_LICENSE_LICENSE_SECTION.cardTitle}
                     </Text>
                     <Text className="text-base sm:text-lg font-black text-gray-900 dark:text-white mt-0.5">
-                      DRIVING LICENCE
+                      {VEHICLE_LICENSE_LICENSE_SECTION.cardSubtitle}
                     </Text>
                   </View>
                   <View className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 items-center justify-center">
@@ -583,7 +630,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   {/* Driver Text Info */}
                   <View className="flex-1">
                     <Text className="text-[10.5px] text-[#64748B] dark:text-slate-400 font-semibold uppercase">
-                      1. Name
+                      {VEHICLE_LICENSE_LICENSE_SECTION.labelDriverName}
                     </Text>
                     <Text className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-2">
                       {data.driverName}
@@ -592,7 +639,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     <View className="flex-row items-center">
                       <View className="flex-1">
                         <Text className="text-[10px] text-[#64748B] dark:text-slate-400 font-semibold uppercase">
-                          4d. Licence No
+                          {VEHICLE_LICENSE_LICENSE_SECTION.labelLicenseNo}
                         </Text>
                         <Text className="text-xs sm:text-sm font-extrabold text-[#FF8C00]">
                           {data.licenseNumber}
@@ -600,7 +647,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                       </View>
                       <View className="flex-1">
                         <Text className="text-[10px] text-[#64748B] dark:text-slate-400 font-semibold uppercase">
-                          NIC No
+                          {VEHICLE_LICENSE_LICENSE_SECTION.labelNic}
                         </Text>
                         <Text className="text-xs font-bold text-gray-800 dark:text-slate-200">
                           {data.nicNumber}
@@ -614,7 +661,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 <View className="grid grid-cols-3 flex-row items-center justify-between mt-3.5 pt-3 border-t border-gray-100 dark:border-slate-700">
                   <View>
                     <Text className="text-[10px] text-[#64748B] dark:text-slate-400 uppercase font-semibold">
-                      4a. Issued
+                      {VEHICLE_LICENSE_LICENSE_SECTION.labelIssueDate}
                     </Text>
                     <Text className="text-xs font-bold text-gray-800 dark:text-slate-200 mt-0.5">
                       {data.licenseIssueDate}
@@ -622,7 +669,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   </View>
                   <View>
                     <Text className="text-[10px] text-[#64748B] dark:text-slate-400 uppercase font-semibold">
-                      4b. Expires
+                      {VEHICLE_LICENSE_LICENSE_SECTION.labelExpiry}
                     </Text>
                     <Text className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                       {data.licenseExpiry}
@@ -630,7 +677,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   </View>
                   <View>
                     <Text className="text-[10px] text-[#64748B] dark:text-slate-400 uppercase font-semibold">
-                      Blood Group
+                      {VEHICLE_LICENSE_LICENSE_SECTION.labelBloodGroup}
                     </Text>
                     <Text className="text-xs font-bold text-red-500 mt-0.5">
                       {data.bloodGroup}
@@ -641,7 +688,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 {/* Vehicle Categories Endorsements */}
                 <View className="mt-3.5 pt-3 border-t border-gray-100 dark:border-slate-700">
                   <Text className="text-[10.5px] text-[#64748B] dark:text-slate-400 uppercase font-semibold mb-2">
-                    9. Authorized Vehicle Classes
+                    {VEHICLE_LICENSE_LICENSE_SECTION.labelCategories}
                   </Text>
                   <View className="flex-row flex-wrap gap-1.5">
                     {data.licenseCategories.map((cat, idx) => (
@@ -660,7 +707,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 {/* Photo Previews: Front & Back */}
                 <View className="mt-4 pt-3.5 border-t border-gray-100 dark:border-slate-700">
                   <Text className="text-[11px] text-[#64748B] dark:text-slate-400 uppercase font-semibold mb-2.5">
-                    Scanned Card Previews
+                    {VEHICLE_LICENSE_LICENSE_SECTION.photosHeader}
                   </Text>
                   <View className="flex-row gap-2.5">
                     {/* Front Photo */}
@@ -669,7 +716,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                       onPress={() => {
                         if (data.licenseFrontPhotoUri) {
                           setPreviewPhotoUri(data.licenseFrontPhotoUri);
-                          setPreviewTitle("Driving Licence - Front Side");
+                          setPreviewTitle(`${VEHICLE_LICENSE_LICENSE_SECTION.sectionTitle} - ${VEHICLE_LICENSE_LICENSE_SECTION.frontCardTitle}`);
                         } else {
                           handleInitiatePhotoUpload("licenseFront");
                         }
@@ -685,7 +732,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                           />
                           <View className="absolute bottom-1.5 left-1.5 right-1.5 bg-black/60 px-2 py-0.5 rounded flex-row items-center justify-between">
                             <Text className="text-[9.5px] font-bold text-white">
-                              Front Card
+                              {VEHICLE_LICENSE_LICENSE_SECTION.frontCardTitle}
                             </Text>
                             <Ionicons name="expand" size={11} color="#FFFFFF" />
                           </View>
@@ -694,7 +741,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                         <View className="items-center">
                           <Ionicons name="camera-outline" size={24} color="#94A3B8" />
                           <Text className="text-[10px] text-gray-500 mt-1">
-                            Upload Front
+                            {VEHICLE_LICENSE_LICENSE_SECTION.uploadButton} Front
                           </Text>
                         </View>
                       )}
@@ -706,7 +753,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                       onPress={() => {
                         if (data.licenseBackPhotoUri) {
                           setPreviewPhotoUri(data.licenseBackPhotoUri);
-                          setPreviewTitle("Driving Licence - Back Side");
+                          setPreviewTitle(`${VEHICLE_LICENSE_LICENSE_SECTION.sectionTitle} - ${VEHICLE_LICENSE_LICENSE_SECTION.backCardTitle}`);
                         } else {
                           handleInitiatePhotoUpload("licenseBack");
                         }
@@ -722,7 +769,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                           />
                           <View className="absolute bottom-1.5 left-1.5 right-1.5 bg-black/60 px-2 py-0.5 rounded flex-row items-center justify-between">
                             <Text className="text-[9.5px] font-bold text-white">
-                              Back Card
+                              {VEHICLE_LICENSE_LICENSE_SECTION.backCardTitle}
                             </Text>
                             <Ionicons name="expand" size={11} color="#FFFFFF" />
                           </View>
@@ -731,7 +778,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                         <View className="items-center">
                           <Ionicons name="camera-outline" size={24} color="#94A3B8" />
                           <Text className="text-[10px] text-gray-500 mt-1">
-                            Upload Back
+                            {VEHICLE_LICENSE_LICENSE_SECTION.uploadButton} Back
                           </Text>
                         </View>
                       )}
@@ -741,17 +788,24 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   {/* Change License Document Photo button */}
                   <TouchableOpacity
                     activeOpacity={0.8}
+                    disabled={isUploadingPhoto}
                     onPress={() => handleInitiatePhotoUpload("licenseFront")}
                     className="mt-2.5 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 items-center justify-center flex-row"
                   >
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={15}
-                      color={isDark ? "#CBD5E1" : "#4B5563"}
-                    />
-                    <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
-                      Upload Updated Licence Document
-                    </Text>
+                    {isUploadingPhoto ? (
+                      <ActivityIndicator size="small" color="#FF8C00" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="cloud-upload-outline"
+                          size={15}
+                          color={isDark ? "#CBD5E1" : "#4B5563"}
+                        />
+                        <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
+                          {VEHICLE_LICENSE_LICENSE_SECTION.retakeButton} Licence Document
+                        </Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -765,7 +819,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 <View className="flex-row items-center">
                   <Ionicons name="bus-outline" size={18} color="#FF8C00" />
                   <Text className="text-sm font-bold text-gray-900 dark:text-white ml-2">
-                    Registered Transport Vehicle
+                    {VEHICLE_LICENSE_VEHICLE_SECTION.sectionTitle}
                   </Text>
                 </View>
                 <Text className="text-xs font-bold text-[#FF8C00]">
@@ -801,7 +855,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                     </View>
                     <View className="items-end">
                       <Text className="text-[10px] text-amber-300 font-bold uppercase">
-                        Commercial Cargo
+                        {VEHICLE_LICENSE_VEHICLE_SECTION.badgeTitle}
                       </Text>
                       <Text className="text-[11px] text-white/80">
                         {data.vehicleYear} Model
@@ -814,7 +868,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 <View className="grid grid-cols-2 gap-2.5">
                   <View className="p-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600">
                     <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
-                      Make & Model
+                      {VEHICLE_LICENSE_VEHICLE_SECTION.labelMakeModel}
                     </Text>
                     <Text className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">
                       {data.vehicleMakeModel}
@@ -823,7 +877,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
 
                   <View className="p-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600">
                     <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
-                      Max Load Capacity
+                      {VEHICLE_LICENSE_VEHICLE_SECTION.labelMaxCapacity}
                     </Text>
                     <Text className="text-sm font-bold text-[#16A34A] dark:text-emerald-400 mt-0.5">
                       {data.maxCapacityKg.toLocaleString()} kg ({data.maxCapacityKg / 1000} Ton)
@@ -832,7 +886,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
 
                   <View className="p-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600">
                     <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
-                      Cargo Bay Dimensions
+                      {VEHICLE_LICENSE_VEHICLE_SECTION.labelCargoDimensions}
                     </Text>
                     <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
                       {data.cargoDimensions}
@@ -841,7 +895,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
 
                   <View className="p-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600">
                     <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
-                      Fuel & Color
+                      {VEHICLE_LICENSE_VEHICLE_SECTION.labelFuelType} & {VEHICLE_LICENSE_VEHICLE_SECTION.labelVehicleColor}
                     </Text>
                     <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
                       {data.fuelType} · {data.vehicleColor}
@@ -849,17 +903,32 @@ export const TransporterVehicleLicenseScreen: React.FC<
                   </View>
                 </View>
 
+                {/* Refrigerated / Cold Storage Row */}
+                <View className="mt-2.5 p-3 rounded-2xl bg-gray-50 dark:bg-slate-700/60 border border-gray-100 dark:border-slate-600 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <Ionicons name="snow-outline" size={16} color="#0EA5E9" style={{ marginRight: 6 }} />
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
+                      {VEHICLE_LICENSE_VEHICLE_SECTION.labelRefrigerated}
+                    </Text>
+                  </View>
+                  <Text className="text-xs font-bold text-gray-900 dark:text-white">
+                    {data.refrigerated
+                      ? VEHICLE_LICENSE_VEHICLE_SECTION.refrigeratedYes
+                      : VEHICLE_LICENSE_VEHICLE_SECTION.refrigeratedNo}
+                  </Text>
+                </View>
+
                 {/* Vehicle Photo Preview */}
                 <View className="mt-3.5 pt-3 border-t border-gray-100 dark:border-slate-700">
                   <Text className="text-[11px] text-[#64748B] dark:text-slate-400 uppercase font-semibold mb-2">
-                    Vehicle Photo
+                    {VEHICLE_LICENSE_VEHICLE_SECTION.photoCardTitle}
                   </Text>
                   {data.vehiclePhotoUri ? (
                     <TouchableOpacity
                       activeOpacity={0.88}
                       onPress={() => {
                         setPreviewPhotoUri(data.vehiclePhotoUri || null);
-                        setPreviewTitle(`Vehicle - ${data.vehiclePlate}`);
+                        setPreviewTitle(`${VEHICLE_LICENSE_VEHICLE_SECTION.sectionTitle} - ${data.vehiclePlate}`);
                       }}
                       className="rounded-2xl overflow-hidden h-40 bg-slate-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 relative"
                     >
@@ -871,7 +940,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                       <View className="absolute bottom-2 right-2 bg-black/60 px-2.5 py-1 rounded-md flex-row items-center">
                         <Ionicons name="expand" size={12} color="#FFFFFF" />
                         <Text className="text-[11px] text-white font-medium ml-1">
-                          Tap to enlarge
+                          {VEHICLE_LICENSE_LICENSE_SECTION.tapToEnlarge}
                         </Text>
                       </View>
                     </TouchableOpacity>
@@ -879,18 +948,114 @@ export const TransporterVehicleLicenseScreen: React.FC<
 
                   <TouchableOpacity
                     activeOpacity={0.8}
+                    disabled={isUploadingPhoto}
                     onPress={() => handleInitiatePhotoUpload("vehicle")}
                     className="mt-2.5 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 items-center justify-center flex-row"
                   >
-                    <Ionicons
-                      name="camera-outline"
-                      size={15}
-                      color={isDark ? "#CBD5E1" : "#4B5563"}
-                    />
-                    <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
-                      Update Vehicle Photo
-                    </Text>
+                    {isUploadingPhoto ? (
+                      <ActivityIndicator size="small" color="#FF8C00" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="camera-outline"
+                          size={15}
+                          color={isDark ? "#CBD5E1" : "#4B5563"}
+                        />
+                        <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
+                          {data.vehiclePhotoUri
+                            ? VEHICLE_LICENSE_VEHICLE_SECTION.photoRetakeButton
+                            : VEHICLE_LICENSE_VEHICLE_SECTION.photoUploadButton}
+                        </Text>
+                      </>
+                    )}
                   </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* ================= SECTION C: LEGAL & COMPLIANCE PERMITS ================= */}
+          {(activeSection === "all" || activeSection === "vehicle") && (
+            <View className="mb-4">
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  <Ionicons name="shield-outline" size={18} color="#16A34A" />
+                  <Text className="text-sm font-bold text-gray-900 dark:text-white ml-2">
+                    {VEHICLE_LICENSE_PERMITS_SECTION.sectionTitle}
+                  </Text>
+                </View>
+                <Text className="text-xs font-bold text-[#16A34A] dark:text-emerald-400">
+                  {VEHICLE_LICENSE_PERMITS_SECTION.badgeTitle}
+                </Text>
+              </View>
+
+              <View
+                className="rounded-3xl bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700 p-4 sm:p-5 shadow-xs"
+                style={{
+                  elevation: 2,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.05,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 3 },
+                }}
+              >
+                {/* Revenue Licence */}
+                <View className="pb-3 border-b border-gray-100 dark:border-slate-700">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs font-bold text-gray-900 dark:text-white">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.revenueLicenseTitle}
+                    </Text>
+                    <View className="bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                      <Text className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300">
+                        {VEHICLE_LICENSE_BANNER.activeBadge}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row items-center justify-between mt-1.5">
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.revenueLicenseNoLabel} {data.revenueLicenseNo}
+                    </Text>
+                    <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.revenueLicenseExpiryLabel} {data.revenueLicenseExpiry}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Commercial Vehicle Insurance */}
+                <View className="py-3 border-b border-gray-100 dark:border-slate-700">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs font-bold text-gray-900 dark:text-white">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.insuranceTitle}
+                    </Text>
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                      {data.insuranceProvider}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center justify-between mt-1.5">
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.insurancePolicyLabel} {data.insurancePolicyNo}
+                    </Text>
+                    <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.insuranceExpiryLabel} {data.insuranceExpiry}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* DriveGreen Emission Test */}
+                <View className="pt-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs font-bold text-gray-900 dark:text-white">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.emissionTestTitle}
+                    </Text>
+                    <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {data.emissionCertificateStatus}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center justify-between mt-1.5">
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                      {VEHICLE_LICENSE_PERMITS_SECTION.emissionExpiryLabel} {data.emissionCertificateExpiry}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -911,7 +1076,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
           >
             <Ionicons name="create-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
-              Update Vehicle & License Details
+              {VEHICLE_LICENSE_EDIT_MODAL.title}
             </Text>
           </TouchableOpacity>
         </View>
@@ -945,7 +1110,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {VEHICLE_LICENSE_NAV_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -965,7 +1130,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {VEHICLE_LICENSE_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -985,7 +1150,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {VEHICLE_LICENSE_NAV_TABS.active}
             </Text>
           </TouchableOpacity>
 
@@ -1005,7 +1170,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-bold text-[#FF8C00]`}
             >
-              Profile
+              {VEHICLE_LICENSE_NAV_TABS.profile}
             </Text>
             {/* Active Indicator Underline */}
             <View className="h-0.5 w-5 bg-[#FF8C00] rounded-full mt-0.5" />
@@ -1026,7 +1191,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Edit Vehicle & License
+              {VEHICLE_LICENSE_EDIT_MODAL.title}
             </Text>
             <TouchableOpacity
               onPress={() => setShowEditModal(false)}
@@ -1046,12 +1211,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* License Number Input */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Driving Licence Number *
+                  {VEHICLE_LICENSE_EDIT_MODAL.licenseNoLabel}
                 </Text>
                 <TextInput
                   value={editLicenseNo}
                   onChangeText={setEditLicenseNo}
-                  placeholder="e.g. B3849201"
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.licenseNoPlaceholder}
                   placeholderTextColor="#94A3B8"
                   autoCapitalize="characters"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-bold text-gray-900 dark:text-white"
@@ -1061,12 +1226,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* License Expiry Input */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Licence Expiry Date
+                  {VEHICLE_LICENSE_EDIT_MODAL.licenseExpiryLabel}
                 </Text>
                 <TextInput
                   value={editLicenseExpiry}
                   onChangeText={setEditLicenseExpiry}
-                  placeholder="DD/MM/YYYY"
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.licenseExpiryPlaceholder}
                   placeholderTextColor="#94A3B8"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-white"
                 />
@@ -1075,12 +1240,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* Vehicle Plate Input */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Vehicle Plate / Reg No *
+                  {VEHICLE_LICENSE_EDIT_MODAL.vehiclePlateLabel}
                 </Text>
                 <TextInput
                   value={editPlate}
                   onChangeText={setEditPlate}
-                  placeholder="e.g. WP-LH-4821"
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.vehiclePlatePlaceholder}
                   placeholderTextColor="#94A3B8"
                   autoCapitalize="characters"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-black text-gray-900 dark:text-white"
@@ -1090,12 +1255,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* Vehicle Type Input */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Vehicle Type / Category *
+                  {VEHICLE_LICENSE_EDIT_MODAL.vehicleTypeLabel}
                 </Text>
                 <TextInput
                   value={editVehicleType}
                   onChangeText={setEditVehicleType}
-                  placeholder="e.g. Lorry - 3 Ton, Mini Lorry, Pickup..."
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.vehicleTypePresetsPrompt}
                   placeholderTextColor="#94A3B8"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-900 dark:text-white mb-2"
                 />
@@ -1133,12 +1298,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* Make & Model Input */}
               <View className="mb-3.5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Vehicle Make & Model
+                  {VEHICLE_LICENSE_EDIT_MODAL.makeModelLabel}
                 </Text>
                 <TextInput
                   value={editMakeModel}
                   onChangeText={setEditMakeModel}
-                  placeholder="e.g. Isuzu Elf NPR 71"
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.makeModelPlaceholder}
                   placeholderTextColor="#94A3B8"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-white"
                 />
@@ -1147,12 +1312,12 @@ export const TransporterVehicleLicenseScreen: React.FC<
               {/* Max Capacity Input */}
               <View className="mb-5">
                 <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                  Max Payload Capacity (kg)
+                  {VEHICLE_LICENSE_EDIT_MODAL.capacityLabel}
                 </Text>
                 <TextInput
                   value={editCapacity}
                   onChangeText={setEditCapacity}
-                  placeholder="3000"
+                  placeholder={VEHICLE_LICENSE_EDIT_MODAL.capacityPlaceholder}
                   keyboardType="numeric"
                   placeholderTextColor="#94A3B8"
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-white"
@@ -1163,9 +1328,21 @@ export const TransporterVehicleLicenseScreen: React.FC<
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleSaveEdits}
-                className="py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
+                disabled={isSavingSpecs}
+                className="py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs flex-row"
               >
-                <Text className="text-sm font-bold text-white">Save Changes</Text>
+                {isSavingSpecs ? (
+                  <>
+                    <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text className="text-sm font-bold text-white">
+                      {VEHICLE_LICENSE_EDIT_MODAL.savingButton}
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-sm font-bold text-white">
+                    {VEHICLE_LICENSE_EDIT_MODAL.saveButton}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </SmoothScrollView>
@@ -1183,7 +1360,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
           <SafeAreaView edges={["top"]} className="w-full">
             <View className="flex-row items-center justify-between py-2 px-2">
               <Text className="text-white font-bold text-base" numberOfLines={1}>
-                {previewTitle || "Document Preview"}
+                {previewTitle || VEHICLE_LICENSE_HEADER.title}
               </Text>
               <TouchableOpacity
                 onPress={() => setPreviewPhotoUri(null)}
@@ -1210,7 +1387,9 @@ export const TransporterVehicleLicenseScreen: React.FC<
               onPress={() => setPreviewPhotoUri(null)}
               className="py-3 rounded-xl bg-white/20 items-center justify-center mt-2"
             >
-              <Text className="text-white font-bold text-sm">Close Preview</Text>
+              <Text className="text-white font-bold text-sm">
+                {VEHICLE_LICENSE_PREVIEW_MODAL.closeButton}
+              </Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -1235,7 +1414,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
           >
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                Upload Document Photo
+                {VEHICLE_LICENSE_PHOTO_MODAL.title}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowPhotoSourceModal(false)}
@@ -1256,10 +1435,10 @@ export const TransporterVehicleLicenseScreen: React.FC<
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Take Photo with Camera
+                  {VEHICLE_LICENSE_PHOTO_MODAL.optionCamera.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Capture document directly with your camera
+                  {VEHICLE_LICENSE_PHOTO_MODAL.optionCamera.description}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -1275,10 +1454,10 @@ export const TransporterVehicleLicenseScreen: React.FC<
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Choose from Gallery
+                  {VEHICLE_LICENSE_PHOTO_MODAL.optionGallery.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Pick an existing photo from device files
+                  {VEHICLE_LICENSE_PHOTO_MODAL.optionGallery.description}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -1289,7 +1468,7 @@ export const TransporterVehicleLicenseScreen: React.FC<
               className="py-3 rounded-xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
             >
               <Text className="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-200">
-                Cancel
+                {VEHICLE_LICENSE_PHOTO_MODAL.cancelButton}
               </Text>
             </TouchableOpacity>
           </TouchableOpacity>
