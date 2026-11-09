@@ -8,6 +8,12 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_JOB_METADATA,
   DEFAULT_STAT_FALLBACKS,
+  PROFILE_VALIDATION_MESSAGES,
+  OFFER_MESSAGES,
+  DEFAULT_OFFER_CONSTANTS,
+  OFFER_SUBMITTED_CONSTANTS,
+  CONFIRM_PICKUP_MESSAGES,
+  DEFAULT_PICKUP_CONSTANTS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -16,6 +22,32 @@ export interface AuthenticatedRequest extends Request {
         role: string;
         email: string;
     };
+}
+
+let pickupColumnsChecked = false;
+export async function ensurePickupColumnsExist(): Promise<void> {
+  if (pickupColumnsChecked) return;
+  try {
+    const [cols] = await pool.query<RowDataPacket[]>(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+         AND TABLE_NAME = 'transport_jobs' 
+         AND COLUMN_NAME IN ('pickup_timestamp', 'pickup_notes', 'proof_photo_url')`
+    );
+    const existing = cols.map((c) => c.COLUMN_NAME);
+    if (!existing.includes('pickup_timestamp')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN pickup_timestamp VARCHAR(100) DEFAULT NULL`);
+    }
+    if (!existing.includes('pickup_notes')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN pickup_notes TEXT DEFAULT NULL`);
+    }
+    if (!existing.includes('proof_photo_url')) {
+      await pool.query(`ALTER TABLE transport_jobs ADD COLUMN proof_photo_url TEXT DEFAULT NULL`);
+    }
+    pickupColumnsChecked = true;
+  } catch (err) {
+    console.warn('Note: Could not verify transport_jobs pickup columns:', err);
+  }
 }
 
 /**
@@ -218,7 +250,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
 export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { id } = req.params;
-        let { status } = req.body;
+        let { status, pickupTimestamp, timestamp, notes, pickupNotes, proofPhotoUri, proofPhotoUrl } = req.body;
 
         // Map mobile UI statuses to database ENUM values
         if (status === 'In Progress' || status === 'At Pickup') {
@@ -237,23 +269,34 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
 
         // Ensure the job exists and belongs to this transporter
         const [jobRows] = await pool.query<RowDataPacket[]>(
-            `SELECT id, status, order_id FROM transport_jobs WHERE id = ? AND transporter_id = ?`,
-            [id, transporterId]
+            `SELECT id, status, order_id FROM transport_jobs WHERE (id = ? OR job_code = ?) AND transporter_id = ?`,
+            [id, id, transporterId]
         );
 
         if (jobRows.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Transport job not found or not assigned to you',
+                message: CONFIRM_PICKUP_MESSAGES.jobNotFound,
             });
         }
 
         const job = jobRows[0];
 
+        await ensurePickupColumnsExist();
+
+        const finalTimestamp = pickupTimestamp || timestamp || null;
+        const finalNotes = notes || pickupNotes || null;
+        const finalPhoto = proofPhotoUri || proofPhotoUrl || null;
+
         // Perform the status update
         await pool.query(
-            `UPDATE transport_jobs SET status = ? WHERE id = ?`,
-            [status, id]
+            `UPDATE transport_jobs 
+             SET status = ?,
+                 pickup_timestamp = COALESCE(?, pickup_timestamp),
+                 pickup_notes = COALESCE(?, pickup_notes),
+                 proof_photo_url = COALESCE(?, proof_photo_url)
+             WHERE id = ?`,
+            [status, finalTimestamp, finalNotes, finalPhoto, job.id]
         );
 
         // If job is delivered, update order delivery status and release payment
@@ -272,13 +315,152 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
         return res.status(200).json({
             success: true,
             message: `Transport job #${id} status updated to ${status}`,
-            data: { id, status },
+            data: { 
+                id: job.id, 
+                status,
+                pickupTimestamp: finalTimestamp,
+                pickupNotes: finalNotes,
+                proofPhotoUri: finalPhoto,
+            },
         });
     } catch (error: any) {
         console.error('Error updating job status:', error);
         return res.status(500).json({
             success: false,
             message: 'Failed to update transport job status',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * PATCH or POST /api/transporter/jobs/:id/pickup
+ * Confirms cargo pickup at the farm and transitions status to 'In Transit'
+ */
+export const confirmJobPickup = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+        const { timestamp, pickupTimestamp, notes, pickupNotes, proofPhotoUri, proofPhotoUrl } = req.body;
+
+        const finalTimestamp = timestamp || pickupTimestamp || new Date().toISOString();
+        const finalNotes = notes || pickupNotes || '';
+        const finalProofPhoto = proofPhotoUri || proofPhotoUrl || null;
+
+        await ensurePickupColumnsExist();
+
+        // 1. Fetch the target job
+        const [jobRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+                tj.id,
+                tj.job_code,
+                tj.status,
+                tj.order_id,
+                tj.pickup_location,
+                tj.drop_location,
+                tj.vehicle_type,
+                tj.fee,
+                tj.scheduled_date,
+                tj.created_at,
+                tj.pickup_timestamp,
+                tj.pickup_notes,
+                tj.proof_photo_url,
+                o.order_code,
+                o.product_name,
+                o.quantity,
+                u_farmer.name AS farmer_name,
+                u_farmer.phone AS farmer_phone,
+                u_farmer.location AS farmer_location,
+                u_seller.name AS seller_name,
+                u_seller.phone AS seller_phone,
+                u_seller.location AS seller_location
+            FROM transport_jobs tj
+            JOIN orders o ON tj.order_id = o.id
+            LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+            LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+            WHERE (tj.id = ? OR tj.job_code = ?) AND tj.transporter_id = ?`,
+            [id, id, transporterId]
+        );
+
+        if (jobRows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: CONFIRM_PICKUP_MESSAGES.jobNotFound,
+            });
+        }
+
+        const job = jobRows[0];
+
+        // Check if status is invalid for pickup (e.g. Delivered or Cancelled)
+        if (job.status === 'Delivered' || job.status === 'Cancelled') {
+            return res.status(400).json({
+                success: false,
+                message: `${CONFIRM_PICKUP_MESSAGES.invalidStatus} (Current: ${job.status})`,
+            });
+        }
+
+        // 2. Update status to 'In Transit' and store pickup details
+        await pool.query(
+            `UPDATE transport_jobs
+             SET status = 'In Transit',
+                 pickup_timestamp = ?,
+                 pickup_notes = ?,
+                 proof_photo_url = ?
+             WHERE id = ?`,
+            [finalTimestamp, finalNotes, finalProofPhoto, job.id]
+        );
+
+        // Also update order status to In Transit if linked
+        if (job.order_id) {
+            await pool.query(
+                `UPDATE orders SET status = 'In Transit', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                [job.order_id]
+            ).catch(() => {});
+        }
+
+        const schedule = formatJobSchedule(job.scheduled_date);
+
+        const updatedJob = {
+            id: job.job_code || `#TR-${job.id}`,
+            dbId: job.id,
+            orderId: job.order_id,
+            orderCode: job.order_code,
+            cropName: job.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+            weight: job.quantity ? `${job.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+            status: 'In Progress',
+            rawStatus: 'In Transit',
+            pickup: job.pickup_location,
+            dropoff: job.drop_location,
+            distance: 'Approx. 85 km',
+            price: `Rs. ${Number(job.fee).toLocaleString()}`,
+            rawFee: Number(job.fee),
+            vehicleType: job.vehicle_type || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
+            farmerName: job.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+            farmerPhone: job.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+            farmerLocation: job.farmer_location,
+            sellerName: job.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+            sellerPhone: job.seller_phone,
+            sellerLocation: job.seller_location,
+            pickupDate: schedule.combinedStr,
+            pickupTimestamp: finalTimestamp,
+            pickupNotes: finalNotes || undefined,
+            proofPhotoUri: finalProofPhoto || undefined,
+            specialInstructions: 'Handle with care. Keep cool. Arrive on schedule for market opening.',
+            farmerRating: DEFAULT_JOB_METADATA.activeFarmerRating,
+            eta: DEFAULT_JOB_METADATA.defaultEta,
+            createdAt: job.created_at,
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: CONFIRM_PICKUP_MESSAGES.success,
+            data: updatedJob,
+        });
+    } catch (error: any) {
+        console.error('Error confirming job pickup:', error);
+        return res.status(500).json({
+            success: false,
+            message: CONFIRM_PICKUP_MESSAGES.failedUpdate,
             error: error.message,
         });
     }
@@ -569,7 +751,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (!quotePrice) {
       return res.status(400).json({
         success: false,
-        message: 'Quote price is required',
+        message: OFFER_MESSAGES.missingQuotePrice,
       });
     }
 
@@ -580,7 +762,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Valid positive quote price is required',
+        message: OFFER_MESSAGES.invalidQuotePrice,
       });
     }
 
@@ -591,14 +773,14 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     );
 
     if (jobRows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Transport job not found' });
+      return res.status(404).json({ success: false, message: OFFER_MESSAGES.jobNotFound });
     }
 
     const job = jobRows[0];
     if (job.status !== 'Open') {
       return res.status(400).json({
         success: false,
-        message: `Job is no longer open for offers (Current status: ${job.status})`,
+        message: `${OFFER_MESSAGES.jobNotOpen} (Current status: ${job.status})`,
       });
     }
 
@@ -611,7 +793,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     if (existingOffer.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'You have already submitted an active offer for this job',
+        message: OFFER_MESSAGES.duplicateActiveOffer,
       });
     }
 
@@ -623,14 +805,14 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
         job.id,
         transporterId,
         numericPrice,
-        estimatedDelivery || 'Standard Delivery Window',
+        estimatedDelivery || DEFAULT_OFFER_CONSTANTS.defaultDeliveryWindow,
         notes || '',
       ]
     );
 
     return res.status(201).json({
       success: true,
-      message: 'Transport offer submitted successfully to farmer',
+      message: OFFER_MESSAGES.submitSuccess,
       data: {
         offerId: insertResult.insertId,
         jobId: job.job_code || `#TR-${job.id}`,
@@ -648,6 +830,285 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
+/**
+ * GET /api/transporter/offers
+ * Fetches all transport offers submitted by the logged-in transporter
+ */
+export const getMyOffers = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const { status } = req.query;
+
+    let query = `
+      SELECT 
+        tof.id AS offer_id,
+        tof.job_id,
+        tof.quote_price,
+        tof.estimated_delivery,
+        tof.notes,
+        tof.status AS offer_status,
+        tof.created_at AS offer_created_at,
+        tj.id AS job_db_id,
+        tj.job_code,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee AS job_fee,
+        tj.scheduled_date,
+        tj.status AS job_status,
+        o.id AS order_id,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+      FROM transport_offers tof
+      JOIN transport_jobs tj ON tof.job_id = tj.id
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tof.transporter_id = ?
+    `;
+
+    const params: any[] = [transporterId];
+
+    if (status && typeof status === 'string' && status !== 'All') {
+      if (status === 'Submitted') {
+        query += ` AND tof.status IN ('Submitted', 'Under Review', 'Pending Farmer Approval')`;
+      } else if (status === 'Accepted') {
+        query += ` AND tof.status = 'Accepted'`;
+      } else {
+        query += ` AND tof.status = ?`;
+        params.push(status);
+      }
+    }
+
+    query += ` ORDER BY tof.created_at DESC`;
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    const offers = rows.map((row) => {
+      const schedule = formatJobSchedule(row.scheduled_date);
+      const createdAtDate = row.offer_created_at ? new Date(row.offer_created_at) : new Date();
+      const submittedDate = `${createdAtDate.getFullYear()}-${String(createdAtDate.getMonth() + 1).padStart(2, '0')}-${String(createdAtDate.getDate()).padStart(2, '0')}`;
+
+      return {
+        id: row.job_code || `Job #${row.job_id}`,
+        offerId: row.offer_id,
+        jobId: row.job_id,
+        jobCode: row.job_code,
+        title: DEFAULT_OFFER_CONSTANTS.defaultTitle,
+        cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+        weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+        route: `${row.pickup_location} → ${row.drop_location}`,
+        quotePrice: `Rs. ${Number(row.quote_price).toLocaleString()}`,
+        rawPrice: Number(row.quote_price),
+        estimatedDelivery: row.estimated_delivery || schedule.combinedStr,
+        notes: row.notes || DEFAULT_OFFER_CONSTANTS.defaultOfferNote,
+        submittedDate,
+        status: row.offer_status,
+        sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+        farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+        farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+        pickupLocation: row.pickup_location,
+        dropoffLocation: row.drop_location,
+        jobStatus: row.job_status,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: offers,
+      count: offers.length,
+    });
+  } catch (error: any) {
+    console.error('Error fetching transporter offers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transport offers',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /api/transporter/offers/:id
+ * Transporter withdraws a submitted offer
+ */
+export const withdrawOffer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+
+    // Search by offer id or matching job_id or job_code
+    let [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT tof.id, tof.status, tof.job_id, tj.job_code 
+       FROM transport_offers tof
+       JOIN transport_jobs tj ON tof.job_id = tj.id
+       WHERE tof.id = ? AND tof.transporter_id = ?`,
+      [id, transporterId]
+    );
+
+    // If not found by direct offer id, try by job_id or job_code
+    if (rows.length === 0) {
+      const cleanId = String(id).replace(/[^0-9]/g, '');
+      const jobCode = String(id).trim();
+
+      [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT tof.id, tof.status, tof.job_id, tj.job_code 
+         FROM transport_offers tof
+         JOIN transport_jobs tj ON tof.job_id = tj.id
+         WHERE (tof.job_id = ? OR tj.job_code = ? OR tj.id = ?) AND tof.transporter_id = ?`,
+        [cleanId || id, jobCode, cleanId || id, transporterId]
+      );
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: OFFER_MESSAGES.notFound,
+      });
+    }
+
+    const offer = rows[0];
+
+    if (offer.status === 'Accepted') {
+      return res.status(400).json({
+        success: false,
+        message: OFFER_MESSAGES.cannotWithdrawAccepted,
+      });
+    }
+
+    // Delete the offer record
+    await pool.query(
+      `DELETE FROM transport_offers WHERE id = ? AND transporter_id = ?`,
+      [offer.id, transporterId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: OFFER_MESSAGES.withdrawSuccess,
+      data: {
+        offerId: offer.id,
+        jobId: offer.job_id,
+        jobCode: offer.job_code,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error withdrawing transport offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to withdraw transport offer',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/offers/latest
+ * Fetches the latest submitted offer for the logged-in transporter (or for a specific job via ?jobId=...)
+ */
+export const getLatestOffer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const { jobId } = req.query;
+
+    let query = `
+      SELECT 
+        tof.id AS offer_id,
+        tof.job_id,
+        tof.quote_price,
+        tof.estimated_delivery,
+        tof.notes,
+        tof.status AS offer_status,
+        tof.created_at AS offer_created_at,
+        tj.id AS job_db_id,
+        tj.job_code,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee AS job_fee,
+        tj.scheduled_date,
+        tj.status AS job_status,
+        o.id AS order_id,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+      FROM transport_offers tof
+      JOIN transport_jobs tj ON tof.job_id = tj.id
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tof.transporter_id = ?
+    `;
+
+    const params: any[] = [transporterId];
+
+    if (jobId) {
+      const cleanJobId = String(jobId).replace(/[^0-9]/g, '');
+      const jobCode = String(jobId).trim();
+      query += ` AND (tof.job_id = ? OR tj.job_code = ? OR tj.id = ?)`;
+      params.push(cleanJobId || jobId, jobCode, cleanJobId || jobId);
+    }
+
+    query += ` ORDER BY tof.created_at DESC LIMIT 1`;
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: OFFER_SUBMITTED_CONSTANTS.noOfferFound,
+      });
+    }
+
+    const row = rows[0];
+    const schedule = formatJobSchedule(row.scheduled_date);
+    const createdAtDate = row.offer_created_at ? new Date(row.offer_created_at) : new Date();
+    const submittedDate = `${createdAtDate.getFullYear()}-${String(createdAtDate.getMonth() + 1).padStart(2, '0')}-${String(createdAtDate.getDate()).padStart(2, '0')}`;
+
+    const offer = {
+      id: row.job_code || `Job #${row.job_id}`,
+      offerId: row.offer_id,
+      jobId: row.job_id,
+      jobCode: row.job_code,
+      title: DEFAULT_OFFER_CONSTANTS.defaultTitle,
+      cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+      weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+      route: `${row.pickup_location} → ${row.drop_location}`,
+      quotePrice: `Rs. ${Number(row.quote_price).toLocaleString()}`,
+      rawPrice: Number(row.quote_price),
+      estimatedDelivery: row.estimated_delivery || schedule.combinedStr,
+      notes: row.notes || DEFAULT_OFFER_CONSTANTS.defaultOfferNote,
+      submittedDate,
+      status: row.offer_status,
+      statusLabel: `Offer Status: ${row.offer_status === 'Submitted' ? 'Under Review' : row.offer_status}`,
+      statusDescription: OFFER_SUBMITTED_CONSTANTS.defaultStatusDescription,
+      sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+      farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+      farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+      pickupLocation: row.pickup_location,
+      dropoffLocation: row.drop_location,
+      jobStatus: row.job_status,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: offer,
+    });
+  } catch (error: any) {
+    console.error('Error fetching latest offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch latest transport offer',
+      error: error.message,
+    });
+  }
+};
+
 
 /**
  * GET /api/transporter/jobs/active
@@ -656,6 +1117,8 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
 export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+
+    await ensurePickupColumnsExist();
 
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT 
@@ -668,6 +1131,9 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
         tj.fee,
         tj.scheduled_date,
         tj.created_at,
+        tj.pickup_timestamp,
+        tj.pickup_notes,
+        tj.proof_photo_url,
         o.id AS order_id,
         o.order_code,
         o.product_name,
@@ -723,6 +1189,9 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
       sellerPhone: row.seller_phone,
       sellerLocation: row.seller_location,
       pickupDate: schedule.combinedStr,
+      pickupTimestamp: row.pickup_timestamp || schedule.combinedStr,
+      pickupNotes: row.pickup_notes || undefined,
+      proofPhotoUri: row.proof_photo_url || undefined,
       specialInstructions: 'Handle with care. Keep cool. Arrive on schedule for market opening.',
       farmerRating: DEFAULT_JOB_METADATA.activeFarmerRating,
       eta: DEFAULT_JOB_METADATA.defaultEta,
@@ -819,51 +1288,107 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * PUT /api/transporter/profile
- * Updates transporter profile contact details and vehicle specifications
+ * Updates transporter profile contact details, vehicle specifications, and optional avatar
  */
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
-    const { name, phone, email, baseLocation, vehicleType, vehiclePlate } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      baseLocation,
+      vehicleType,
+      vehiclePlate,
+      avatarUrl,
+      avatarUri,
+    } = req.body;
 
     if (!name || name.trim() === '') {
-      return res.status(400).json({ success: false, message: 'Full name is required' });
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.missingName });
     }
+
+    if (phone && phone.trim().length < 9) {
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.invalidPhone });
+    }
+
+    if (email && (!email.includes('@') || !email.includes('.'))) {
+      return res.status(400).json({ success: false, message: PROFILE_VALIDATION_MESSAGES.invalidEmail });
+    }
+
+    const trimmedName = name.trim();
+    const trimmedPhone = phone ? phone.trim() : '';
+    const trimmedEmail = email ? email.trim() : '';
+    const trimmedLocation = baseLocation ? baseLocation.trim() : DEFAULT_TRANSPORTER_PROFILE.baseLocation;
+    const trimmedVehicle = vehicleType ? vehicleType.trim() : DEFAULT_TRANSPORTER_PROFILE.vehicleType;
+    const trimmedPlate = vehiclePlate ? vehiclePlate.trim().toUpperCase() : DEFAULT_TRANSPORTER_PROFILE.vehiclePlate;
 
     // 1. Update basic user details in users table
     await pool.query(
       `UPDATE users 
        SET name = ?, phone = COALESCE(?, phone), email = COALESCE(?, email), location = COALESCE(?, location)
        WHERE id = ? AND role = 'transporter'`,
-      [name.trim(), phone, email, baseLocation, transporterId]
+      [trimmedName, trimmedPhone || null, trimmedEmail || null, trimmedLocation, transporterId]
     );
 
-    // 2. Update vehicle specifications in transporter_profiles table
-    await pool.query(
-      `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE 
-         vehicle_type = COALESCE(?, vehicle_type),
-         vehicle_plate = COALESCE(?, vehicle_plate)`,
-      [
-        transporterId,
-        vehicleType || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
-        vehiclePlate || DEFAULT_TRANSPORTER_PROFILE.vehiclePlate,
-        vehicleType || null,
-        vehiclePlate || null,
-      ]
+    // 2. Update vehicle specifications & avatar in transporter_profiles table
+    const targetAvatar = avatarUrl !== undefined ? avatarUrl : avatarUri;
+    if (targetAvatar !== undefined) {
+      await pool.query(
+        `INSERT INTO transporter_profiles (user_id, avatar_url, vehicle_type, vehicle_plate)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+           avatar_url = VALUES(avatar_url),
+           vehicle_type = COALESCE(?, vehicle_type),
+           vehicle_plate = COALESCE(?, vehicle_plate)`,
+        [
+          transporterId,
+          targetAvatar || null,
+          trimmedVehicle,
+          trimmedPlate,
+          trimmedVehicle,
+          trimmedPlate,
+        ]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+           vehicle_type = COALESCE(?, vehicle_type),
+           vehicle_plate = COALESCE(?, vehicle_plate)`,
+        [
+          transporterId,
+          trimmedVehicle,
+          trimmedPlate,
+          trimmedVehicle,
+          trimmedPlate,
+        ]
+      );
+    }
+
+    // Fetch the final avatar_url to return in the response
+    const [profRows] = await pool.query<RowDataPacket[]>(
+      `SELECT avatar_url, rating, on_time_rate FROM transporter_profiles WHERE user_id = ?`,
+      [transporterId]
     );
+    const finalProf = profRows[0] || {};
 
     return res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        name: name.trim(),
-        phone,
-        email,
-        baseLocation,
-        vehicleType: vehicleType || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
-        vehiclePlate: vehiclePlate || DEFAULT_TRANSPORTER_PROFILE.vehiclePlate,
+        name: trimmedName,
+        greeting: 'Good morning,',
+        avatarLetter: trimmedName.charAt(0).toUpperCase(),
+        avatarUri: finalProf.avatar_url || undefined,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        baseLocation: trimmedLocation,
+        vehicleType: trimmedVehicle,
+        vehiclePlate: trimmedPlate,
+        rating: Number(finalProf.rating) || DEFAULT_TRANSPORTER_PROFILE.rating,
+        onTimeDeliveryRate: finalProf.on_time_rate || DEFAULT_TRANSPORTER_PROFILE.onTimeRate,
       },
     });
   } catch (error: any) {

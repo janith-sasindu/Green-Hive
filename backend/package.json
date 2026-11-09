@@ -15,7 +15,11 @@
     "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
     "test:notifications": "ts-node src/scripts/test-notifications-api.ts",
     "db:notification-settings": "ts-node src/scripts/setup-notification-settings-db.ts",
-    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts"
+    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts",
+    "test:edit-profile": "ts-node src/scripts/test-edit-profile-api.ts",
+    "test:my-offers": "ts-node src/scripts/test-my-offers-api.ts",
+    "test:offer-submitted": "ts-node src/scripts/test-offer-submitted-api.ts",
+    "test:confirm-pickup": "ts-node src/scripts/test-confirm-pickup-api.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

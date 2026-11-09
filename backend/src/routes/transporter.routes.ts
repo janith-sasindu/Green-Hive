@@ -2,10 +2,14 @@ import { Router } from 'express';
 import {
   getHomeScreenData,
   updateJobStatus,
+  confirmJobPickup,
   getAvailableJobs,
   getActiveJob,
   getJobById,
   submitJobOffer,
+  getMyOffers,
+  withdrawOffer,
+  getLatestOffer,
   getProfile,
   updateProfile,
   updateAvatar,
@@ -35,8 +39,15 @@ router.get('/jobs/available', getAvailableJobs);
 router.get('/jobs/:id', getJobById);
 router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
+// Transporter My Offers Endpoints
+router.get('/offers', authenticateToken, getMyOffers);
+router.get('/offers/latest', authenticateToken, getLatestOffer);
+router.delete('/offers/:id', authenticateToken, withdrawOffer);
+
 // Update Status (Confirm pickup / Confirm delivery)
 router.patch('/jobs/:id/status', authenticateToken, updateJobStatus);
+router.patch('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
+router.post('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
 
 // Profile Endpoints
 router.get('/profile', authenticateToken, getProfile);
