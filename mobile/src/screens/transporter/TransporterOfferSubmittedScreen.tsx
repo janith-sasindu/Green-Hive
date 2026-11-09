@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StatusBar,
   Modal,
   Switch,
+  Image,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +23,9 @@ import {
   MOCK_TRANSPORTER_PROFILE,
   AvailableTransportJob,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
+  OFFER_SUBMITTED_TEXTS,
+  OFFER_SUBMITTED_ALERTS,
 } from "./data";
 
 export interface TransporterOfferSubmittedScreenProps {
@@ -51,7 +55,14 @@ export const TransporterOfferSubmittedScreen: React.FC<
   const job = route?.params?.job || propJob;
 
   // State
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [submittedOffer, setSubmittedOffer] = useState<{
+    id?: string;
+    quotePrice?: string;
+    status?: string;
+    statusLabel?: string;
+    statusDescription?: string;
+  } | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -63,6 +74,43 @@ export const TransporterOfferSubmittedScreen: React.FC<
     secondaryButtonText?: string;
     onSecondaryPress?: () => void;
   } | null>(null);
+
+  // Fetch live transporter profile
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch(TRANSPORTER_API_ENDPOINTS.profile);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setProfile((prev) => ({
+          ...prev,
+          ...json.data,
+        }));
+      }
+    } catch (err) {
+      console.log("Error loading profile for offer submitted screen:", err);
+    }
+  }, []);
+
+  // Fetch latest submitted offer from backend
+  const fetchLatestOffer = useCallback(async () => {
+    try {
+      const endpoint = job?.id
+        ? TRANSPORTER_API_ENDPOINTS.jobOffer(job.id)
+        : TRANSPORTER_API_ENDPOINTS.latestOffer;
+      const response = await fetch(endpoint);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setSubmittedOffer(json.data);
+      }
+    } catch (err) {
+      console.log("Error loading latest offer from API:", err);
+    }
+  }, [job?.id]);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchLatestOffer();
+  }, [fetchProfile, fetchLatestOffer]);
 
   // Navigation handlers
   const handleBackToJobs = () => {
@@ -93,11 +141,11 @@ export const TransporterOfferSubmittedScreen: React.FC<
     setShowProfileModal(false);
     setAlertConfig({
       visible: true,
-      title: "Log Out",
-      message: "Are you sure you want to log out of your driver account?",
+      title: OFFER_SUBMITTED_ALERTS.logOut.title,
+      message: OFFER_SUBMITTED_ALERTS.logOut.message,
       type: "warning",
-      primaryButtonText: "Log Out",
-      secondaryButtonText: "Cancel",
+      primaryButtonText: OFFER_SUBMITTED_ALERTS.logOut.primaryButton,
+      secondaryButtonText: OFFER_SUBMITTED_ALERTS.logOut.secondaryButton,
       onPrimaryPress: () => {
         setAlertConfig(null);
         if (navigation?.canGoBack && navigation.canGoBack()) {
@@ -154,7 +202,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                   : "text-[20px]"
               }`}
             >
-              Submit Offer
+              {OFFER_SUBMITTED_TEXTS.headerTitle}
             </Text>
           </View>
 
@@ -179,22 +227,30 @@ export const TransporterOfferSubmittedScreen: React.FC<
               <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
             </TouchableOpacity>
 
-            {/* Profile Avatar Pill ("R") */}
+            {/* Profile Avatar Pill */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setShowProfileModal(true)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-2xs ${
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-2xs overflow-hidden ${
                 isExtraSmall ? "h-8 w-8" : isSmallDevice ? "h-8.5 w-8.5" : "h-9 w-9"
               }`}
             >
-              <Text
-                className={`text-white font-black ${
-                  isExtraSmall ? "text-xs" : isSmallDevice ? "text-xs" : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter}
-              </Text>
+              {profile.avatarUri ? (
+                <Image
+                  source={{ uri: profile.avatarUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`text-white font-black ${
+                    isExtraSmall ? "text-xs" : isSmallDevice ? "text-xs" : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -246,12 +302,12 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 : "text-[24px]"
             }`}
           >
-            Offer Submitted!
+            {OFFER_SUBMITTED_TEXTS.successTitle}
           </Text>
 
           {/* 3. Subtitle */}
           <Text className="text-xs sm:text-[13.5px] text-gray-500 dark:text-slate-400 font-medium text-center px-2 max-w-[320px] leading-relaxed">
-            The seller will review your offer and notify you of their decision.
+            {OFFER_SUBMITTED_TEXTS.successSubtitle}
           </Text>
 
           {/* 4. Yellow Status Box */}
@@ -267,10 +323,10 @@ export const TransporterOfferSubmittedScreen: React.FC<
             }}
           >
             <Text className="text-[13px] sm:text-sm font-bold text-[#D97706] dark:text-amber-400 mb-1">
-              Offer Status: Under Review
+              {submittedOffer?.statusLabel || OFFER_SUBMITTED_TEXTS.statusBox.title}
             </Text>
             <Text className="text-[11.5px] sm:text-xs text-[#D97706]/90 dark:text-amber-300 font-medium leading-snug">
-              You will be notified when the seller makes a decision
+              {submittedOffer?.statusDescription || OFFER_SUBMITTED_TEXTS.statusBox.subtitle}
             </Text>
           </View>
 
@@ -288,7 +344,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
             }}
           >
             <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
-              Back to Jobs
+              {OFFER_SUBMITTED_TEXTS.buttons.backToJobs}
             </Text>
           </TouchableOpacity>
 
@@ -305,7 +361,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
             className="mt-3.5 py-2 px-6 items-center justify-center"
           >
             <Text className="text-xs sm:text-[13px] font-bold text-[#E68A00] dark:text-amber-400">
-              View Submitted Transport Offers →
+              {OFFER_SUBMITTED_TEXTS.buttons.viewOffers}
             </Text>
           </TouchableOpacity>
         </View>
@@ -338,7 +394,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {OFFER_SUBMITTED_TEXTS.bottomTabs.home}
             </Text>
           </TouchableOpacity>
 
@@ -358,7 +414,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-bold text-[#E68A00]`}
             >
-              Jobs
+              {OFFER_SUBMITTED_TEXTS.bottomTabs.jobs}
             </Text>
             {/* Active Indicator Bar */}
             <View className="h-0.5 w-4 bg-[#E68A00] rounded-full mt-0.5" />
@@ -380,7 +436,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {OFFER_SUBMITTED_TEXTS.bottomTabs.active}
             </Text>
           </TouchableOpacity>
 
@@ -400,7 +456,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {OFFER_SUBMITTED_TEXTS.bottomTabs.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -419,7 +475,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Driver Profile
+              {OFFER_SUBMITTED_TEXTS.profileModal.title}
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
@@ -444,17 +500,25 @@ export const TransporterOfferSubmittedScreen: React.FC<
               {/* Driver Card */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
                 <View
-                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
+                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 overflow-hidden ${
                     isSmallDevice ? "h-14 w-14" : "h-16 w-16"
                   }`}
                 >
-                  <Text
-                    className={`font-black text-white ${
-                      isSmallDevice ? "text-xl" : "text-2xl"
-                    }`}
-                  >
-                    {profile.avatarLetter}
-                  </Text>
+                  {profile.avatarUri ? (
+                    <Image
+                      source={{ uri: profile.avatarUri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text
+                      className={`font-black text-white ${
+                        isSmallDevice ? "text-xl" : "text-2xl"
+                      }`}
+                    >
+                      {profile.avatarLetter}
+                    </Text>
+                  )}
                 </View>
                 <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
                   {profile.name}
@@ -463,28 +527,28 @@ export const TransporterOfferSubmittedScreen: React.FC<
                   {profile.email}
                 </Text>
                 <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
-                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                  Completed Trips)
+                  ⭐ {profile.rating.toFixed(1)} {OFFER_SUBMITTED_TEXTS.profileModal.ratingSuffix} ({profile.completedJobs}{" "}
+                  {OFFER_SUBMITTED_TEXTS.profileModal.completedTripsSuffix})
                 </Text>
               </View>
 
               {/* Vehicle details */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
-                  Registered Vehicle
+                  {OFFER_SUBMITTED_TEXTS.profileModal.registeredVehicleSection}
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    🚚 <Text className="font-semibold">{OFFER_SUBMITTED_TEXTS.profileModal.typeLabel}</Text>{" "}
                     {profile.vehicleType}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    🔢 <Text className="font-semibold">{OFFER_SUBMITTED_TEXTS.profileModal.plateLabel}</Text>{" "}
                     {profile.vehiclePlate}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                    Verified
+                    🛡️ <Text className="font-semibold">{OFFER_SUBMITTED_TEXTS.profileModal.statusLabel}</Text>{" "}
+                    {OFFER_SUBMITTED_TEXTS.profileModal.verifiedBadge}
                   </Text>
                 </View>
               </View>
@@ -502,10 +566,12 @@ export const TransporterOfferSubmittedScreen: React.FC<
                     </View>
                     <View>
                       <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                        Dark Mode
+                        {OFFER_SUBMITTED_TEXTS.profileModal.darkModeTitle}
                       </Text>
                       <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                        {isDark
+                          ? OFFER_SUBMITTED_TEXTS.profileModal.darkModeActive
+                          : OFFER_SUBMITTED_TEXTS.profileModal.lightModeActive}
                       </Text>
                     </View>
                   </View>
@@ -513,7 +579,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                     value={isDark}
                     onValueChange={toggleDarkMode}
                     trackColor={{ false: "#D1D5DB", true: "#E68A00" }}
-                    thumbColor={isDark ? "#FFFFFF" : "#FFFFFF"}
+                    thumbColor="#FFFFFF"
                   />
                 </View>
               </View>
@@ -525,7 +591,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
                 className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3 sm:py-3.5 items-center justify-center mt-2"
               >
                 <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                  Log Out of Transporter Account
+                  {OFFER_SUBMITTED_TEXTS.profileModal.logOutButton}
                 </Text>
               </TouchableOpacity>
             </View>
