@@ -22,6 +22,9 @@ import {
   SUPPORT_MESSAGES,
   DEFAULT_SUPPORT_CATEGORIES,
   DEFAULT_SUPPORT_TICKETS,
+  VEHICLE_LICENSE_MESSAGES,
+  DEFAULT_VEHICLE_LICENSE,
+  VEHICLE_TYPE_PRESETS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -156,6 +159,107 @@ export async function ensureSupportTicketsTableExists(): Promise<void> {
     supportTicketsTableChecked = true;
   } catch (err) {
     console.warn('Note: Could not ensure transporter_support_tickets table:', err);
+  }
+}
+
+let vehicleLicenseTableChecked = false;
+export async function ensureVehicleLicenseTableExists(): Promise<void> {
+  if (vehicleLicenseTableChecked) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS transporter_vehicle_license (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        transporter_id INT NOT NULL UNIQUE,
+        license_number VARCHAR(50) NOT NULL,
+        license_expiry VARCHAR(50) DEFAULT '14/03/2028',
+        license_issue_date VARCHAR(50) DEFAULT '15/03/2018',
+        license_categories TEXT DEFAULT NULL,
+        nic_number VARCHAR(50) DEFAULT '198923401234',
+        blood_group VARCHAR(10) DEFAULT 'O+',
+        license_front_photo_url TEXT DEFAULT NULL,
+        license_back_photo_url TEXT DEFAULT NULL,
+        license_status VARCHAR(50) DEFAULT 'Verified',
+        vehicle_type VARCHAR(100) DEFAULT 'Lorry - 3 Ton',
+        vehicle_plate VARCHAR(50) DEFAULT 'WP-LH-4821',
+        vehicle_make_model VARCHAR(100) DEFAULT 'Isuzu Elf NPR 71',
+        vehicle_year VARCHAR(20) DEFAULT '2020',
+        vehicle_color VARCHAR(50) DEFAULT 'Polar White',
+        max_capacity_kg INT DEFAULT 3000,
+        cargo_dimensions VARCHAR(100) DEFAULT '14.5 ft × 6.2 ft × 6.0 ft',
+        fuel_type VARCHAR(50) DEFAULT 'Diesel',
+        refrigerated TINYINT(1) DEFAULT 0,
+        vehicle_photo_url TEXT DEFAULT NULL,
+        revenue_license_no VARCHAR(50) DEFAULT 'RL-2025-98321',
+        revenue_license_expiry VARCHAR(50) DEFAULT '30/11/2026',
+        insurance_provider VARCHAR(150) DEFAULT 'Sri Lanka Insurance Corporation (SLIC)',
+        insurance_policy_no VARCHAR(100) DEFAULT 'SLIC-CV-783921',
+        insurance_expiry VARCHAR(50) DEFAULT '15/01/2027',
+        emission_cert_status VARCHAR(50) DEFAULT 'Passed',
+        emission_cert_expiry VARCHAR(50) DEFAULT '24/10/2026',
+        verification_date VARCHAR(50) DEFAULT '12 Jan 2026',
+        verification_status VARCHAR(50) DEFAULT 'Verified',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (transporter_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Seed default record for Transporter 7 if not exists
+    const [existing] = await pool.query<RowDataPacket[]>(
+      `SELECT id FROM transporter_vehicle_license WHERE transporter_id = ? LIMIT 1`,
+      [DEFAULT_TRANSPORTER_ID]
+    );
+
+    if (existing.length === 0) {
+      await pool.query(
+        `INSERT INTO transporter_vehicle_license (
+          transporter_id, license_number, license_expiry, license_issue_date,
+          license_categories, nic_number, blood_group, license_front_photo_url,
+          license_back_photo_url, license_status, vehicle_type, vehicle_plate,
+          vehicle_make_model, vehicle_year, vehicle_color, max_capacity_kg,
+          cargo_dimensions, fuel_type, refrigerated, vehicle_photo_url,
+          revenue_license_no, revenue_license_expiry, insurance_provider,
+          insurance_policy_no, insurance_expiry, emission_cert_status,
+          emission_cert_expiry, verification_date, verification_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE transporter_id = transporter_id`,
+        [
+          DEFAULT_TRANSPORTER_ID,
+          DEFAULT_VEHICLE_LICENSE.licenseNumber,
+          DEFAULT_VEHICLE_LICENSE.licenseExpiry,
+          DEFAULT_VEHICLE_LICENSE.licenseIssueDate,
+          JSON.stringify(DEFAULT_VEHICLE_LICENSE.licenseCategories),
+          DEFAULT_VEHICLE_LICENSE.nicNumber,
+          DEFAULT_VEHICLE_LICENSE.bloodGroup,
+          DEFAULT_VEHICLE_LICENSE.licenseFrontPhotoUri,
+          DEFAULT_VEHICLE_LICENSE.licenseBackPhotoUri,
+          DEFAULT_VEHICLE_LICENSE.licenseStatus,
+          DEFAULT_VEHICLE_LICENSE.vehicleType,
+          DEFAULT_VEHICLE_LICENSE.vehiclePlate,
+          DEFAULT_VEHICLE_LICENSE.vehicleMakeModel,
+          DEFAULT_VEHICLE_LICENSE.vehicleYear,
+          DEFAULT_VEHICLE_LICENSE.vehicleColor,
+          DEFAULT_VEHICLE_LICENSE.maxCapacityKg,
+          DEFAULT_VEHICLE_LICENSE.cargoDimensions,
+          DEFAULT_VEHICLE_LICENSE.fuelType,
+          DEFAULT_VEHICLE_LICENSE.refrigerated ? 1 : 0,
+          DEFAULT_VEHICLE_LICENSE.vehiclePhotoUri,
+          DEFAULT_VEHICLE_LICENSE.revenueLicenseNo,
+          DEFAULT_VEHICLE_LICENSE.revenueLicenseExpiry,
+          DEFAULT_VEHICLE_LICENSE.insuranceProvider,
+          DEFAULT_VEHICLE_LICENSE.insurancePolicyNo,
+          DEFAULT_VEHICLE_LICENSE.insuranceExpiry,
+          DEFAULT_VEHICLE_LICENSE.emissionCertificateStatus,
+          DEFAULT_VEHICLE_LICENSE.emissionCertificateExpiry,
+          DEFAULT_VEHICLE_LICENSE.verificationDate,
+          DEFAULT_VEHICLE_LICENSE.verificationStatus,
+        ]
+      ).catch(() => {});
+    }
+
+    vehicleLicenseTableChecked = true;
+  } catch (err) {
+    console.warn('Note: Could not ensure transporter_vehicle_license table:', err);
   }
 }
 
@@ -2256,6 +2360,231 @@ export const createSupportTicket = async (req: AuthenticatedRequest, res: Respon
     return res.status(500).json({
       success: false,
       message: SUPPORT_MESSAGES.failedSubmit,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/vehicle-license
+ * Fetches vehicle specifications, license details, and permits for the transporter
+ */
+export const getVehicleLicense = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    await ensureVehicleLicenseTableExists();
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        tvl.*,
+        u.name AS user_name,
+        tp.vehicle_type AS profile_vehicle_type,
+        tp.vehicle_plate AS profile_vehicle_plate
+       FROM users u
+       LEFT JOIN transporter_vehicle_license tvl ON u.id = tvl.transporter_id
+       LEFT JOIN transporter_profiles tp ON u.id = tp.user_id
+       WHERE u.id = ?`,
+      [transporterId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: VEHICLE_LICENSE_MESSAGES.transporterNotFound,
+      });
+    }
+
+    const row = rows[0];
+
+    let categories = DEFAULT_VEHICLE_LICENSE.licenseCategories;
+    if (row.license_categories) {
+      try {
+        categories = typeof row.license_categories === 'string'
+          ? JSON.parse(row.license_categories)
+          : row.license_categories;
+      } catch {
+        categories = DEFAULT_VEHICLE_LICENSE.licenseCategories;
+      }
+    }
+
+    const vehicleLicenseData = {
+      driverName: row.user_name || DEFAULT_VEHICLE_LICENSE.driverName,
+      licenseNumber: row.license_number || DEFAULT_VEHICLE_LICENSE.licenseNumber,
+      licenseExpiry: row.license_expiry || DEFAULT_VEHICLE_LICENSE.licenseExpiry,
+      licenseIssueDate: row.license_issue_date || DEFAULT_VEHICLE_LICENSE.licenseIssueDate,
+      licenseCategories: categories,
+      nicNumber: row.nic_number || DEFAULT_VEHICLE_LICENSE.nicNumber,
+      bloodGroup: row.blood_group || DEFAULT_VEHICLE_LICENSE.bloodGroup,
+      licenseFrontPhotoUri: row.license_front_photo_url || DEFAULT_VEHICLE_LICENSE.licenseFrontPhotoUri,
+      licenseBackPhotoUri: row.license_back_photo_url || DEFAULT_VEHICLE_LICENSE.licenseBackPhotoUri,
+      licenseStatus: row.license_status || DEFAULT_VEHICLE_LICENSE.licenseStatus,
+
+      vehicleType: row.vehicle_type || row.profile_vehicle_type || DEFAULT_VEHICLE_LICENSE.vehicleType,
+      vehiclePlate: row.vehicle_plate || row.profile_vehicle_plate || DEFAULT_VEHICLE_LICENSE.vehiclePlate,
+      vehicleMakeModel: row.vehicle_make_model || DEFAULT_VEHICLE_LICENSE.vehicleMakeModel,
+      vehicleYear: row.vehicle_year || DEFAULT_VEHICLE_LICENSE.vehicleYear,
+      vehicleColor: row.vehicle_color || DEFAULT_VEHICLE_LICENSE.vehicleColor,
+      maxCapacityKg: Number(row.max_capacity_kg) || DEFAULT_VEHICLE_LICENSE.maxCapacityKg,
+      cargoDimensions: row.cargo_dimensions || DEFAULT_VEHICLE_LICENSE.cargoDimensions,
+      fuelType: row.fuel_type || DEFAULT_VEHICLE_LICENSE.fuelType,
+      refrigerated: Boolean(row.refrigerated),
+      vehiclePhotoUri: row.vehicle_photo_url || DEFAULT_VEHICLE_LICENSE.vehiclePhotoUri,
+
+      revenueLicenseNo: row.revenue_license_no || DEFAULT_VEHICLE_LICENSE.revenueLicenseNo,
+      revenueLicenseExpiry: row.revenue_license_expiry || DEFAULT_VEHICLE_LICENSE.revenueLicenseExpiry,
+      insuranceProvider: row.insurance_provider || DEFAULT_VEHICLE_LICENSE.insuranceProvider,
+      insurancePolicyNo: row.insurance_policy_no || DEFAULT_VEHICLE_LICENSE.insurancePolicyNo,
+      insuranceExpiry: row.insurance_expiry || DEFAULT_VEHICLE_LICENSE.insuranceExpiry,
+      emissionCertificateStatus: row.emission_cert_status || DEFAULT_VEHICLE_LICENSE.emissionCertificateStatus,
+      emissionCertificateExpiry: row.emission_cert_expiry || DEFAULT_VEHICLE_LICENSE.emissionCertificateExpiry,
+      verificationDate: row.verification_date || DEFAULT_VEHICLE_LICENSE.verificationDate,
+      verificationStatus: row.verification_status || DEFAULT_VEHICLE_LICENSE.verificationStatus,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: VEHICLE_LICENSE_MESSAGES.fetchSuccess,
+      data: vehicleLicenseData,
+    });
+  } catch (err: any) {
+    console.error('Error fetching vehicle and license details:', err);
+    return res.status(500).json({
+      success: false,
+      message: VEHICLE_LICENSE_MESSAGES.failedFetch,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/transporter/vehicle-license
+ * Updates vehicle specifications and driving license information
+ */
+export const updateVehicleLicense = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const {
+      licenseNumber,
+      licenseExpiry,
+      vehiclePlate,
+      vehicleType,
+      vehicleMakeModel,
+      maxCapacityKg,
+    } = req.body;
+
+    if (!vehiclePlate || !licenseNumber || !vehicleType) {
+      return res.status(400).json({
+        success: false,
+        message: VEHICLE_LICENSE_MESSAGES.missingRequiredSpecs,
+      });
+    }
+
+    await ensureVehicleLicenseTableExists();
+
+    const finalPlate = vehiclePlate.trim().toUpperCase();
+    const finalLicenseNo = licenseNumber.trim().toUpperCase();
+    const finalVehicleType = vehicleType.trim();
+    const finalLicenseExpiry = licenseExpiry ? licenseExpiry.trim() : DEFAULT_VEHICLE_LICENSE.licenseExpiry;
+    const finalMakeModel = vehicleMakeModel ? vehicleMakeModel.trim() : DEFAULT_VEHICLE_LICENSE.vehicleMakeModel;
+    const finalCapacity = parseInt(String(maxCapacityKg), 10) || DEFAULT_VEHICLE_LICENSE.maxCapacityKg;
+
+    // 1. Upsert into transporter_vehicle_license
+    await pool.query(
+      `INSERT INTO transporter_vehicle_license (
+        transporter_id, license_number, license_expiry, vehicle_plate, vehicle_type, vehicle_make_model, max_capacity_kg
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        license_number = VALUES(license_number),
+        license_expiry = VALUES(license_expiry),
+        vehicle_plate = VALUES(vehicle_plate),
+        vehicle_type = VALUES(vehicle_type),
+        vehicle_make_model = VALUES(vehicle_make_model),
+        max_capacity_kg = VALUES(max_capacity_kg)`,
+      [transporterId, finalLicenseNo, finalLicenseExpiry, finalPlate, finalVehicleType, finalMakeModel, finalCapacity]
+    );
+
+    // 2. Keep transporter_profiles vehicle_type and vehicle_plate in sync
+    await pool.query(
+      `INSERT INTO transporter_profiles (user_id, vehicle_type, vehicle_plate)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         vehicle_type = VALUES(vehicle_type),
+         vehicle_plate = VALUES(vehicle_plate)`,
+      [transporterId, finalVehicleType, finalPlate]
+    ).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: VEHICLE_LICENSE_MESSAGES.updateSuccess,
+      data: {
+        licenseNumber: finalLicenseNo,
+        licenseExpiry: finalLicenseExpiry,
+        vehiclePlate: finalPlate,
+        vehicleType: finalVehicleType,
+        vehicleMakeModel: finalMakeModel,
+        maxCapacityKg: finalCapacity,
+      },
+    });
+  } catch (err: any) {
+    console.error('Error updating vehicle and license details:', err);
+    return res.status(500).json({
+      success: false,
+      message: VEHICLE_LICENSE_MESSAGES.failedUpdate,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * POST or PATCH /api/transporter/vehicle-license/documents
+ * Updates document photo URIs (licenseFront, licenseBack, or vehicle)
+ */
+export const updateVehicleLicenseDocument = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const { target, uri, photoUri, photoUrl } = req.body;
+
+    const finalPhoto = uri || photoUri || photoUrl;
+    if (!finalPhoto || !finalPhoto.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: VEHICLE_LICENSE_MESSAGES.missingDocumentPhoto,
+      });
+    }
+
+    if (!['licenseFront', 'licenseBack', 'vehicle'].includes(target)) {
+      return res.status(400).json({
+        success: false,
+        message: VEHICLE_LICENSE_MESSAGES.invalidTarget,
+      });
+    }
+
+    await ensureVehicleLicenseTableExists();
+
+    let column = 'vehicle_photo_url';
+    if (target === 'licenseFront') column = 'license_front_photo_url';
+    if (target === 'licenseBack') column = 'license_back_photo_url';
+
+    await pool.query(
+      `UPDATE transporter_vehicle_license 
+       SET ${column} = ?
+       WHERE transporter_id = ?`,
+      [finalPhoto.trim(), transporterId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: VEHICLE_LICENSE_MESSAGES.documentUploadSuccess,
+      data: {
+        target,
+        uri: finalPhoto.trim(),
+      },
+    });
+  } catch (err: any) {
+    console.error('Error updating document photo:', err);
+    return res.status(500).json({
+      success: false,
+      message: VEHICLE_LICENSE_MESSAGES.failedDocUpload,
       error: err.message,
     });
   }

@@ -206,4 +206,51 @@ export const DEFAULT_SUPPORT_TICKETS = [
   },
 ];
 
+export const VEHICLE_LICENSE_MESSAGES = {
+  fetchSuccess: 'Vehicle and driver license details fetched successfully',
+  updateSuccess: 'Vehicle specifications and driving license information updated successfully',
+  documentUploadSuccess: 'Document updated and submitted for fleet safety verification',
+  missingRequiredSpecs: 'Vehicle license number, vehicle plate, and vehicle type are required',
+  invalidTarget: 'Invalid document target. Must be licenseFront, licenseBack, or vehicle',
+  missingDocumentPhoto: 'Document photo URI or URL is required',
+  transporterNotFound: 'Transporter profile not found',
+  failedUpdate: 'Failed to update vehicle and license details',
+  failedFetch: 'Failed to fetch vehicle and license details',
+  failedDocUpload: 'Failed to upload document photo',
+};
+
+export const DEFAULT_VEHICLE_LICENSE = {
+  driverName: 'Nimal Bandara',
+  licenseNumber: 'B3849201',
+  licenseExpiry: '14/03/2028',
+  licenseIssueDate: '15/03/2018',
+  licenseCategories: ['B (Dual Purpose)', 'C1 (Light Lorry)', 'C (Heavy Lorry 3T+)'],
+  nicNumber: '198923401234',
+  bloodGroup: 'O+',
+  licenseFrontPhotoUri: 'https://images.unsplash.com/photo-1589330694653-dad6d3240a2b?auto=format&fit=crop&w=800&q=80',
+  licenseBackPhotoUri: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+  licenseStatus: 'Verified',
+
+  vehicleType: 'Lorry - 3 Ton',
+  vehiclePlate: 'WP-LH-4821',
+  vehicleMakeModel: 'Isuzu Elf NPR 71',
+  vehicleYear: '2020',
+  vehicleColor: 'Polar White',
+  maxCapacityKg: 3000,
+  cargoDimensions: '14.5 ft × 6.2 ft × 6.0 ft',
+  fuelType: 'Diesel',
+  refrigerated: false,
+  vehiclePhotoUri: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80',
+
+  revenueLicenseNo: 'RL-2025-98321',
+  revenueLicenseExpiry: '30/11/2026',
+  insuranceProvider: 'Sri Lanka Insurance Corporation (SLIC)',
+  insurancePolicyNo: 'SLIC-CV-783921',
+  insuranceExpiry: '15/01/2027',
+  emissionCertificateStatus: 'Passed',
+  emissionCertificateExpiry: '24/10/2026',
+  verificationDate: '12 Jan 2026',
+  verificationStatus: 'Verified',
+};
+
 

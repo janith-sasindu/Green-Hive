@@ -24,6 +24,9 @@ import {
   updateNotificationSettings,
   getSupportTickets,
   createSupportTicket,
+  getVehicleLicense,
+  updateVehicleLicense,
+  updateVehicleLicenseDocument,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -79,5 +82,11 @@ router.put('/notification-settings', authenticateToken, updateNotificationSettin
 // Help & Support Endpoints
 router.get('/support/tickets', authenticateToken, getSupportTickets);
 router.post('/support/tickets', authenticateToken, createSupportTicket);
+
+// Vehicle & Driver License Endpoints
+router.get('/vehicle-license', authenticateToken, getVehicleLicense);
+router.put('/vehicle-license', authenticateToken, updateVehicleLicense);
+router.post('/vehicle-license/documents', authenticateToken, updateVehicleLicenseDocument);
+router.patch('/vehicle-license/documents', authenticateToken, updateVehicleLicenseDocument);
 
 export default router;
