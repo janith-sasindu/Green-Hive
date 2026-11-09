@@ -27,5 +27,7 @@ export const TRANSPORTER_API_ENDPOINTS = {
   notificationSettings: `${TRANSPORTER_API_BASE_URL}/notification-settings`,
   offers: `${TRANSPORTER_API_BASE_URL}/offers`,
   withdrawOffer: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/${id}`,
+  latestOffer: `${TRANSPORTER_API_BASE_URL}/offers/latest`,
+  jobOffer: (jobId: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/latest?jobId=${jobId}`,
 };
 

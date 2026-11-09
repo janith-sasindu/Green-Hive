@@ -11,6 +11,7 @@ import {
   PROFILE_VALIDATION_MESSAGES,
   OFFER_MESSAGES,
   DEFAULT_OFFER_CONSTANTS,
+  OFFER_SUBMITTED_CONSTANTS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -820,6 +821,111 @@ export const withdrawOffer = async (req: AuthenticatedRequest, res: Response) =>
     return res.status(500).json({
       success: false,
       message: 'Failed to withdraw transport offer',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/offers/latest
+ * Fetches the latest submitted offer for the logged-in transporter (or for a specific job via ?jobId=...)
+ */
+export const getLatestOffer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const { jobId } = req.query;
+
+    let query = `
+      SELECT 
+        tof.id AS offer_id,
+        tof.job_id,
+        tof.quote_price,
+        tof.estimated_delivery,
+        tof.notes,
+        tof.status AS offer_status,
+        tof.created_at AS offer_created_at,
+        tj.id AS job_db_id,
+        tj.job_code,
+        tj.pickup_location,
+        tj.drop_location,
+        tj.vehicle_type,
+        tj.fee AS job_fee,
+        tj.scheduled_date,
+        tj.status AS job_status,
+        o.id AS order_id,
+        o.product_name,
+        o.quantity,
+        u_farmer.name AS farmer_name,
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
+      FROM transport_offers tof
+      JOIN transport_jobs tj ON tof.job_id = tj.id
+      JOIN orders o ON tj.order_id = o.id
+      LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+      LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+      WHERE tof.transporter_id = ?
+    `;
+
+    const params: any[] = [transporterId];
+
+    if (jobId) {
+      const cleanJobId = String(jobId).replace(/[^0-9]/g, '');
+      const jobCode = String(jobId).trim();
+      query += ` AND (tof.job_id = ? OR tj.job_code = ? OR tj.id = ?)`;
+      params.push(cleanJobId || jobId, jobCode, cleanJobId || jobId);
+    }
+
+    query += ` ORDER BY tof.created_at DESC LIMIT 1`;
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: OFFER_SUBMITTED_CONSTANTS.noOfferFound,
+      });
+    }
+
+    const row = rows[0];
+    const schedule = formatJobSchedule(row.scheduled_date);
+    const createdAtDate = row.offer_created_at ? new Date(row.offer_created_at) : new Date();
+    const submittedDate = `${createdAtDate.getFullYear()}-${String(createdAtDate.getMonth() + 1).padStart(2, '0')}-${String(createdAtDate.getDate()).padStart(2, '0')}`;
+
+    const offer = {
+      id: row.job_code || `Job #${row.job_id}`,
+      offerId: row.offer_id,
+      jobId: row.job_id,
+      jobCode: row.job_code,
+      title: DEFAULT_OFFER_CONSTANTS.defaultTitle,
+      cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+      weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+      route: `${row.pickup_location} → ${row.drop_location}`,
+      quotePrice: `Rs. ${Number(row.quote_price).toLocaleString()}`,
+      rawPrice: Number(row.quote_price),
+      estimatedDelivery: row.estimated_delivery || schedule.combinedStr,
+      notes: row.notes || DEFAULT_OFFER_CONSTANTS.defaultOfferNote,
+      submittedDate,
+      status: row.offer_status,
+      statusLabel: `Offer Status: ${row.offer_status === 'Submitted' ? 'Under Review' : row.offer_status}`,
+      statusDescription: OFFER_SUBMITTED_CONSTANTS.defaultStatusDescription,
+      sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+      farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+      farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+      pickupLocation: row.pickup_location,
+      dropoffLocation: row.drop_location,
+      jobStatus: row.job_status,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: offer,
+    });
+  } catch (error: any) {
+    console.error('Error fetching latest offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch latest transport offer',
       error: error.message,
     });
   }

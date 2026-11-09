@@ -102,3 +102,11 @@ export const DEFAULT_OFFER_CONSTANTS = {
   defaultDeliveryWindow: 'Standard Delivery Window',
   defaultOfferNote: 'I have vehicle ready for safe agricultural transit.',
 };
+
+export const OFFER_SUBMITTED_CONSTANTS = {
+  defaultStatusLabel: 'Offer Status: Under Review',
+  defaultStatusDescription: 'You will be notified when the seller makes a decision',
+  successTitle: 'Offer Submitted!',
+  successDescription: 'The seller will review your offer and notify you of their decision.',
+  noOfferFound: 'No submitted offer found for this job',
+};

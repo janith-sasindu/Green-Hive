@@ -8,6 +8,7 @@ import {
   submitJobOffer,
   getMyOffers,
   withdrawOffer,
+  getLatestOffer,
   getProfile,
   updateProfile,
   updateAvatar,
@@ -39,6 +40,7 @@ router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
 // Transporter My Offers Endpoints
 router.get('/offers', authenticateToken, getMyOffers);
+router.get('/offers/latest', authenticateToken, getLatestOffer);
 router.delete('/offers/:id', authenticateToken, withdrawOffer);
 
 // Update Status (Confirm pickup / Confirm delivery)
