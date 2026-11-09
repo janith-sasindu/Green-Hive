@@ -6,3 +6,4 @@ export * from './offerSubmittedData';
 export * from './submitOfferData';
 export * from './confirmPickupData';
 export * from './confirmDeliveryData';
+export * from './bankDetailsData';
