@@ -18,6 +18,7 @@ export const TRANSPORTER_API_ENDPOINTS = {
   jobDetails: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}`,
   jobOffers: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/offers`,
   jobStatus: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/status`,
+  confirmPickup: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/pickup`,
   profile: `${TRANSPORTER_API_BASE_URL}/profile`,
   avatar: `${TRANSPORTER_API_BASE_URL}/profile/avatar`,
   bankDetails: `${TRANSPORTER_API_BASE_URL}/bank-details`,
