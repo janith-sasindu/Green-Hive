@@ -63,6 +63,7 @@ router.delete('/profile/avatar', authenticateToken, removeAvatar);
 // Bank Details Endpoints
 router.get('/bank-details', authenticateToken, getBankDetails);
 router.put('/bank-details', authenticateToken, updateBankDetails);
+router.post('/bank-details', authenticateToken, updateBankDetails);
 
 // Notification Endpoints
 router.get('/notifications', authenticateToken, getNotifications);

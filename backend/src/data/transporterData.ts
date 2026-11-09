@@ -37,15 +37,43 @@ export const PROFILE_VALIDATION_MESSAGES = {
   missingVehiclePlate: 'Vehicle license plate is required',
 };
 
-export const DEFAULT_BANK_DETAILS = {
-  accountHolderName: 'Transporter',
-  bankName: 'Commercial Bank of Ceylon',
-  branchName: 'Colombo Main Branch',
-  branchCode: '014',
-  accountNumber: '8004529104',
-  accountType: 'Savings Account',
-  isVerified: true,
+export const BANK_DETAILS_MESSAGES = {
+  notFound: 'Transporter not found',
+  fetchSuccess: 'Bank account details retrieved successfully',
+  fetchFailed: 'Failed to fetch bank account details',
+  updateSuccess: 'Bank details saved successfully',
+  updateFailed: 'Failed to update bank details',
+  validationError: 'Account holder name, bank name, branch name, and account number are required',
+  invalidAccountNumber: 'Please enter a valid bank account number (at least 6 digits)',
 };
+
+export const DEFAULT_BANK_DETAILS = {
+  accountHolderName: 'Nimal Bandara',
+  bankName: 'Commercial Bank of Ceylon',
+  branchName: 'Colombo Fort Branch',
+  branchCode: '016',
+  accountNumber: '8204918234',
+  accountType: 'Savings',
+  isVerified: true,
+  verificationStatus: 'Verified',
+  payoutMethod: 'Direct Bank Transfer (LANKAQR / SLIPS)',
+  notes: 'Primary account for Green-Hive trip payouts and toll reimbursements.',
+};
+
+export const POPULAR_SRI_LANKAN_BANKS = [
+  'Commercial Bank of Ceylon',
+  'Bank of Ceylon (BOC)',
+  'People\'s Bank',
+  'Hatton National Bank (HNB)',
+  'Sampath Bank',
+  'National Development Bank (NDB)',
+  'DFCC Bank',
+  'Seylan Bank',
+  'Nations Trust Bank (NTB)',
+  'Amana Bank',
+];
+
+export const BANK_ACCOUNT_TYPES = ['Savings', 'Current'];
 
 export const DEFAULT_NOTIFICATION_SETTINGS = {
   newJobsPush: true,

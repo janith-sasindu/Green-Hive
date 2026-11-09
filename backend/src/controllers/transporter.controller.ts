@@ -5,6 +5,9 @@ import {
   DEFAULT_TRANSPORTER_ID,
   DEFAULT_TRANSPORTER_PROFILE,
   DEFAULT_BANK_DETAILS,
+  BANK_DETAILS_MESSAGES,
+  POPULAR_SRI_LANKAN_BANKS,
+  BANK_ACCOUNT_TYPES,
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_JOB_METADATA,
   DEFAULT_STAT_FALLBACKS,
@@ -78,6 +81,32 @@ export async function ensureDeliveryColumnsExist(): Promise<void> {
     deliveryColumnsChecked = true;
   } catch (err) {
     console.warn('Note: Could not verify transport_jobs delivery columns:', err);
+  }
+}
+
+let bankDetailsTableChecked = false;
+export async function ensureBankDetailsTableExists(): Promise<void> {
+  if (bankDetailsTableChecked) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS transporter_bank_details (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        transporter_id INT NOT NULL UNIQUE,
+        account_holder_name VARCHAR(150) NOT NULL,
+        bank_name VARCHAR(100) NOT NULL,
+        branch_name VARCHAR(100) NOT NULL,
+        branch_code VARCHAR(20) DEFAULT '014',
+        account_number VARCHAR(50) NOT NULL,
+        account_type VARCHAR(30) DEFAULT 'Savings',
+        is_verified TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (transporter_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+    bankDetailsTableChecked = true;
+  } catch (err) {
+    console.warn('Note: Could not ensure transporter_bank_details table:', err);
   }
 }
 
@@ -1656,6 +1685,8 @@ export const getBankDetails = async (req: AuthenticatedRequest, res: Response) =
   try {
     const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
 
+    await ensureBankDetailsTableExists();
+
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT 
         tbd.account_holder_name,
@@ -1673,10 +1704,11 @@ export const getBankDetails = async (req: AuthenticatedRequest, res: Response) =
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Transporter not found' });
+      return res.status(404).json({ success: false, message: BANK_DETAILS_MESSAGES.notFound });
     }
 
     const row = rows[0];
+    const isVerified = Boolean(row.is_verified ?? DEFAULT_BANK_DETAILS.isVerified);
 
     const bankAccount = {
       accountHolderName: row.account_holder_name || row.user_name || DEFAULT_BANK_DETAILS.accountHolderName,
@@ -1685,25 +1717,29 @@ export const getBankDetails = async (req: AuthenticatedRequest, res: Response) =
       branchCode: row.branch_code || DEFAULT_BANK_DETAILS.branchCode,
       accountNumber: row.account_number || DEFAULT_BANK_DETAILS.accountNumber,
       accountType: row.account_type || DEFAULT_BANK_DETAILS.accountType,
-      isVerified: Boolean(row.is_verified ?? DEFAULT_BANK_DETAILS.isVerified),
+      isVerified: isVerified,
+      verificationStatus: isVerified ? 'Verified' : 'Pending',
+      payoutMethod: DEFAULT_BANK_DETAILS.payoutMethod,
+      notes: DEFAULT_BANK_DETAILS.notes,
     };
 
     return res.status(200).json({
       success: true,
+      message: BANK_DETAILS_MESSAGES.fetchSuccess,
       data: bankAccount,
     });
   } catch (error: any) {
     console.error('Error fetching bank details:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch bank account details',
+      message: BANK_DETAILS_MESSAGES.fetchFailed,
       error: error.message,
     });
   }
 };
 
 /**
- * PUT /api/transporter/bank-details
+ * PUT or POST /api/transporter/bank-details
  * Updates payout bank account details of the logged-in transporter
  */
 export const updateBankDetails = async (req: AuthenticatedRequest, res: Response) => {
@@ -1721,9 +1757,23 @@ export const updateBankDetails = async (req: AuthenticatedRequest, res: Response
     if (!accountHolderName || !bankName || !accountNumber) {
       return res.status(400).json({
         success: false,
-        message: 'Account holder name, bank name, and account number are required',
+        message: BANK_DETAILS_MESSAGES.validationError,
       });
     }
+
+    const trimmedAccountNo = accountNumber.toString().trim().replace(/\s+/g, '');
+    if (trimmedAccountNo.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: BANK_DETAILS_MESSAGES.invalidAccountNumber,
+      });
+    }
+
+    await ensureBankDetailsTableExists();
+
+    const finalBranchName = branchName ? branchName.trim() : DEFAULT_BANK_DETAILS.branchName;
+    const finalBranchCode = branchCode ? branchCode.trim() : DEFAULT_BANK_DETAILS.branchCode;
+    const finalAccountType = accountType || DEFAULT_BANK_DETAILS.accountType;
 
     await pool.query(
       `INSERT INTO transporter_bank_details (
@@ -1741,31 +1791,34 @@ export const updateBankDetails = async (req: AuthenticatedRequest, res: Response
         transporterId,
         accountHolderName.trim(),
         bankName.trim(),
-        branchName ? branchName.trim() : DEFAULT_BANK_DETAILS.branchName,
-        branchCode ? branchCode.trim() : DEFAULT_BANK_DETAILS.branchCode,
-        accountNumber.trim(),
-        accountType || DEFAULT_BANK_DETAILS.accountType,
+        finalBranchName,
+        finalBranchCode,
+        trimmedAccountNo,
+        finalAccountType,
       ]
     );
 
     return res.status(200).json({
       success: true,
-      message: 'Bank details saved successfully',
+      message: BANK_DETAILS_MESSAGES.updateSuccess,
       data: {
         accountHolderName: accountHolderName.trim(),
         bankName: bankName.trim(),
-        branchName: branchName ? branchName.trim() : DEFAULT_BANK_DETAILS.branchName,
-        branchCode: branchCode ? branchCode.trim() : DEFAULT_BANK_DETAILS.branchCode,
-        accountNumber: accountNumber.trim(),
-        accountType: accountType || DEFAULT_BANK_DETAILS.accountType,
+        branchName: finalBranchName,
+        branchCode: finalBranchCode,
+        accountNumber: trimmedAccountNo,
+        accountType: finalAccountType,
         isVerified: true,
+        verificationStatus: 'Verified',
+        payoutMethod: DEFAULT_BANK_DETAILS.payoutMethod,
+        notes: DEFAULT_BANK_DETAILS.notes,
       },
     });
   } catch (error: any) {
     console.error('Error updating bank details:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update bank details',
+      message: BANK_DETAILS_MESSAGES.updateFailed,
       error: error.message,
     });
   }
