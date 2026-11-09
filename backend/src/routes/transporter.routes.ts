@@ -22,6 +22,8 @@ import {
   markAllNotificationsRead,
   getNotificationSettings,
   updateNotificationSettings,
+  getSupportTickets,
+  createSupportTicket,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -73,5 +75,9 @@ router.patch('/notifications/:id/read', authenticateToken, markNotificationRead)
 // Notification Settings Endpoints
 router.get('/notification-settings', authenticateToken, getNotificationSettings);
 router.put('/notification-settings', authenticateToken, updateNotificationSettings);
+
+// Help & Support Endpoints
+router.get('/support/tickets', authenticateToken, getSupportTickets);
+router.post('/support/tickets', authenticateToken, createSupportTicket);
 
 export default router;

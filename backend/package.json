@@ -21,7 +21,8 @@
     "test:offer-submitted": "ts-node src/scripts/test-offer-submitted-api.ts",
     "test:confirm-pickup": "ts-node src/scripts/test-confirm-pickup-api.ts",
     "test:confirm-delivery": "ts-node src/scripts/test-confirm-delivery-api.ts",
-    "test:bank-details": "ts-node src/scripts/test-bank-details-api.ts"
+    "test:bank-details": "ts-node src/scripts/test-bank-details-api.ts",
+    "test:support": "ts-node src/scripts/test-support-api.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

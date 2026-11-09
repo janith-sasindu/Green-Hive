@@ -166,4 +166,44 @@ export const DEFAULT_DELIVERY_CONSTANTS = {
   defaultStatus: 'Delivered',
 };
 
+export const SUPPORT_MESSAGES = {
+  fetchSuccess: 'Support tickets fetched successfully',
+  submitSuccess: 'Support inquiry submitted successfully. Admins will review your message shortly.',
+  missingSubject: 'Subject / summary is required',
+  missingMessage: 'Message description is required',
+  ticketNotFound: 'Support ticket not found',
+  failedSubmit: 'Failed to submit support inquiry',
+  failedFetch: 'Failed to fetch support tickets',
+};
+
+export const DEFAULT_SUPPORT_CATEGORIES = [
+  { id: 'payment', label: 'Payment & Wallet' },
+  { id: 'trip', label: 'Trip & Delivery Issue' },
+  { id: 'pickup', label: 'Farm Pickup Discrepancy' },
+  { id: 'account', label: 'Account & Verification' },
+  { id: 'technical', label: 'App Bug / Technical' },
+  { id: 'other', label: 'Other Inquiry' },
+];
+
+export const DEFAULT_SUPPORT_TICKETS = [
+  {
+    ticketCode: '#SUP-8104',
+    category: 'Payment & Wallet',
+    subject: 'Highway toll charge reimbursement for Colombo trip',
+    message: 'Expressway toll of Rs. 400 was incurred during transit from Nuwara Eliya. Receipt attached.',
+    status: 'Resolved',
+    adminReply: 'Toll fee of Rs. 400 has been credited to your transporter wallet. Thank you!',
+    timeAgo: 'Oct 28, 2026 · 11:20 AM',
+  },
+  {
+    ticketCode: '#SUP-7942',
+    category: 'Trip & Delivery Issue',
+    subject: 'Receiver delayed gate entry at Colombo Fresh Market',
+    message: 'Wait time exceeded 45 minutes due to receiving bay congestion.',
+    status: 'In Review',
+    adminReply: 'Our logistics officer contacted Colombo wholesale receiving bay #3. Delay logged.',
+    timeAgo: 'Oct 25, 2026 · 02:40 PM',
+  },
+];
+
 

@@ -19,6 +19,9 @@ import {
   DEFAULT_PICKUP_CONSTANTS,
   CONFIRM_DELIVERY_MESSAGES,
   DEFAULT_DELIVERY_CONSTANTS,
+  SUPPORT_MESSAGES,
+  DEFAULT_SUPPORT_CATEGORIES,
+  DEFAULT_SUPPORT_TICKETS,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -107,6 +110,52 @@ export async function ensureBankDetailsTableExists(): Promise<void> {
     bankDetailsTableChecked = true;
   } catch (err) {
     console.warn('Note: Could not ensure transporter_bank_details table:', err);
+  }
+}
+
+let supportTicketsTableChecked = false;
+export async function ensureSupportTicketsTableExists(): Promise<void> {
+  if (supportTicketsTableChecked) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS transporter_support_tickets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ticket_code VARCHAR(50) NOT NULL UNIQUE,
+        transporter_id INT NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        subject VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        related_job_code VARCHAR(50) DEFAULT NULL,
+        photo_url TEXT DEFAULT NULL,
+        status VARCHAR(50) DEFAULT 'Pending',
+        admin_reply TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (transporter_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Seed default support inquiries if none exist for default transporter
+    const [existing] = await pool.query<RowDataPacket[]>(
+      `SELECT id FROM transporter_support_tickets WHERE transporter_id = ? LIMIT 1`,
+      [DEFAULT_TRANSPORTER_ID]
+    );
+
+    if (existing.length === 0) {
+      for (const t of DEFAULT_SUPPORT_TICKETS) {
+        await pool.query(
+          `INSERT INTO transporter_support_tickets 
+            (ticket_code, transporter_id, category, subject, message, status, admin_reply)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE ticket_code = ticket_code`,
+          [t.ticketCode, DEFAULT_TRANSPORTER_ID, t.category, t.subject, t.message, t.status, t.adminReply]
+        ).catch(() => {});
+      }
+    }
+
+    supportTicketsTableChecked = true;
+  } catch (err) {
+    console.warn('Note: Could not ensure transporter_support_tickets table:', err);
   }
 }
 
@@ -2057,6 +2106,157 @@ export const updateNotificationSettings = async (req: AuthenticatedRequest, res:
       success: false,
       message: 'Failed to update notification settings',
       error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/transporter/support/tickets
+ * Fetches all support tickets/inquiries for the logged-in transporter
+ */
+export const getSupportTickets = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    await ensureSupportTicketsTableExists();
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        id,
+        ticket_code,
+        category,
+        subject,
+        message,
+        related_job_code,
+        photo_url,
+        status,
+        admin_reply,
+        created_at
+      FROM transporter_support_tickets
+      WHERE transporter_id = ?
+      ORDER BY created_at DESC`,
+      [transporterId]
+    );
+
+    const tickets = rows.map((row) => {
+      const now = new Date(row.created_at);
+      const submittedAt = `${now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })} · ${now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
+
+      return {
+        id: row.ticket_code || `#SUP-${row.id}`,
+        dbId: row.id,
+        category: row.category,
+        subject: row.subject,
+        message: row.message,
+        relatedJobId: row.related_job_code || undefined,
+        imageUri: row.photo_url || undefined,
+        status: row.status,
+        submittedAt,
+        adminReply: row.admin_reply || undefined,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: SUPPORT_MESSAGES.fetchSuccess,
+      data: tickets,
+    });
+  } catch (err: any) {
+    console.error('Error fetching support tickets:', err);
+    return res.status(500).json({
+      success: false,
+      message: SUPPORT_MESSAGES.failedFetch,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * POST /api/transporter/support/tickets
+ * Creates a new support ticket / inquiry sent to administrators
+ */
+export const createSupportTicket = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transporterId = req.user?.id || DEFAULT_TRANSPORTER_ID;
+    const {
+      category,
+      subject,
+      message,
+      relatedJobId,
+      imageUri,
+      photoUrl,
+    } = req.body;
+
+    if (!subject || !subject.toString().trim()) {
+      return res.status(400).json({
+        success: false,
+        message: SUPPORT_MESSAGES.missingSubject,
+      });
+    }
+
+    if (!message || !message.toString().trim()) {
+      return res.status(400).json({
+        success: false,
+        message: SUPPORT_MESSAGES.missingMessage,
+      });
+    }
+
+    await ensureSupportTicketsTableExists();
+
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const ticketCode = `#SUP-${randomSuffix}`;
+    const finalCategory = category?.trim() || DEFAULT_SUPPORT_CATEGORIES[0].label;
+    const finalSubject = subject.trim();
+    const finalMessage = message.trim();
+    const finalJobCode = relatedJobId?.trim() || null;
+    const finalPhoto = imageUri?.trim() || photoUrl?.trim() || null;
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `INSERT INTO transporter_support_tickets 
+        (ticket_code, transporter_id, category, subject, message, related_job_code, photo_url, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+      [ticketCode, transporterId, finalCategory, finalSubject, finalMessage, finalJobCode, finalPhoto]
+    );
+
+    const now = new Date();
+    const submittedAt = `${now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })} · ${now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+
+    const createdTicket = {
+      id: ticketCode,
+      dbId: result.insertId,
+      category: finalCategory,
+      subject: finalSubject,
+      message: finalMessage,
+      relatedJobId: finalJobCode || undefined,
+      imageUri: finalPhoto || undefined,
+      status: 'Pending',
+      submittedAt,
+    };
+
+    return res.status(201).json({
+      success: true,
+      message: SUPPORT_MESSAGES.submitSuccess,
+      data: createdTicket,
+    });
+  } catch (err: any) {
+    console.error('Error submitting support ticket:', err);
+    return res.status(500).json({
+      success: false,
+      message: SUPPORT_MESSAGES.failedSubmit,
+      error: err.message,
     });
   }
 };
