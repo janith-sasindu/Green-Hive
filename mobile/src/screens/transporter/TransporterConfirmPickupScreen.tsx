@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,7 @@ import {
   SAMPLE_PICKUP_PROOF_PHOTO_URI,
   ActiveTransportJob,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
 } from "./data";
 
 export interface TransporterConfirmPickupScreenProps {
@@ -65,7 +67,8 @@ export const TransporterConfirmPickupScreen: React.FC<
   const initialJob: ActiveTransportJob =
     route?.params?.job || propJob || MOCK_ACTIVE_JOB;
   const [currentJob, setCurrentJob] = useState<ActiveTransportJob>(initialJob);
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [isLoading, setIsLoading] = useState<boolean>(!route?.params?.job && !propJob);
 
   // Form states
   const getFormattedNow = () => {
@@ -85,6 +88,71 @@ export const TransporterConfirmPickupScreen: React.FC<
   const [timestamp, setTimestamp] = useState<string>(getFormattedNow());
   const [notes, setNotes] = useState<string>("");
   const [proofPhotoUri, setProofPhotoUri] = useState<string | null>(null);
+
+  // Hydrate active trip and profile from live backend
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchLiveJobAndProfile = async () => {
+      try {
+        const [jobRes, profileRes] = await Promise.allSettled([
+          fetch(TRANSPORTER_API_ENDPOINTS.activeJob),
+          fetch(TRANSPORTER_API_ENDPOINTS.profile),
+        ]);
+
+        if (isMounted && jobRes.status === "fulfilled" && jobRes.value.ok) {
+          const json = await jobRes.value.json();
+          if (json.success && json.data) {
+            const liveJob: ActiveTransportJob = {
+              ...json.data,
+              id: json.data.id || initialJob.id,
+              dbId: json.data.dbId || initialJob.dbId,
+              cropName: json.data.cropName || initialJob.cropName,
+              weight: json.data.weight || initialJob.weight,
+              pickup: json.data.pickup || initialJob.pickup,
+              dropoff: json.data.dropoff || initialJob.dropoff,
+              price: json.data.price || initialJob.price,
+              status: json.data.status || initialJob.status,
+            };
+            setCurrentJob(liveJob);
+            if (json.data.pickupTimestamp) {
+              setTimestamp(json.data.pickupTimestamp);
+            }
+            if (json.data.pickupNotes) {
+              setNotes(json.data.pickupNotes);
+            }
+            if (json.data.proofPhotoUri) {
+              setProofPhotoUri(json.data.proofPhotoUri);
+            }
+          }
+        }
+
+        if (isMounted && profileRes.status === "fulfilled" && profileRes.value.ok) {
+          const profileJson = await profileRes.value.json();
+          if (profileJson.success && profileJson.data) {
+            setProfile((prev) => ({
+              ...prev,
+              ...profileJson.data,
+              avatarLetter: profileJson.data.avatarLetter || prev.avatarLetter,
+              avatarUri: profileJson.data.avatarUri || prev.avatarUri,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load active trip or profile:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchLiveJobAndProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Modals & Feedback
   const [showSourceModal, setShowSourceModal] = useState<boolean>(false);
@@ -351,17 +419,25 @@ export const TransporterConfirmPickupScreen: React.FC<
       </SafeAreaView>
 
       {/* ================= 2. MAIN SCROLLABLE CONTENT ================= */}
-      <SmoothScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: screenWidth < 360 ? 12 : 16,
-          paddingTop: 8,
-          paddingBottom: 28,
-          alignItems: "center",
-        }}
-      >
-        <View style={{ maxWidth: 540, width: "100%" }}>
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center p-6">
+          <ActivityIndicator size="large" color="#FF9800" />
+          <Text className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-3">
+            Loading active trip details...
+          </Text>
+        </View>
+      ) : (
+        <SmoothScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: screenWidth < 360 ? 12 : 16,
+            paddingTop: 8,
+            paddingBottom: 28,
+            alignItems: "center",
+          }}
+        >
+          <View style={{ maxWidth: 540, width: "100%" }}>
           {/* Farm Pickup Banner Card */}
           <View className="rounded-2xl bg-[#EDFAF2] dark:bg-emerald-950/30 border border-[#B9F0D2] dark:border-emerald-800/50 p-3.5 sm:p-4 mb-3.5">
             <View className="flex-row items-center">
@@ -549,6 +625,7 @@ export const TransporterConfirmPickupScreen: React.FC<
           </TouchableOpacity>
         </View>
       </SmoothScrollView>
+      )}
 
       {/* ================= 3. BOTTOM TAB NAVIGATION ================= */}
       <SafeAreaView
