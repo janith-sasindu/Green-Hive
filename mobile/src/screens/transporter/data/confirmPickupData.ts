@@ -110,6 +110,10 @@ export const CONFIRM_PICKUP_ACTIONS = {
   submittingButton: "Confirming...",
 };
 
+export const CONFIRM_PICKUP_LOADING = {
+  message: "Loading active trip details...",
+};
+
 export const CONFIRM_PICKUP_TABS = {
   home: "Home",
   jobs: "Jobs",

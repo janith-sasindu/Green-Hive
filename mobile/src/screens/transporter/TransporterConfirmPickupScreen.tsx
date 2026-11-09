@@ -29,6 +29,16 @@ import {
   ActiveTransportJob,
   TransporterProfile,
   TRANSPORTER_API_ENDPOINTS,
+  CONFIRM_PICKUP_HEADER,
+  CONFIRM_PICKUP_BANNER,
+  CONFIRM_PICKUP_CARGO,
+  CONFIRM_PICKUP_INPUTS,
+  CONFIRM_PICKUP_PHOTO,
+  CONFIRM_PICKUP_MODAL,
+  CONFIRM_PICKUP_ALERTS,
+  CONFIRM_PICKUP_ACTIONS,
+  CONFIRM_PICKUP_TABS,
+  CONFIRM_PICKUP_LOADING,
 } from "./data";
 
 export interface TransporterConfirmPickupScreenProps {
@@ -159,6 +169,7 @@ export const TransporterConfirmPickupScreen: React.FC<
   const [showPhotoPreviewModal, setShowPhotoPreviewModal] =
     useState<boolean>(false);
   const [isProcessingPhoto, setIsProcessingPhoto] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -233,8 +244,8 @@ export const TransporterConfirmPickupScreen: React.FC<
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Camera Permission Required",
-          "Green-Hive needs camera access to capture proof photo of the loaded cargo. Please allow camera access in your device settings.",
+          CONFIRM_PICKUP_ALERTS.cameraPermission.title,
+          CONFIRM_PICKUP_ALERTS.cameraPermission.message,
           { type: "warning" }
         );
         return;
@@ -252,8 +263,8 @@ export const TransporterConfirmPickupScreen: React.FC<
       }
     } catch (err) {
       showAlert(
-        "Camera Error",
-        "Could not launch camera. Please check your device settings or choose from gallery.",
+        CONFIRM_PICKUP_ALERTS.cameraError.title,
+        CONFIRM_PICKUP_ALERTS.cameraError.message,
         { type: "error" }
       );
     } finally {
@@ -268,8 +279,8 @@ export const TransporterConfirmPickupScreen: React.FC<
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Gallery Permission Required",
-          "Green-Hive needs photo library access to select proof of cargo pickup. Please allow photo library access in your settings.",
+          CONFIRM_PICKUP_ALERTS.galleryPermission.title,
+          CONFIRM_PICKUP_ALERTS.galleryPermission.message,
           { type: "warning" }
         );
         return;
@@ -287,8 +298,8 @@ export const TransporterConfirmPickupScreen: React.FC<
       }
     } catch (err) {
       showAlert(
-        "Gallery Error",
-        "Could not access photos. Please check device permissions and try again.",
+        CONFIRM_PICKUP_ALERTS.galleryError.title,
+        CONFIRM_PICKUP_ALERTS.galleryError.message,
         { type: "error" }
       );
     } finally {
@@ -306,39 +317,80 @@ export const TransporterConfirmPickupScreen: React.FC<
     setProofPhotoUri(null);
   };
 
-  // Confirm Pickup action
-  const handleConfirmPickup = () => {
-    const updatedJob: ActiveTransportJob = {
-      ...currentJob,
-      status: "In Transit",
-      proofPhotoUri: proofPhotoUri || undefined,
-      pickupTimestamp: timestamp,
-      pickupNotes: notes.trim() || undefined,
-    };
+  // Confirm Pickup action connected to backend endpoint
+  const handleConfirmPickup = async () => {
+    setIsSubmitting(true);
+    try {
+      const targetJobId = currentJob.dbId || currentJob.id.replace("#TR-", "");
+      const res = await fetch(
+        TRANSPORTER_API_ENDPOINTS.confirmPickup(targetJobId),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            timestamp,
+            pickupTimestamp: timestamp,
+            notes: notes.trim(),
+            pickupNotes: notes.trim(),
+            proofPhotoUri: proofPhotoUri || undefined,
+          }),
+        }
+      );
 
-    // Update global mock for persistence
-    Object.assign(MOCK_ACTIVE_JOB, updatedJob);
-    setCurrentJob(updatedJob);
+      const json = await res.json();
 
-    showAlert(
-      "Pickup Confirmed!",
-      `Cargo has been verified and successfully loaded at ${
-        currentJob.pickup || "the farm"
-      }. Job status is now 'In Transit'. Please proceed to ${currentJob.dropoff}.`,
-      {
-        type: "success",
-        primaryButtonText: "View Trip",
-        onPrimaryPress: () => {
-          if (onConfirmSuccess) {
-            onConfirmSuccess(updatedJob);
-          } else if (navigation?.navigate) {
-            navigation.navigate("TransporterActiveJob", { job: updatedJob });
-          } else {
-            handleGoBack();
-          }
-        },
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || CONFIRM_PICKUP_ALERTS.failure.message);
       }
-    );
+
+      const updatedJob: ActiveTransportJob = {
+        ...currentJob,
+        ...(json.data || {}),
+        status: "In Transit",
+        proofPhotoUri: proofPhotoUri || undefined,
+        pickupTimestamp: timestamp,
+        pickupNotes: notes.trim() || undefined,
+      };
+
+      // Update global mock for local navigation persistence
+      Object.assign(MOCK_ACTIVE_JOB, updatedJob);
+      setCurrentJob(updatedJob);
+
+      showAlert(
+        CONFIRM_PICKUP_ALERTS.success.title,
+        CONFIRM_PICKUP_ALERTS.success.message(
+          currentJob.pickup || CONFIRM_PICKUP_BANNER.fallbackPickupLocation,
+          currentJob.dropoff || CONFIRM_PICKUP_BANNER.fallbackDropoffLocation
+        ),
+        {
+          type: "success",
+          primaryButtonText: CONFIRM_PICKUP_ALERTS.success.buttonText,
+          onPrimaryPress: () => {
+            if (onConfirmSuccess) {
+              onConfirmSuccess(updatedJob);
+            } else if (navigation?.navigate) {
+              navigation.navigate("TransporterActiveJob", { job: updatedJob });
+            } else {
+              handleGoBack();
+            }
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error("Failed to confirm pickup:", err);
+      showAlert(
+        CONFIRM_PICKUP_ALERTS.failure.title,
+        err?.message || CONFIRM_PICKUP_ALERTS.failure.message,
+        {
+          type: "error",
+          primaryButtonText: CONFIRM_PICKUP_ALERTS.failure.buttonText,
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -362,6 +414,7 @@ export const TransporterConfirmPickupScreen: React.FC<
               activeOpacity={0.7}
               onPress={handleGoBack}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={CONFIRM_PICKUP_HEADER.backAccessibilityLabel}
               className="p-1 -ml-1 mr-2.5 rounded-full"
             >
               <Ionicons
@@ -375,7 +428,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                 isExtraSmall ? "text-lg" : "text-xl"
               }`}
             >
-              Confirm Pickup
+              {CONFIRM_PICKUP_HEADER.title}
             </Text>
           </View>
 
@@ -385,6 +438,7 @@ export const TransporterConfirmPickupScreen: React.FC<
               activeOpacity={0.7}
               onPress={handleNotificationPress}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={CONFIRM_PICKUP_HEADER.notificationsAccessibilityLabel}
               className="items-center justify-center relative p-1.5"
             >
               <Ionicons
@@ -400,6 +454,7 @@ export const TransporterConfirmPickupScreen: React.FC<
               activeOpacity={0.8}
               onPress={() => handleTabPress("profile")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={CONFIRM_PICKUP_HEADER.profileAccessibilityLabel}
               className="items-center justify-center rounded-full bg-[#E68A00] h-9 w-9 shadow-xs overflow-hidden"
             >
               {profile.avatarUri ? (
@@ -423,7 +478,7 @@ export const TransporterConfirmPickupScreen: React.FC<
         <View className="flex-1 items-center justify-center p-6">
           <ActivityIndicator size="large" color="#FF9800" />
           <Text className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-3">
-            Loading active trip details...
+            {CONFIRM_PICKUP_LOADING.message}
           </Text>
         </View>
       ) : (
@@ -441,40 +496,40 @@ export const TransporterConfirmPickupScreen: React.FC<
           {/* Farm Pickup Banner Card */}
           <View className="rounded-2xl bg-[#EDFAF2] dark:bg-emerald-950/30 border border-[#B9F0D2] dark:border-emerald-800/50 p-3.5 sm:p-4 mb-3.5">
             <View className="flex-row items-center">
-              <Text className="text-base mr-2">📦</Text>
+              <Text className="text-base mr-2">{CONFIRM_PICKUP_BANNER.icon}</Text>
               <Text className="text-[14.5px] sm:text-[15px] font-bold text-[#166534] dark:text-emerald-400">
-                Confirm Pickup at Farm
+                {CONFIRM_PICKUP_BANNER.title}
               </Text>
             </View>
             <Text className="text-[12.5px] sm:text-[13px] font-medium text-[#16A34A] dark:text-emerald-300 mt-1 pl-6">
-              {currentJob.pickup || MOCK_ACTIVE_JOB.pickup}
+              {currentJob.pickup || CONFIRM_PICKUP_BANNER.fallbackPickupLocation}
             </Text>
           </View>
 
           {/* Cargo Details Card */}
           <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 border border-gray-100 dark:border-slate-700/80 shadow-2xs mb-4">
             <Text className="text-[15px] sm:text-base font-bold text-[#1E293B] dark:text-white mb-3">
-              Cargo Details
+              {CONFIRM_PICKUP_CARGO.cardTitle}
             </Text>
 
             <View className="flex-row items-center">
               {/* Product */}
               <View className="flex-1">
                 <Text className="text-xs text-[#64748B] dark:text-slate-400 mb-1">
-                  Product
+                  {CONFIRM_PICKUP_CARGO.productLabel}
                 </Text>
                 <Text className="text-[14.5px] sm:text-[15px] font-bold text-[#1E293B] dark:text-white">
-                  {currentJob.cropName || MOCK_ACTIVE_JOB.cropName}
+                  {currentJob.cropName || CONFIRM_PICKUP_CARGO.fallbackProduct}
                 </Text>
               </View>
 
               {/* Quantity */}
               <View className="flex-1">
                 <Text className="text-xs text-[#64748B] dark:text-slate-400 mb-1">
-                  Quantity
+                  {CONFIRM_PICKUP_CARGO.quantityLabel}
                 </Text>
                 <Text className="text-[14.5px] sm:text-[15px] font-bold text-[#1E293B] dark:text-white">
-                  {currentJob.weight || MOCK_ACTIVE_JOB.weight}
+                  {currentJob.weight || CONFIRM_PICKUP_CARGO.fallbackQuantity}
                 </Text>
               </View>
             </View>
@@ -483,13 +538,13 @@ export const TransporterConfirmPickupScreen: React.FC<
           {/* Timestamp Input Section */}
           <View className="mb-4">
             <Text className="text-[13.5px] sm:text-sm font-semibold text-[#334155] dark:text-slate-200 mb-1.5">
-              Timestamp
+              {CONFIRM_PICKUP_INPUTS.timestampLabel}
             </Text>
             <View className="flex-row items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3.5 py-3 shadow-2xs">
               <TextInput
                 value={timestamp}
                 onChangeText={setTimestamp}
-                placeholder="Pickup date and time"
+                placeholder={CONFIRM_PICKUP_INPUTS.timestampPlaceholder}
                 placeholderTextColor="#94A3B8"
                 className="flex-1 text-[13.5px] sm:text-sm text-[#1E293B] dark:text-white p-0"
               />
@@ -511,13 +566,13 @@ export const TransporterConfirmPickupScreen: React.FC<
           {/* Notes (optional) Section */}
           <View className="mb-4">
             <Text className="text-[13.5px] sm:text-sm font-semibold text-[#334155] dark:text-slate-200 mb-1.5">
-              Notes (optional)
+              {CONFIRM_PICKUP_INPUTS.notesLabel}
             </Text>
             <View className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xs">
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Any observations or notes..."
+                placeholder={CONFIRM_PICKUP_INPUTS.notesPlaceholder}
                 placeholderTextColor="#94A3B8"
                 multiline
                 numberOfLines={3}
@@ -540,7 +595,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                       color="#059669"
                     />
                     <Text className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 ml-1.5">
-                      Proof Photo Attached
+                      {CONFIRM_PICKUP_PHOTO.attachedBadge}
                     </Text>
                   </View>
 
@@ -552,7 +607,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                   >
                     <Ionicons name="trash-outline" size={14} color="#EF4444" />
                     <Text className="text-xs font-bold text-red-500 ml-1">
-                      Remove
+                      {CONFIRM_PICKUP_PHOTO.removeButton}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -571,7 +626,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                   <View className="absolute bottom-2 right-2 bg-black/60 px-2.5 py-1 rounded-md flex-row items-center">
                     <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
                     <Text className="text-[11px] text-white font-medium ml-1">
-                      Tap to enlarge
+                      {CONFIRM_PICKUP_PHOTO.tapToEnlarge}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -588,7 +643,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                     color={isDark ? "#E2E8F0" : "#4B5563"}
                   />
                   <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
-                    Retake / Change Photo
+                    {CONFIRM_PICKUP_PHOTO.retakeButton}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -603,10 +658,10 @@ export const TransporterConfirmPickupScreen: React.FC<
                 <View className="items-center justify-center">
                   <Ionicons name="camera-outline" size={42} color="#94A3B8" />
                   <Text className="text-[15px] font-semibold text-[#475569] dark:text-slate-300 mt-2.5">
-                    Upload Proof Photo
+                    {CONFIRM_PICKUP_PHOTO.uploadTitle}
                   </Text>
                   <Text className="text-xs text-[#94A3B8] dark:text-slate-400 mt-1">
-                    Optional but recommended
+                    {CONFIRM_PICKUP_PHOTO.uploadSubtitle}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -617,11 +672,23 @@ export const TransporterConfirmPickupScreen: React.FC<
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={handleConfirmPickup}
-            className="rounded-2xl bg-[#FF9800] py-3.5 sm:py-4 items-center justify-center shadow-sm active:scale-[0.99] transition-transform"
+            disabled={isSubmitting}
+            className={`rounded-2xl bg-[#FF9800] py-3.5 sm:py-4 items-center justify-center shadow-sm active:scale-[0.99] transition-transform ${
+              isSubmitting ? "opacity-75" : ""
+            }`}
           >
-            <Text className="text-base font-bold text-white tracking-wide">
-              Confirm Pickup
-            </Text>
+            {isSubmitting ? (
+              <View className="flex-row items-center justify-center">
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text className="text-base font-bold text-white tracking-wide ml-2">
+                  {CONFIRM_PICKUP_ACTIONS.submittingButton}
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-base font-bold text-white tracking-wide">
+                {CONFIRM_PICKUP_ACTIONS.submitButton}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </SmoothScrollView>
@@ -654,7 +721,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {CONFIRM_PICKUP_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -674,7 +741,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {CONFIRM_PICKUP_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -694,7 +761,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-bold text-[#FF8C00]`}
             >
-              Active
+              {CONFIRM_PICKUP_TABS.active}
             </Text>
             {/* Active Indicator Underline */}
             <View className="h-0.5 w-5 bg-[#FF8C00] rounded-full mt-0.5" />
@@ -716,7 +783,7 @@ export const TransporterConfirmPickupScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {CONFIRM_PICKUP_TABS.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -742,10 +809,10 @@ export const TransporterConfirmPickupScreen: React.FC<
             <View className="flex-row items-center justify-between mb-4">
               <View>
                 <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                  Add Proof Photo
+                  {CONFIRM_PICKUP_MODAL.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Select an option to capture or upload loaded cargo proof
+                  {CONFIRM_PICKUP_MODAL.subtitle}
                 </Text>
               </View>
               <TouchableOpacity
@@ -771,10 +838,10 @@ export const TransporterConfirmPickupScreen: React.FC<
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Take Photo with Camera
+                  {CONFIRM_PICKUP_MODAL.optionCamera.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Capture cargo picture on-site
+                  {CONFIRM_PICKUP_MODAL.optionCamera.description}
                 </Text>
               </View>
               <Ionicons
@@ -795,10 +862,10 @@ export const TransporterConfirmPickupScreen: React.FC<
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Choose from Gallery
+                  {CONFIRM_PICKUP_MODAL.optionGallery.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Select existing photo from device
+                  {CONFIRM_PICKUP_MODAL.optionGallery.description}
                 </Text>
               </View>
               <Ionicons
@@ -819,10 +886,10 @@ export const TransporterConfirmPickupScreen: React.FC<
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Use Sample Cargo Photo
+                  {CONFIRM_PICKUP_MODAL.optionSample.title}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">
-                  Quick demo proof for simulator
+                  {CONFIRM_PICKUP_MODAL.optionSample.description}
                 </Text>
               </View>
               <Ionicons
@@ -839,7 +906,7 @@ export const TransporterConfirmPickupScreen: React.FC<
               className="py-3 rounded-xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
             >
               <Text className="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-200">
-                Cancel
+                {CONFIRM_PICKUP_MODAL.cancelButton}
               </Text>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -857,7 +924,7 @@ export const TransporterConfirmPickupScreen: React.FC<
           <SafeAreaView edges={["top"]} className="w-full">
             <View className="flex-row items-center justify-between py-2 px-2">
               <Text className="text-white font-bold text-base">
-                Pickup Cargo Proof
+                {CONFIRM_PICKUP_PHOTO.previewTitle}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowPhotoPreviewModal(false)}
@@ -884,7 +951,9 @@ export const TransporterConfirmPickupScreen: React.FC<
               onPress={() => setShowPhotoPreviewModal(false)}
               className="py-3 rounded-xl bg-white/20 items-center justify-center mt-2"
             >
-              <Text className="text-white font-bold text-sm">Close Preview</Text>
+              <Text className="text-white font-bold text-sm">
+                {CONFIRM_PICKUP_PHOTO.closePreview}
+              </Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
