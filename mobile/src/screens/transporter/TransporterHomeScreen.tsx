@@ -33,6 +33,20 @@ import {
   PaymentSummaryData,
   TransporterNotificationItem,
   TRANSPORTER_API_ENDPOINTS,
+  HOME_HEADER,
+  HOME_BANNER,
+  HOME_STATS_LABELS,
+  HOME_QUICK_ACTIONS,
+  HOME_ACTIVE_JOB_SECTION,
+  HOME_AVAILABLE_JOBS_SECTION,
+  HOME_PAYMENT_SUMMARY_SECTION,
+  HOME_NAV_TABS,
+  HOME_ALERTS,
+  HOME_OFFERS_MODAL,
+  HOME_NOTIFICATIONS_MODAL,
+  HOME_AVAILABLE_JOB_MODAL,
+  HOME_ACTIVE_JOB_MODAL,
+  HOME_PROFILE_MODAL,
 } from "./data";
 import { TransporterAvailableJobsScreen } from "./TransporterAvailableJobsScreen";
 import { TransporterActiveJobScreen } from "./TransporterActiveJobScreen";
@@ -101,12 +115,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
   const handleConfirmPickup = () => {
     if (activeJob.status === "In Transit" || activeJob.status === "Delivered") {
+      const alertData = HOME_ALERTS.pickupAlreadyConfirmed(
+        activeJob.cropName,
+        activeJob.weight,
+        activeJob.status
+      );
       Alert.alert(
-        "Cargo Already Picked Up",
-        `You have already confirmed pickup for ${activeJob.cropName} · ${activeJob.weight}. Status: ${activeJob.status}.`,
+        alertData.title,
+        alertData.message,
         [
-          { text: "View Trip", onPress: () => navigation?.navigate?.("TransporterActiveJob") },
-          { text: "OK", style: "cancel" },
+          { text: alertData.viewTripButton, onPress: () => navigation?.navigate?.("TransporterActiveJob") },
+          { text: alertData.okButton, style: "cancel" },
         ]
       );
       return;
@@ -121,18 +140,19 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
       setShowJobDetailsModal(false);
     }
     if (activeJob.status === "Delivered") {
+      const alertData = HOME_ALERTS.deliveryAlreadyConfirmed(activeJob.price);
       Alert.alert(
-        "Job Already Delivered",
-        `This shipment has already been delivered. Payment of ${activeJob.price} has been released.`,
+        alertData.title,
+        alertData.message,
         [
           {
-            text: "View Details",
+            text: alertData.viewDetailsButton,
             onPress: () =>
               navigation?.navigate?.("TransporterConfirmDelivery", {
                 job: activeJob,
               }),
           },
-          { text: "OK", style: "cancel" },
+          { text: alertData.okButton, style: "cancel" },
         ]
       );
       return;
@@ -143,37 +163,39 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   };
 
   const handleUpdateStatus = () => {
+    const alertData = HOME_ALERTS.updateDeliveryStatus(activeJob.id);
     Alert.alert(
-      "Update Delivery Status",
-      `Select current status for job ${activeJob.id}:`,
+      alertData.title,
+      alertData.message,
       [
         {
-          text: "In Progress",
+          text: alertData.statusInProgress,
           onPress: () => setActiveJob((prev) => ({ ...prev, status: "In Progress" })),
         },
         {
-          text: "At Pickup Location",
+          text: alertData.statusAtPickup,
           onPress: () => setActiveJob((prev) => ({ ...prev, status: "At Pickup" })),
         },
         {
-          text: "In Transit on Highway",
+          text: alertData.statusInTransit,
           onPress: () => setActiveJob((prev) => ({ ...prev, status: "In Transit" })),
         },
         {
-          text: `Delivered to Destination`,
+          text: alertData.statusDelivered,
           onPress: () => {
             if (navigation?.navigate) {
               navigation.navigate("TransporterConfirmDelivery", { job: activeJob });
             } else {
               setActiveJob((prev) => ({ ...prev, status: "Delivered" }));
+              const completedData = HOME_ALERTS.deliveryCompleted(activeJob.cropName, activeJob.price);
               Alert.alert(
-                "Delivery Completed!",
-                `${activeJob.cropName} delivered. Payment of ${activeJob.price} has been added to your earnings.`
+                completedData.title,
+                completedData.message
               );
             }
           },
         },
-        { text: "Cancel", style: "cancel" },
+        { text: alertData.cancelButton, style: "cancel" },
       ]
     );
   };
@@ -190,17 +212,19 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
     if (navigation?.navigate) {
       navigation.navigate("TransporterSubmitOffer", { job: targetJob });
     } else {
+      const confirmData = HOME_ALERTS.makeOfferConfirm(cropInfo, jobId);
       Alert.alert(
-        "Submit Transport Offer",
-        `Do you want to submit your standard rate offer for ${cropInfo} (${jobId})?`,
+        confirmData.title,
+        confirmData.message,
         [
-          { text: "Cancel", style: "cancel" },
+          { text: confirmData.cancelButton, style: "cancel" },
           {
-            text: "Submit Offer",
+            text: confirmData.submitButton,
             onPress: () => {
+              const successData = HOME_ALERTS.offerSentSuccess(jobId);
               Alert.alert(
-                "Offer Sent!",
-                `Your quote for ${jobId} has been sent to the farmer. You will receive an alert once accepted.`
+                successData.title,
+                successData.message
               );
             },
           },
@@ -270,10 +294,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   };
 
   const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to log out of your driver account?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(HOME_ALERTS.signOut.title, HOME_ALERTS.signOut.message, [
+      { text: HOME_ALERTS.signOut.cancelButton, style: "cancel" },
       {
-        text: "Sign Out",
+        text: HOME_ALERTS.signOut.signOutButton,
         style: "destructive",
         onPress: () => {
           setShowProfileModal(false);
@@ -382,7 +406,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     : "text-[20px]"
                 }`}
             >
-              Dashboard
+              {HOME_HEADER.title}
             </Text>
           </View>
 
@@ -526,7 +550,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     <View className="flex-row items-center mt-0.5">
                       <Ionicons name="checkmark-circle-outline" size={13} color="#FEF3C7" />
                       <Text className="ml-1 text-[11px] sm:text-[11.5px] font-medium text-[#FEF3C7]">
-                        Verified Driver
+                        {HOME_BANNER.verifiedDriver}
                       </Text>
                     </View>
                   )}
@@ -552,7 +576,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  · {profile.completedJobs} completed jobs
+                  {HOME_BANNER.completedJobsSubtitle(profile.completedJobs)}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -571,7 +595,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               >
                 <View className="flex-1 pr-1">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#6B7280] dark:text-slate-400">
-                    Open Jobs
+                    {HOME_STATS_LABELS.openJobs}
                   </Text>
                   <Text
                     className={`font-black text-[#111827] dark:text-white mt-0.5 ${isExtraSmall
@@ -618,7 +642,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               >
                 <View className="flex-1 pr-1">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#6B7280] dark:text-slate-400">
-                    My Offers
+                    {HOME_STATS_LABELS.myOffers}
                   </Text>
                   <Text
                     className={`font-black text-[#111827] dark:text-white mt-0.5 ${isExtraSmall
@@ -662,7 +686,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               >
                 <View className="flex-1 pr-1">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#6B7280] dark:text-slate-400">
-                    Active Jobs
+                    {HOME_STATS_LABELS.activeJobs}
                   </Text>
                   <Text
                     className={`font-black text-[#111827] dark:text-white mt-0.5 ${isExtraSmall
@@ -701,7 +725,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               >
                 <View className="flex-1 pr-1">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#6B7280] dark:text-slate-400">
-                    This Month
+                    {HOME_STATS_LABELS.thisMonth}
                   </Text>
                   <Text
                     className={`font-black text-[#111827] dark:text-white mt-0.5 ${isExtraSmall
@@ -769,7 +793,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Available Jobs
+                  {HOME_QUICK_ACTIONS.availableJobs}
                 </Text>
               </TouchableOpacity>
 
@@ -796,7 +820,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Active Jobs
+                  {HOME_QUICK_ACTIONS.activeJobs}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -832,7 +856,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  My Offers
+                  {HOME_QUICK_ACTIONS.myOffers}
                 </Text>
               </TouchableOpacity>
 
@@ -859,7 +883,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Profile
+                  {HOME_QUICK_ACTIONS.profile}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -894,7 +918,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Bank Details
+                  {HOME_QUICK_ACTIONS.bankDetails}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -904,14 +928,14 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           <View className="mt-4 px-4 sm:px-5">
             <View className="flex-row items-center justify-between mb-2 sm:mb-2.5">
               <Text className="text-[11.5px] sm:text-[12px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
-                ACTIVE JOB
+                {HOME_ACTIVE_JOB_SECTION.sectionTitle}
               </Text>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setActiveTab("active")}
               >
                 <Text className="text-xs font-bold text-[#E68A00]">
-                  View Live Trip →
+                  {HOME_ACTIVE_JOB_SECTION.viewLiveTrip}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -997,7 +1021,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     adjustsFontSizeToFit
                     minimumFontScale={0.8}
                   >
-                    Confirm Pickup
+                    {HOME_ACTIVE_JOB_SECTION.confirmPickupButton}
                   </Text>
                 </TouchableOpacity>
 
@@ -1019,7 +1043,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     adjustsFontSizeToFit
                     minimumFontScale={0.8}
                   >
-                    Confirm Delivery
+                    {HOME_ACTIVE_JOB_SECTION.confirmDeliveryButton}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1031,7 +1055,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             {/* Section Header */}
             <View className="flex-row items-center justify-between mb-2.5">
               <Text className="text-[11.5px] sm:text-[12px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
-                AVAILABLE JOBS
+                {HOME_AVAILABLE_JOBS_SECTION.sectionTitle}
               </Text>
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -1039,7 +1063,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text className="text-[12px] sm:text-[12.5px] font-bold text-[#E68A00]">
-                  View all
+                  {HOME_AVAILABLE_JOBS_SECTION.viewAll}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1124,7 +1148,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         className={`font-bold text-[#D97706] dark:text-amber-400 ${isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
                           }`}
                       >
-                        View Details &gt;
+                        {HOME_AVAILABLE_JOBS_SECTION.viewDetails}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1136,7 +1160,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         className={`font-bold text-[#E68A00] ml-2 ${isSmallDevice ? "text-[11.5px]" : "text-[12.5px]"
                           }`}
                       >
-                        Submit Offer →
+                        {HOME_AVAILABLE_JOBS_SECTION.submitOffer}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1152,14 +1176,14 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 }`}
             >
               <Text className="text-[12.5px] sm:text-[13px] font-bold text-[#14532D] dark:text-emerald-300 mb-2 sm:mb-2.5">
-                Payment Summary
+                {HOME_PAYMENT_SUMMARY_SECTION.sectionTitle}
               </Text>
 
               <View className="flex-row items-center justify-between">
                 {/* Pending Release */}
                 <View className="flex-1 pr-2">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#059669] dark:text-emerald-400">
-                    Pending Release
+                    {HOME_PAYMENT_SUMMARY_SECTION.pendingRelease}
                   </Text>
                   <Text
                     className={`font-black text-[#065F46] dark:text-emerald-200 mt-0.5 ${isExtraSmall
@@ -1182,7 +1206,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 {/* This Month */}
                 <View className="flex-1 pl-3">
                   <Text className="text-[11px] sm:text-[11.5px] font-semibold text-[#059669] dark:text-emerald-400">
-                    This Month
+                    {HOME_PAYMENT_SUMMARY_SECTION.thisMonth}
                   </Text>
                   <Text
                     className={`font-black text-[#065F46] dark:text-emerald-200 mt-0.5 ${isExtraSmall
@@ -1232,7 +1256,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
                 }`}
             >
-              Home
+              {HOME_NAV_TABS.home}
             </Text>
             {activeTab === "home" && (
               <View
@@ -1259,7 +1283,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               className={`mt-0.5 ${isSmallDevice ? "text-[10px]" : "text-[11px]"
                 } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {HOME_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -1280,7 +1304,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               className={`mt-0.5 ${isSmallDevice ? "text-[10px]" : "text-[11px]"
                 } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {HOME_NAV_TABS.active}
             </Text>
           </TouchableOpacity>
 
@@ -1301,7 +1325,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               className={`mt-0.5 ${isSmallDevice ? "text-[10px]" : "text-[11px]"
                 } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {HOME_NAV_TABS.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1321,10 +1345,10 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <View className="flex-1 pr-2">
               <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white" numberOfLines={1}>
-                📋 My Transport Offers
+                {HOME_OFFERS_MODAL.headerTitle}
               </Text>
               <Text className="text-xs text-gray-500 dark:text-slate-400">
-                {myOffersList.length} submitted quotes under review
+                {HOME_OFFERS_MODAL.subtitle(myOffersList.length)}
               </Text>
             </View>
             <TouchableOpacity
@@ -1370,7 +1394,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   </Text>
 
                   <View className="mt-3 flex-row justify-between items-center pt-2.5 border-t border-gray-100 dark:border-slate-700">
-                    <Text className="text-xs text-gray-500 dark:text-slate-400">Your Quote:</Text>
+                    <Text className="text-xs text-gray-500 dark:text-slate-400">{HOME_OFFERS_MODAL.yourQuoteLabel}</Text>
                     <Text className="text-sm font-extrabold text-[#16A34A] dark:text-emerald-400">
                       {offer.quotePrice}
                     </Text>
@@ -1402,7 +1426,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <View className="flex-row justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-700">
               <Text className="text-base font-bold text-gray-900 dark:text-white">
-                🔔 Recent Notifications
+                {HOME_NOTIFICATIONS_MODAL.headerTitle}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowNotifications(false)}
@@ -1465,7 +1489,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               }}
               className="mt-2.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-500/20 items-center justify-center flex-row"
             >
-              <Text className="text-xs font-bold text-[#D97706] dark:text-amber-400">See More</Text>
+              <Text className="text-xs font-bold text-[#D97706] dark:text-amber-400">{HOME_NOTIFICATIONS_MODAL.seeMoreButton}</Text>
               <Ionicons
                 name="chevron-forward"
                 size={14}
@@ -1480,7 +1504,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               onPress={() => setShowNotifications(false)}
               className="mt-2 py-3 rounded-xl bg-[#E68A00] items-center justify-center shadow-xs"
             >
-              <Text className="text-xs font-bold text-white">Dismiss</Text>
+              <Text className="text-xs font-bold text-white">{HOME_NOTIFICATIONS_MODAL.dismissButton}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1564,7 +1588,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
                     {/* ROUTE Section */}
                     <Text className="text-[10.5px] sm:text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mt-4 sm:mt-5 mb-2 sm:mb-2.5">
-                      ROUTE
+                      {HOME_AVAILABLE_JOB_MODAL.routeTitle}
                     </Text>
 
                     {/* Pickup Card */}
@@ -1572,7 +1596,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mr-2" />
                         <Text className="text-xs sm:text-[13px] font-bold text-[#16A34A] dark:text-emerald-400">
-                          Pickup
+                          {HOME_AVAILABLE_JOB_MODAL.pickupTitle}
                         </Text>
                       </View>
                       <Text
@@ -1582,7 +1606,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getPickupAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Farmer: {selectedAvailableJob.farmerName || defaultAvailableFallback.farmerName}
+                        {HOME_AVAILABLE_JOB_MODAL.farmerPrefix}{selectedAvailableJob.farmerName || defaultAvailableFallback.farmerName}
                       </Text>
                     </View>
 
@@ -1591,7 +1615,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#EF4444] mr-2" />
                         <Text className="text-xs sm:text-[13px] font-bold text-[#DC2626] dark:text-red-400">
-                          Delivery
+                          {HOME_AVAILABLE_JOB_MODAL.deliveryTitle}
                         </Text>
                       </View>
                       <Text
@@ -1601,7 +1625,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                         {getDeliveryAddress(selectedAvailableJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Seller: {selectedAvailableJob.sellerName || defaultAvailableFallback.sellerName}
+                        {HOME_AVAILABLE_JOB_MODAL.sellerPrefix}{selectedAvailableJob.sellerName || defaultAvailableFallback.sellerName}
                       </Text>
                     </View>
 
@@ -1609,7 +1633,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     <View className="flex-row items-center gap-2 sm:gap-3 mt-2.5 sm:mt-3">
                       <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
                         <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                          Required Date
+                          {HOME_AVAILABLE_JOB_MODAL.requiredDateLabel}
                         </Text>
                         <Text
                           numberOfLines={1}
@@ -1623,7 +1647,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
                       <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
                         <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                          Required Time
+                          {HOME_AVAILABLE_JOB_MODAL.requiredTimeLabel}
                         </Text>
                         <Text
                           numberOfLines={1}
@@ -1639,7 +1663,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     {/* Special Instructions Card */}
                     <View className="rounded-2xl bg-[#FFFDF0] dark:bg-amber-950/40 p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#FDE68A] dark:border-amber-700/50">
                       <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#D97706] dark:text-amber-400">
-                        Special Instructions
+                        {HOME_AVAILABLE_JOB_MODAL.specialInstructionsTitle}
                       </Text>
                       <Text className="text-[11px] sm:text-[12.5px] text-[#92400E] dark:text-amber-200 font-medium mt-1 leading-relaxed">
                         {getSpecialInstructions(selectedAvailableJob)}
@@ -1651,12 +1675,11 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                       <View className="flex-row items-center">
                         <Text className="text-xs mr-1.5">🔒</Text>
                         <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#16A34A] dark:text-emerald-400">
-                          Payment Protected
+                          {HOME_AVAILABLE_JOB_MODAL.paymentProtectedTitle}
                         </Text>
                       </View>
                       <Text className="text-[11px] sm:text-xs text-[#16A34A] dark:text-emerald-300 font-medium mt-1 leading-relaxed">
-                        Transportation payment is held by Green Hive and released upon
-                        successful delivery confirmation.
+                        {HOME_AVAILABLE_JOB_MODAL.paymentProtectedDesc}
                       </Text>
                     </View>
                   </View>
@@ -1669,7 +1692,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                       className="flex-[0.4] py-3 sm:py-3.5 rounded-2xl bg-white dark:bg-slate-700 border border-gray-200/90 dark:border-slate-600 items-center justify-center shadow-2xs"
                     >
                       <Text className="text-xs sm:text-base font-bold text-gray-800 dark:text-slate-200">
-                        Back
+                        {HOME_AVAILABLE_JOB_MODAL.backButton}
                       </Text>
                     </TouchableOpacity>
 
@@ -1679,7 +1702,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                       className="flex-[0.6] py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
                     >
                       <Text className="text-xs sm:text-base font-bold text-white">
-                        Submit Offer
+                        {HOME_AVAILABLE_JOB_MODAL.submitOfferButton}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1707,7 +1730,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           >
             <View className="flex-1 pr-2">
               <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white" numberOfLines={1}>
-                Active Job Details
+                {HOME_ACTIVE_JOB_MODAL.headerTitle}
               </Text>
               <Text className="text-xs text-gray-500 dark:text-slate-400" numberOfLines={1}>
                 {activeJob.id} · {activeJob.cropName}
@@ -1737,27 +1760,27 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">
-                  Cargo Summary
+                  {HOME_ACTIVE_JOB_MODAL.cargoSummaryTitle}
                 </Text>
                 <Text className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white mt-1">
                   {activeJob.cropName} · {activeJob.weight}
                 </Text>
                 <Text className="text-xs text-green-700 dark:text-emerald-400 font-bold mt-1">
-                  Status: {activeJob.status}
+                  {HOME_ACTIVE_JOB_MODAL.statusPrefix}{activeJob.status}
                 </Text>
 
                 <View className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 space-y-2 gap-2">
                   <Text className="text-xs text-gray-600 dark:text-slate-300">
-                    📍 <Text className="font-bold text-gray-800 dark:text-white">Pickup:</Text> {activeJob.pickup}
+                    📍 <Text className="font-bold text-gray-800 dark:text-white">{HOME_ACTIVE_JOB_MODAL.pickupPrefix}</Text> {activeJob.pickup}
                   </Text>
                   <Text className="text-xs text-gray-600 dark:text-slate-300">
-                    🏁 <Text className="font-bold text-gray-800 dark:text-white">Dropoff:</Text> {activeJob.dropoff}
+                    🏁 <Text className="font-bold text-gray-800 dark:text-white">{HOME_ACTIVE_JOB_MODAL.dropoffPrefix}</Text> {activeJob.dropoff}
                   </Text>
                   <Text className="text-xs text-gray-600 dark:text-slate-300">
-                    💰 <Text className="font-bold text-gray-800 dark:text-white">Fare:</Text> {activeJob.price}
+                    💰 <Text className="font-bold text-gray-800 dark:text-white">{HOME_ACTIVE_JOB_MODAL.farePrefix}</Text> {activeJob.price}
                   </Text>
                   <Text className="text-xs text-gray-600 dark:text-slate-300">
-                    🛣️ <Text className="font-bold text-gray-800 dark:text-white">Distance:</Text> {activeJob.distance}
+                    🛣️ <Text className="font-bold text-gray-800 dark:text-white">{HOME_ACTIVE_JOB_MODAL.distancePrefix}</Text> {activeJob.distance}
                   </Text>
                 </View>
               </View>
@@ -1770,7 +1793,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   className="rounded-2xl bg-[#059669] py-3 sm:py-3.5 items-center justify-center shadow-xs"
                 >
                   <Text className="text-sm font-bold text-white">
-                    Confirm Pickup
+                    {HOME_ACTIVE_JOB_MODAL.confirmPickupButton}
                   </Text>
                 </TouchableOpacity>
 
@@ -1780,7 +1803,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   className="rounded-2xl bg-[#FF8C00] py-3 sm:py-3.5 items-center justify-center shadow-xs"
                 >
                   <Text className="text-sm font-bold text-white">
-                    Confirm Delivery
+                    {HOME_ACTIVE_JOB_MODAL.confirmDeliveryButton}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1805,7 +1828,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Driver Profile
+              {HOME_PROFILE_MODAL.headerTitle}
             </Text>
             <TouchableOpacity
               onPress={() => {
@@ -1851,7 +1874,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                   {profile.email}
                 </Text>
                 <Text className="text-xs text-amber-700 dark:text-amber-300 font-bold mt-1">
-                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs} Completed Trips)
+                  {HOME_PROFILE_MODAL.ratingSubtitle(profile.rating, profile.completedJobs)}
                 </Text>
               </View>
 
@@ -1864,7 +1887,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                     color={isDark ? "#FBBF24" : "#6B7280"}
                   />
                   <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white ml-2.5">
-                    Dark Mode
+                    {HOME_PROFILE_MODAL.darkMode}
                   </Text>
                 </View>
                 <Switch
@@ -1879,17 +1902,17 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
               {/* Vehicle details */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
-                  Registered Vehicle
+                  {HOME_PROFILE_MODAL.registeredVehicleTitle}
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🚚 <Text className="font-semibold text-gray-900 dark:text-white">Type:</Text> {profile.vehicleType}
+                    🚚 <Text className="font-semibold text-gray-900 dark:text-white">{HOME_PROFILE_MODAL.typeLabel}</Text> {profile.vehicleType}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🔢 <Text className="font-semibold text-gray-900 dark:text-white">Plate:</Text> {profile.vehiclePlate}
+                    🔢 <Text className="font-semibold text-gray-900 dark:text-white">{HOME_PROFILE_MODAL.plateLabel}</Text> {profile.vehiclePlate}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🛡️ <Text className="font-semibold text-gray-900 dark:text-white">Status:</Text> Green-Hive Verified
+                    🛡️ <Text className="font-semibold text-gray-900 dark:text-white">{HOME_PROFILE_MODAL.statusLabel}</Text> {HOME_PROFILE_MODAL.statusVerified}
                   </Text>
                 </View>
               </View>
@@ -1901,7 +1924,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 py-3 sm:py-3.5 items-center justify-center mt-2"
               >
                 <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                  Log Out of Transporter Account
+                  {HOME_PROFILE_MODAL.signOutButton}
                 </Text>
               </TouchableOpacity>
             </View>

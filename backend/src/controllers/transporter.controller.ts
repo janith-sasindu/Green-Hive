@@ -25,6 +25,7 @@ import {
   VEHICLE_LICENSE_MESSAGES,
   DEFAULT_VEHICLE_LICENSE,
   VEHICLE_TYPE_PRESETS,
+  TRANSPORTER_CONTROLLER_MESSAGES,
 } from '../data';
 
 export interface AuthenticatedRequest extends Request {
@@ -282,7 +283,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
         );
 
         if (userRows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Transporter profile not found' });
+            return res.status(404).json({ success: false, message: TRANSPORTER_CONTROLLER_MESSAGES.transporterNotFound });
         }
 
         const user = userRows[0];
@@ -450,7 +451,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
         console.error('Error fetching transporter home data:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to fetch home screen data',
+            message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchHome,
             error: error.message,
         });
     }
@@ -540,7 +541,7 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
         console.error('Error updating job status:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to update transport job status',
+            message: TRANSPORTER_CONTROLLER_MESSAGES.failedUpdateJobStatus,
             error: error.message,
         });
     }
@@ -975,7 +976,7 @@ export const getAvailableJobs = async (req: Request, res: Response) => {
     console.error('Error fetching available jobs:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch available transport jobs',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchAvailableJobs,
       error: error.message,
     });
   }
@@ -1021,7 +1022,7 @@ export const getJobById = async (req: Request, res: Response) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Transport job not found' });
+      return res.status(404).json({ success: false, message: TRANSPORTER_CONTROLLER_MESSAGES.jobNotFound });
     }
 
     const row = rows[0];
@@ -1090,7 +1091,7 @@ export const getJobById = async (req: Request, res: Response) => {
     console.error('Error fetching job details:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch job details',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchJobDetails,
       error: error.message,
     });
   }
@@ -1182,7 +1183,7 @@ export const submitJobOffer = async (req: AuthenticatedRequest, res: Response) =
     console.error('Error submitting transport offer:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to submit transport offer',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedSubmitOffer,
       error: error.message,
     });
   }
@@ -1283,7 +1284,7 @@ export const getMyOffers = async (req: AuthenticatedRequest, res: Response) => {
     console.error('Error fetching transporter offers:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch transport offers',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchOffers,
       error: error.message,
     });
   }
@@ -1356,7 +1357,7 @@ export const withdrawOffer = async (req: AuthenticatedRequest, res: Response) =>
     console.error('Error withdrawing transport offer:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to withdraw transport offer',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedWithdrawOffer,
       error: error.message,
     });
   }
@@ -1461,7 +1462,7 @@ export const getLatestOffer = async (req: AuthenticatedRequest, res: Response) =
     console.error('Error fetching latest offer:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch latest transport offer',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchLatestOffer,
       error: error.message,
     });
   }
@@ -1523,7 +1524,7 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
       return res.status(200).json({
         success: true,
         data: null,
-        message: 'No active transport trip in progress',
+        message: TRANSPORTER_CONTROLLER_MESSAGES.noActiveTrip,
       });
     }
 
@@ -1573,7 +1574,7 @@ export const getActiveJob = async (req: AuthenticatedRequest, res: Response) => 
     console.error('Error fetching active job:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch active job',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchActiveJob,
       error: error.message,
     });
   }
@@ -1610,7 +1611,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Transporter profile not found' });
+      return res.status(404).json({ success: false, message: TRANSPORTER_CONTROLLER_MESSAGES.transporterNotFound });
     }
 
     const row = rows[0];
@@ -1647,7 +1648,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     console.error('Error fetching profile:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch transporter profile',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchProfile,
       error: error.message,
     });
   }
@@ -1743,7 +1744,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
 
     return res.status(200).json({
       success: true,
-      message: 'Profile updated successfully',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.profileUpdateSuccess,
       data: {
         name: trimmedName,
         greeting: 'Good morning,',
@@ -1762,7 +1763,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     console.error('Error updating profile:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update transporter profile',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedUpdateProfile,
       error: error.message,
     });
   }
@@ -1778,7 +1779,7 @@ export const updateAvatar = async (req: AuthenticatedRequest, res: Response) => 
     const { avatarUrl } = req.body;
 
     if (!avatarUrl || typeof avatarUrl !== 'string') {
-      return res.status(400).json({ success: false, message: 'Valid avatar URL is required' });
+      return res.status(400).json({ success: false, message: TRANSPORTER_CONTROLLER_MESSAGES.avatarUrlRequired });
     }
 
     await pool.query(
@@ -1790,14 +1791,14 @@ export const updateAvatar = async (req: AuthenticatedRequest, res: Response) => 
 
     return res.status(200).json({
       success: true,
-      message: 'Avatar updated successfully',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.avatarUpdateSuccess,
       data: { avatarUrl },
     });
   } catch (error: any) {
     console.error('Error updating avatar:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update avatar photo',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedUpdateAvatar,
       error: error.message,
     });
   }
@@ -1818,13 +1819,13 @@ export const removeAvatar = async (req: AuthenticatedRequest, res: Response) => 
 
     return res.status(200).json({
       success: true,
-      message: 'Avatar photo removed successfully',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.avatarRemovedSuccess,
     });
   } catch (error: any) {
     console.error('Error removing avatar:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to remove avatar photo',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedRemoveAvatar,
       error: error.message,
     });
   }
@@ -2031,7 +2032,7 @@ export const getNotifications = async (req: AuthenticatedRequest, res: Response)
     console.error('Error fetching notifications:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch notifications',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchNotifications,
       error: error.message,
     });
   }
@@ -2056,20 +2057,20 @@ export const markNotificationRead = async (req: AuthenticatedRequest, res: Respo
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Notification not found or unauthorized',
+        message: TRANSPORTER_CONTROLLER_MESSAGES.notificationNotFound,
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Notification marked as read',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.notificationMarkedRead,
       data: { id, isRead: true },
     });
   } catch (error: any) {
     console.error('Error marking notification as read:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update notification',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedUpdateNotification,
       error: error.message,
     });
   }
@@ -2092,14 +2093,14 @@ export const markAllNotificationsRead = async (req: AuthenticatedRequest, res: R
 
     return res.status(200).json({
       success: true,
-      message: 'All notifications marked as read',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.allNotificationsMarkedRead,
       data: { updatedCount: result.affectedRows },
     });
   } catch (error: any) {
     console.error('Error marking all notifications as read:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to mark notifications as read',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedMarkAllNotificationsRead,
       error: error.message,
     });
   }
@@ -2145,7 +2146,7 @@ export const getNotificationSettings = async (req: AuthenticatedRequest, res: Re
     console.error('Error fetching notification settings:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch notification settings',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedFetchNotificationSettings,
       error: error.message,
     });
   }
@@ -2201,14 +2202,14 @@ export const updateNotificationSettings = async (req: AuthenticatedRequest, res:
 
     return res.status(200).json({
       success: true,
-      message: 'Notification preferences updated successfully',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.notificationSettingsUpdateSuccess,
       data: updatedSettings,
     });
   } catch (error: any) {
     console.error('Error updating notification settings:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update notification settings',
+      message: TRANSPORTER_CONTROLLER_MESSAGES.failedUpdateNotificationSettings,
       error: error.message,
     });
   }

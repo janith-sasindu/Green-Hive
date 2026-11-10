@@ -27,6 +27,12 @@ import {
   TransporterProfile,
   TransporterNotificationItem,
   TRANSPORTER_API_ENDPOINTS,
+  AVAILABLE_JOBS_HEADER,
+  AVAILABLE_JOBS_CARD,
+  AVAILABLE_JOBS_ROUTE_MODAL,
+  AVAILABLE_JOBS_ALERTS,
+  AVAILABLE_JOBS_NAV_TABS,
+  AVAILABLE_JOBS_MODALS,
 } from "./data";
 import { TransporterNotificationsScreen } from "./TransporterNotificationsScreen";
 import { TransporterSubmitOfferScreen } from "./TransporterSubmitOfferScreen";
@@ -189,34 +195,36 @@ export const TransporterAvailableJobsScreen = ({
   };
 
   const handleCallFarmer = (job: AvailableTransportJob) => {
-    Alert.alert(
-      "Contact Farmer",
-      `Call ${job.farmerName || defaultFallbackJob.farmerName || "Farmer"} at ${
-        job.farmerPhone || defaultFallbackJob.farmerPhone || ""
-      }?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Call", onPress: () => {} },
-      ]
+    const alert = AVAILABLE_JOBS_ALERTS.contactFarmer(
+      job.farmerName || defaultFallbackJob.farmerName,
+      job.farmerPhone || defaultFallbackJob.farmerPhone
     );
+    Alert.alert(alert.title, alert.message, [
+      { text: alert.cancelButton, style: "cancel" },
+      { text: alert.callButton, onPress: () => {} },
+    ]);
   };
 
   const handleSignOut = () => {
     setShowProfileModal(false);
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => {
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate("Welcome");
-          }
+    Alert.alert(
+      AVAILABLE_JOBS_ALERTS.signOut.title,
+      AVAILABLE_JOBS_ALERTS.signOut.message,
+      [
+        { text: AVAILABLE_JOBS_ALERTS.signOut.cancelButton, style: "cancel" },
+        {
+          text: AVAILABLE_JOBS_ALERTS.signOut.confirmButton,
+          style: "destructive",
+          onPress: () => {
+            if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation?.navigate("Welcome");
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   if (submittingOfferJob) {
@@ -282,7 +290,7 @@ export const TransporterAvailableJobsScreen = ({
                   : "text-[20px]"
               }`}
             >
-              Available Jobs
+              {AVAILABLE_JOBS_HEADER.title}
             </Text>
           </View>
 
@@ -360,7 +368,7 @@ export const TransporterAvailableJobsScreen = ({
               isSmallDevice ? "text-[12px]" : "text-[13.5px]"
             }`}
           >
-            {availableJobs.length} transport jobs available near you
+            {AVAILABLE_JOBS_HEADER.countSubtitle(availableJobs.length)}
           </Text>
         </View>
 
@@ -499,7 +507,7 @@ export const TransporterAvailableJobsScreen = ({
                       isSmallDevice ? "text-[11.5px]" : "text-xs"
                     }`}
                   >
-                    View Job &gt;
+                    {AVAILABLE_JOBS_CARD.viewJobButton}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -540,7 +548,7 @@ export const TransporterAvailableJobsScreen = ({
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
-              Home
+              {AVAILABLE_JOBS_NAV_TABS.home}
             </Text>
             {activeTab === "home" && (
               <View
@@ -571,7 +579,7 @@ export const TransporterAvailableJobsScreen = ({
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
-              Jobs
+              {AVAILABLE_JOBS_NAV_TABS.jobs}
             </Text>
             {activeTab === "jobs" && (
               <View
@@ -602,7 +610,7 @@ export const TransporterAvailableJobsScreen = ({
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
-              Active
+              {AVAILABLE_JOBS_NAV_TABS.active}
             </Text>
             {activeTab === "active" && (
               <View
@@ -633,7 +641,7 @@ export const TransporterAvailableJobsScreen = ({
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
-              Profile
+              {AVAILABLE_JOBS_NAV_TABS.profile}
             </Text>
             {activeTab === "profile" && (
               <View
@@ -700,7 +708,7 @@ export const TransporterAvailableJobsScreen = ({
                       <View className="flex-row items-center bg-[#FEF3C7] dark:bg-amber-950/60 px-2.5 py-1 rounded-full shrink-0">
                         <View className="h-2 w-2 rounded-full bg-[#E68A00] mr-1.5" />
                         <Text className="text-[10.5px] sm:text-xs font-bold text-[#B45309] dark:text-amber-300">
-                          {selectedJob.status || "Open"}
+                          {selectedJob.status || AVAILABLE_JOBS_CARD.defaultStatus}
                         </Text>
                       </View>
                     </View>
@@ -726,7 +734,7 @@ export const TransporterAvailableJobsScreen = ({
 
                     {/* ROUTE Section */}
                     <Text className="text-[10.5px] sm:text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mt-4 sm:mt-5 mb-2 sm:mb-2.5">
-                      ROUTE
+                      {AVAILABLE_JOBS_ROUTE_MODAL.routeTitle}
                     </Text>
 
                     {/* Pickup Card */}
@@ -734,7 +742,7 @@ export const TransporterAvailableJobsScreen = ({
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#16A34A] mr-2" />
                         <Text className="text-xs sm:text-[13px] font-bold text-[#16A34A] dark:text-emerald-400">
-                          Pickup
+                          {AVAILABLE_JOBS_ROUTE_MODAL.pickupTitle}
                         </Text>
                       </View>
                       <Text
@@ -744,7 +752,7 @@ export const TransporterAvailableJobsScreen = ({
                         {getPickupAddress(selectedJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Farmer: {selectedJob.farmerName || defaultFallbackJob.farmerName}
+                        {AVAILABLE_JOBS_ROUTE_MODAL.farmerPrefix} {selectedJob.farmerName || defaultFallbackJob.farmerName}
                       </Text>
                     </View>
 
@@ -753,7 +761,7 @@ export const TransporterAvailableJobsScreen = ({
                       <View className="flex-row items-center">
                         <View className="h-2.5 w-2.5 rounded-full bg-[#EF4444] mr-2" />
                         <Text className="text-xs sm:text-[13px] font-bold text-[#DC2626] dark:text-rose-400">
-                          Delivery
+                          {AVAILABLE_JOBS_ROUTE_MODAL.deliveryTitle}
                         </Text>
                       </View>
                       <Text
@@ -763,7 +771,7 @@ export const TransporterAvailableJobsScreen = ({
                         {getDeliveryAddress(selectedJob)}
                       </Text>
                       <Text className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5" numberOfLines={1}>
-                        Seller: {selectedJob.sellerName || defaultFallbackJob.sellerName}
+                        {AVAILABLE_JOBS_ROUTE_MODAL.sellerPrefix} {selectedJob.sellerName || defaultFallbackJob.sellerName}
                       </Text>
                     </View>
 
@@ -771,7 +779,7 @@ export const TransporterAvailableJobsScreen = ({
                     <View className="flex-row items-center gap-2 sm:gap-3 mt-2.5 sm:mt-3">
                       <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700/60 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
                         <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                          Required Date
+                          {AVAILABLE_JOBS_ROUTE_MODAL.requiredDateLabel}
                         </Text>
                         <Text
                           numberOfLines={1}
@@ -785,7 +793,7 @@ export const TransporterAvailableJobsScreen = ({
 
                       <View className="flex-1 rounded-2xl bg-[#F8FAFC] dark:bg-slate-700/60 p-2.5 sm:p-3.5 border border-slate-100 dark:border-slate-600">
                         <Text className="text-[10.5px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                          Required Time
+                          {AVAILABLE_JOBS_ROUTE_MODAL.requiredTimeLabel}
                         </Text>
                         <Text
                           numberOfLines={1}
@@ -801,7 +809,7 @@ export const TransporterAvailableJobsScreen = ({
                     {/* Special Instructions Card */}
                     <View className="rounded-2xl bg-[#FFFDF0] dark:bg-amber-950/30 p-2.5 sm:p-3.5 mt-2.5 sm:mt-3 border border-[#FDE68A] dark:border-amber-700/50">
                       <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#D97706] dark:text-amber-400">
-                        Special Instructions
+                        {AVAILABLE_JOBS_ROUTE_MODAL.instructionsTitle}
                       </Text>
                       <Text className="text-[11px] sm:text-[12.5px] text-[#92400E] dark:text-amber-200 font-medium mt-1 leading-relaxed">
                         {getSpecialInstructions(selectedJob)}
@@ -813,12 +821,11 @@ export const TransporterAvailableJobsScreen = ({
                       <View className="flex-row items-center">
                         <Text className="text-xs mr-1.5">🔒</Text>
                         <Text className="text-[11.5px] sm:text-[12.5px] font-bold text-[#16A34A] dark:text-emerald-400">
-                          Payment Protected
+                          {AVAILABLE_JOBS_ROUTE_MODAL.paymentProtectedTitle}
                         </Text>
                       </View>
                       <Text className="text-[11px] sm:text-xs text-[#16A34A] dark:text-emerald-300 font-medium mt-1 leading-relaxed">
-                        Transportation payment is held by Green Hive and released upon
-                        successful delivery confirmation.
+                        {AVAILABLE_JOBS_ROUTE_MODAL.paymentProtectedDesc}
                       </Text>
                     </View>
                   </View>
@@ -831,7 +838,7 @@ export const TransporterAvailableJobsScreen = ({
                       className="flex-[0.4] py-3 sm:py-3.5 rounded-2xl bg-white dark:bg-slate-700 border border-gray-200/90 dark:border-slate-600 items-center justify-center shadow-2xs"
                     >
                       <Text className="text-xs sm:text-base font-bold text-gray-800 dark:text-slate-200">
-                        Back
+                        {AVAILABLE_JOBS_ROUTE_MODAL.backButton}
                       </Text>
                     </TouchableOpacity>
 
@@ -841,7 +848,7 @@ export const TransporterAvailableJobsScreen = ({
                       className="flex-[0.6] py-3 sm:py-3.5 rounded-2xl bg-[#FF8C00] items-center justify-center shadow-xs"
                     >
                       <Text className="text-xs sm:text-base font-bold text-white">
-                        Submit Offer
+                        {AVAILABLE_JOBS_ROUTE_MODAL.submitOfferButton}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -877,11 +884,11 @@ export const TransporterAvailableJobsScreen = ({
                     isSmallDevice ? "text-base" : "text-lg"
                   }`}
                 >
-                  Notifications
+                  {AVAILABLE_JOBS_MODALS.notificationsTitle}
                 </Text>
                 <View className="ml-2 bg-[#FEF3C7] dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
                   <Text className="text-[10.5px] sm:text-xs font-bold text-amber-800 dark:text-amber-300">
-                    {notifications.length} new
+                    {AVAILABLE_JOBS_MODALS.newCountBadge(notifications.length)}
                   </Text>
                 </View>
               </View>
@@ -923,7 +930,9 @@ export const TransporterAvailableJobsScreen = ({
               onPress={handleSeeMoreNotifications}
               className="mt-2.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/40 items-center justify-center flex-row"
             >
-              <Text className="text-xs font-bold text-[#D97706] dark:text-amber-400">See More</Text>
+              <Text className="text-xs font-bold text-[#D97706] dark:text-amber-400">
+                {AVAILABLE_JOBS_MODALS.seeMoreButton}
+              </Text>
               <Ionicons
                 name="chevron-forward"
                 size={14}
@@ -938,7 +947,9 @@ export const TransporterAvailableJobsScreen = ({
               onPress={() => setShowNotificationsModal(false)}
               className="mt-2 py-3 rounded-xl bg-[#E68A00] items-center justify-center shadow-xs"
             >
-              <Text className="text-xs font-bold text-white">Dismiss</Text>
+              <Text className="text-xs font-bold text-white">
+                {AVAILABLE_JOBS_MODALS.dismissButton}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -957,7 +968,7 @@ export const TransporterAvailableJobsScreen = ({
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Driver Profile
+              {AVAILABLE_JOBS_MODALS.profileTitle}
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
@@ -1000,28 +1011,27 @@ export const TransporterAvailableJobsScreen = ({
                   {profile.email}
                 </Text>
                 <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
-                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                  Completed Trips)
+                  {AVAILABLE_JOBS_MODALS.tripsSummary(profile.rating, profile.completedJobs)}
                 </Text>
               </View>
 
               {/* Vehicle details */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
-                  Registered Vehicle
+                  {AVAILABLE_JOBS_MODALS.vehicleSectionTitle}
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    🚚 <Text className="font-semibold">{AVAILABLE_JOBS_MODALS.typeLabel}</Text>{" "}
                     {profile.vehicleType}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    🔢 <Text className="font-semibold">{AVAILABLE_JOBS_MODALS.plateLabel}</Text>{" "}
                     {profile.vehiclePlate}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                    Verified
+                    🛡️ <Text className="font-semibold">{AVAILABLE_JOBS_MODALS.statusLabel}</Text>{" "}
+                    {AVAILABLE_JOBS_MODALS.verifiedStatus}
                   </Text>
                 </View>
               </View>
@@ -1039,10 +1049,10 @@ export const TransporterAvailableJobsScreen = ({
                     </View>
                     <View>
                       <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                        Dark Mode
+                        {AVAILABLE_JOBS_MODALS.darkModeTitle}
                       </Text>
                       <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                        {isDark ? AVAILABLE_JOBS_MODALS.darkModeActive : AVAILABLE_JOBS_MODALS.lightModeActive}
                       </Text>
                     </View>
                   </View>
@@ -1062,7 +1072,7 @@ export const TransporterAvailableJobsScreen = ({
                 className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3.5 items-center justify-center mt-2"
               >
                 <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                  Log Out of Transporter Account
+                  {AVAILABLE_JOBS_MODALS.logOutButton}
                 </Text>
               </TouchableOpacity>
             </View>

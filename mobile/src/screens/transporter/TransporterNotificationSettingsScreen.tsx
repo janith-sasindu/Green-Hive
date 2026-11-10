@@ -19,6 +19,10 @@ import {
   MOCK_TRANSPORTER_NOTIFICATION_SETTINGS,
   TransporterNotificationSettings,
   TRANSPORTER_API_ENDPOINTS,
+  NOTIFICATION_SETTINGS_HEADER,
+  NOTIFICATION_SETTINGS_CARDS,
+  NOTIFICATION_SETTINGS_ACTIONS,
+  NOTIFICATION_SETTINGS_ALERTS,
 } from "./data";
 
 export interface TransporterNotificationSettingsScreenProps {
@@ -141,11 +145,11 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
         Object.assign(MOCK_TRANSPORTER_NOTIFICATION_SETTINGS, settings);
 
         showAlert(
-          "Notification Settings Saved",
-          "Your notification preferences have been saved successfully.",
+          NOTIFICATION_SETTINGS_ALERTS.saveSuccess.title,
+          NOTIFICATION_SETTINGS_ALERTS.saveSuccess.message,
           {
             type: "success",
-            primaryButtonText: "Done",
+            primaryButtonText: NOTIFICATION_SETTINGS_ALERTS.saveSuccess.primaryButtonText,
             onPrimaryPress: () => {
               handleGoBack();
             },
@@ -153,16 +157,16 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
         );
       } else {
         showAlert(
-          "Save Failed",
-          json.message || "Failed to save notification preferences. Please try again.",
+          NOTIFICATION_SETTINGS_ALERTS.saveFailed.title,
+          json.message || NOTIFICATION_SETTINGS_ALERTS.saveFailed.defaultMessage,
           { type: "error" }
         );
       }
     } catch (error) {
       console.log("Error saving notification settings:", error);
       showAlert(
-        "Connection Error",
-        "Could not connect to the backend server. Please verify your connection.",
+        NOTIFICATION_SETTINGS_ALERTS.connectionError.title,
+        NOTIFICATION_SETTINGS_ALERTS.connectionError.message,
         { type: "error" }
       );
     } finally {
@@ -200,10 +204,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
             </TouchableOpacity>
             <View>
               <Text className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                Notification Settings
+                {NOTIFICATION_SETTINGS_HEADER.title}
               </Text>
               <Text className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400">
-                Manage phone push alerts
+                {NOTIFICATION_SETTINGS_HEADER.subtitle}
               </Text>
             </View>
           </View>
@@ -234,7 +238,7 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
           {/* ================= 1. PUSH ALERTS CARD ================= */}
           <View className="rounded-3xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
             <Text className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-3">
-              Phone Push Alert Types
+              {NOTIFICATION_SETTINGS_CARDS.pushSectionTitle}
             </Text>
 
             {/* Toggle 1: New Jobs Push */}
@@ -245,10 +249,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                    New Jobs Notifications
+                    {NOTIFICATION_SETTINGS_CARDS.newJobs.title}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    Alert on phone when new transport jobs are posted near you
+                    {NOTIFICATION_SETTINGS_CARDS.newJobs.description}
                   </Text>
                 </View>
               </View>
@@ -275,10 +279,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                    Current Job Updates
+                    {NOTIFICATION_SETTINGS_CARDS.currentJob.title}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    Alert on phone for active trip milestones, pickup, and updates
+                    {NOTIFICATION_SETTINGS_CARDS.currentJob.description}
                   </Text>
                 </View>
               </View>
@@ -305,10 +309,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                    Offer Acceptance & Bids
+                    {NOTIFICATION_SETTINGS_CARDS.offerStatus.title}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    Alert on phone when a farmer accepts or counters your offer
+                    {NOTIFICATION_SETTINGS_CARDS.offerStatus.description}
                   </Text>
                 </View>
               </View>
@@ -335,10 +339,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                    Payment Releases
+                    {NOTIFICATION_SETTINGS_CARDS.payment.title}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    Alert on phone when earnings are credited to your account
+                    {NOTIFICATION_SETTINGS_CARDS.payment.description}
                   </Text>
                 </View>
               </View>
@@ -361,7 +365,7 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
           {/* ================= 2. SOUND & VIBRATION ================= */}
           <View className="rounded-3xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
             <Text className="text-xs font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mb-3">
-              Alert Sounds
+              {NOTIFICATION_SETTINGS_CARDS.soundSectionTitle}
             </Text>
 
             <View className="flex-row items-center justify-between py-1">
@@ -371,10 +375,10 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                    Sound & Vibration
+                    {NOTIFICATION_SETTINGS_CARDS.sound.title}
                   </Text>
                   <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    Play phone ringtone and vibrate on arrival
+                    {NOTIFICATION_SETTINGS_CARDS.sound.description}
                   </Text>
                 </View>
               </View>
@@ -416,7 +420,7 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
               <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
             )}
             <Text className="text-sm sm:text-base font-bold text-white ml-2">
-              {saving ? "Saving Preferences..." : "Save Notification Preferences"}
+              {saving ? NOTIFICATION_SETTINGS_ACTIONS.savingButton : NOTIFICATION_SETTINGS_ACTIONS.saveButton}
             </Text>
           </TouchableOpacity>
 
@@ -426,7 +430,7 @@ export const TransporterNotificationSettingsScreen: React.FC<TransporterNotifica
             className="w-full py-2.5 items-center justify-center"
           >
             <Text className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-slate-400">
-              Back to Profile
+              {NOTIFICATION_SETTINGS_ACTIONS.backToProfileButton}
             </Text>
           </TouchableOpacity>
         </View>

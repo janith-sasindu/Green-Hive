@@ -253,4 +253,37 @@ export const DEFAULT_VEHICLE_LICENSE = {
   verificationStatus: 'Verified',
 };
 
+export const TRANSPORTER_CONTROLLER_MESSAGES = {
+  transporterNotFound: 'Transporter profile not found',
+  failedFetchHome: 'Failed to fetch home screen data',
+  failedUpdateJobStatus: 'Failed to update transport job status',
+  failedFetchAvailableJobs: 'Failed to fetch available transport jobs',
+  jobNotFound: 'Transport job not found',
+  failedFetchJobDetails: 'Failed to fetch job details',
+  failedSubmitOffer: 'Failed to submit transport offer',
+  failedFetchOffers: 'Failed to fetch transport offers',
+  failedWithdrawOffer: 'Failed to withdraw transport offer',
+  failedFetchLatestOffer: 'Failed to fetch latest transport offer',
+  noActiveTrip: 'No active transport trip in progress',
+  failedFetchActiveJob: 'Failed to fetch active job',
+  failedFetchProfile: 'Failed to fetch transporter profile',
+  profileUpdateSuccess: 'Profile updated successfully',
+  failedUpdateProfile: 'Failed to update transporter profile',
+  avatarUrlRequired: 'Valid avatar URL is required',
+  avatarUpdateSuccess: 'Avatar updated successfully',
+  failedUpdateAvatar: 'Failed to update avatar photo',
+  avatarRemovedSuccess: 'Avatar photo removed successfully',
+  failedRemoveAvatar: 'Failed to remove avatar photo',
+  failedFetchNotifications: 'Failed to fetch notifications',
+  notificationNotFound: 'Notification not found or unauthorized',
+  notificationMarkedRead: 'Notification marked as read',
+  failedUpdateNotification: 'Failed to update notification',
+  allNotificationsMarkedRead: 'All notifications marked as read',
+  failedMarkAllNotificationsRead: 'Failed to mark notifications as read',
+  failedFetchNotificationSettings: 'Failed to fetch notification settings',
+  notificationSettingsUpdateSuccess: 'Notification preferences updated successfully',
+  failedUpdateNotificationSettings: 'Failed to update notification settings',
+};
+
+
 

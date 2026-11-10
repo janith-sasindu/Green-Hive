@@ -30,6 +30,14 @@ import {
   TransporterProfile,
   TransporterStats,
   TRANSPORTER_API_ENDPOINTS,
+  PROFILE_HEADER,
+  PROFILE_HERO,
+  PROFILE_CONTACT_SECTION,
+  PROFILE_SETTINGS_MENU,
+  PROFILE_ALERTS,
+  PROFILE_PHOTO_SOURCE_MODAL,
+  PROFILE_PHOTO_PREVIEW_MODAL,
+  PROFILE_NAV_TABS,
 } from "./data";
 
 export interface TransporterProfileScreenProps {
@@ -148,8 +156,8 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Camera Permission Required",
-          "GreenHive needs camera access to capture a picture for your profile. Please enable camera permission in your phone settings.",
+          PROFILE_ALERTS.cameraPermission.title,
+          PROFILE_ALERTS.cameraPermission.message,
           { type: "warning" }
         );
         return;
@@ -169,8 +177,8 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       }
     } catch (err) {
       showAlert(
-        "Camera Error",
-        "Could not launch the camera. Please check your device settings and try again.",
+        PROFILE_ALERTS.cameraError.title,
+        PROFILE_ALERTS.cameraError.message,
         { type: "error" }
       );
     } finally {
@@ -184,8 +192,8 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         showAlert(
-          "Gallery Permission Required",
-          "GreenHive needs photo library access to select a profile picture. Please enable gallery access in your device settings.",
+          PROFILE_ALERTS.galleryPermission.title,
+          PROFILE_ALERTS.galleryPermission.message,
           { type: "warning" }
         );
         return;
@@ -205,8 +213,8 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       }
     } catch (err) {
       showAlert(
-        "Gallery Error",
-        "Could not access photo library. Please check your permissions and try again.",
+        PROFILE_ALERTS.galleryError.title,
+        PROFILE_ALERTS.galleryError.message,
         { type: "error" }
       );
     } finally {
@@ -235,11 +243,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
     }).catch((e) => console.log("Failed to sync avatar with backend:", e));
 
     showAlert(
-      "Profile Picture Updated",
-      "Your new profile picture has been successfully uploaded and set!",
+      PROFILE_ALERTS.avatarSuccess.title,
+      PROFILE_ALERTS.avatarSuccess.message,
       {
         type: "success",
-        primaryButtonText: "Great!",
+        primaryButtonText: PROFILE_ALERTS.avatarSuccess.buttonText,
       }
     );
   };
@@ -252,11 +260,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
   const handleRemovePhoto = () => {
     setShowSourceModal(false);
     showAlert(
-      "Remove Profile Picture",
-      "Are you sure you want to remove your profile picture and restore the default initial letter?",
+      PROFILE_ALERTS.removeAvatarConfirm.title,
+      PROFILE_ALERTS.removeAvatarConfirm.message,
       {
         type: "warning",
-        primaryButtonText: "Remove",
+        primaryButtonText: PROFILE_ALERTS.removeAvatarConfirm.primaryButtonText,
         onPrimaryPress: () => {
           setProfile((prev) => {
             const next = { ...prev };
@@ -272,53 +280,54 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             console.log("Failed to delete avatar from backend:", e)
           );
 
-          showAlert("Picture Removed", "Your profile picture has been reset to default.", {
+          showAlert(PROFILE_ALERTS.avatarRemovedSuccess.title, PROFILE_ALERTS.avatarRemovedSuccess.message, {
             type: "info",
-            primaryButtonText: "Done",
+            primaryButtonText: PROFILE_ALERTS.avatarRemovedSuccess.buttonText,
           });
         },
-        secondaryButtonText: "Cancel",
+        secondaryButtonText: PROFILE_ALERTS.removeAvatarConfirm.secondaryButtonText,
       }
     );
   };
 
   const handleMenuPress = (itemTitle: string) => {
     switch (itemTitle) {
-      case "Notification Settings":
+      case PROFILE_SETTINGS_MENU.notificationSettings:
         if (navigation?.navigate) {
           navigation.navigate("TransporterNotificationSettings");
         } else {
           setShowNotificationSettingsModal(true);
         }
         break;
-      case "Vehicle & License":
+      case PROFILE_SETTINGS_MENU.vehicleLicense:
         if (navigation?.navigate) {
           navigation.navigate("TransporterVehicleLicense");
         } else {
+          const dialog = PROFILE_ALERTS.vehicleLicenseDialog(profile.vehicleType, profile.vehiclePlate);
           Alert.alert(
-            "Vehicle & License",
-            `Vehicle: ${profile.vehicleType}\nPlate: ${profile.vehiclePlate}\nDriver License: Verified`
+            dialog.title,
+            dialog.message
           );
         }
         break;
-      case "Help & Support":
+      case PROFILE_SETTINGS_MENU.helpSupport:
         if (navigation?.navigate) {
           navigation.navigate("TransporterHelpSupport");
         } else {
           Alert.alert(
-            "Help & Support",
+            PROFILE_SETTINGS_MENU.helpSupport,
             MOCK_TRANSPORTER_SUPPORT_CONTACT.message
           );
         }
         break;
-      case "Edit Profile":
+      case PROFILE_SETTINGS_MENU.editProfile:
         if (navigation?.navigate) {
           navigation.navigate("TransporterEditProfile");
         } else {
           setShowEditProfileModal(true);
         }
         break;
-      case "Bank Details":
+      case PROFILE_SETTINGS_MENU.bankDetails:
         if (navigation?.navigate) {
           navigation.navigate("TransporterBankDetails");
         } else {
@@ -332,12 +341,12 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
 
   const handleSignOut = () => {
     showAlert(
-      "Sign Out?",
-      "Are you sure you want to sign out of your transporter account? You will return to the welcome screen.",
+      PROFILE_ALERTS.signOut.title,
+      PROFILE_ALERTS.signOut.message,
       {
         type: "error",
-        primaryButtonText: "Sign Out",
-        secondaryButtonText: "Cancel",
+        primaryButtonText: PROFILE_ALERTS.signOut.primaryButtonText,
+        secondaryButtonText: PROFILE_ALERTS.signOut.secondaryButtonText,
         onPrimaryPress: () => {
           let rootNav = navigation;
           while (rootNav?.getParent && rootNav.getParent()) {
@@ -429,7 +438,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   : "text-[20px]"
               }`}
             >
-              My Profile
+              {PROFILE_HEADER.title}
             </Text>
           </View>
 
@@ -604,7 +613,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               </Text>
               <Text className="text-white/80 mx-1.5 text-xs sm:text-sm">·</Text>
               <Text className="font-medium text-white/90 text-xs sm:text-sm">
-                {profile.completedJobs} jobs completed
+                {PROFILE_HERO.jobsCompletedSubtitle(profile.completedJobs)}
               </Text>
             </View>
 
@@ -625,7 +634,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   {profile.completedJobs}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
-                  Jobs
+                  {PROFILE_HERO.statJobsLabel}
                 </Text>
               </View>
 
@@ -642,7 +651,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   {profile.totalEarnings || MOCK_TRANSPORTER_PROFILE.totalEarnings}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
-                  Earned
+                  {PROFILE_HERO.statEarnedLabel}
                 </Text>
               </View>
 
@@ -659,7 +668,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   {profile.onTimeDeliveryRate || MOCK_TRANSPORTER_PROFILE.onTimeDeliveryRate}
                 </Text>
                 <Text className="font-semibold text-white/80 text-[11px] sm:text-xs text-center mt-0.5">
-                  On Time
+                  {PROFILE_HERO.statOnTimeLabel}
                 </Text>
               </View>
             </View>
@@ -679,7 +688,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             }}
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-3.5 sm:mb-4">
-              Contact & Vehicle
+              {PROFILE_CONTACT_SECTION.sectionTitle}
             </Text>
 
             <View className="space-y-3 sm:space-y-3.5 gap-3 sm:gap-3.5">
@@ -694,7 +703,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="flex-1">
                   <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                    Phone
+                    {PROFILE_CONTACT_SECTION.phoneLabel}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -716,7 +725,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="flex-1">
                   <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                    Email
+                    {PROFILE_CONTACT_SECTION.emailLabel}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -738,7 +747,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="flex-1">
                   <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                    Base Location
+                    {PROFILE_CONTACT_SECTION.baseLocationLabel}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -760,7 +769,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="flex-1">
                   <Text className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-slate-400">
-                    Vehicle
+                    {PROFILE_CONTACT_SECTION.vehicleLabel}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -789,11 +798,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             {/* Edit Profile */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => handleMenuPress("Edit Profile")}
+              onPress={() => handleMenuPress(PROFILE_SETTINGS_MENU.editProfile)}
               className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
-                Edit Profile
+                {PROFILE_SETTINGS_MENU.editProfile}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -801,11 +810,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             {/* Bank Details */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => handleMenuPress("Bank Details")}
+              onPress={() => handleMenuPress(PROFILE_SETTINGS_MENU.bankDetails)}
               className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
-                Bank Details
+                {PROFILE_SETTINGS_MENU.bankDetails}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -813,11 +822,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             {/* Vehicle & License */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => handleMenuPress("Vehicle & License")}
+              onPress={() => handleMenuPress(PROFILE_SETTINGS_MENU.vehicleLicense)}
               className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
-                Vehicle & License
+                {PROFILE_SETTINGS_MENU.vehicleLicense}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -825,11 +834,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             {/* Notification Settings */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => handleMenuPress("Notification Settings")}
+              onPress={() => handleMenuPress(PROFILE_SETTINGS_MENU.notificationSettings)}
               className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
-                Notification Settings
+                {PROFILE_SETTINGS_MENU.notificationSettings}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -837,11 +846,11 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
             {/* Help & Support */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => handleMenuPress("Help & Support")}
+              onPress={() => handleMenuPress(PROFILE_SETTINGS_MENU.helpSupport)}
               className="py-3.5 sm:py-4 flex-row items-center justify-between border-b border-gray-100/90 dark:border-slate-700"
             >
               <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
-                Help & Support
+                {PROFILE_SETTINGS_MENU.helpSupport}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
             </TouchableOpacity>
@@ -855,7 +864,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                   color={isDark ? "#FBBF24" : "#6B7280"}
                 />
                 <Text className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white ml-2.5">
-                  Dark Mode
+                  {PROFILE_SETTINGS_MENU.darkMode}
                 </Text>
               </View>
               <Switch
@@ -893,7 +902,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               style={{ marginRight: 8 }}
             />
             <Text className="text-sm sm:text-base font-bold text-[#EF4444]">
-              Sign Out
+              {PROFILE_SETTINGS_MENU.signOutButton}
             </Text>
           </TouchableOpacity>
         </View>
@@ -926,7 +935,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {PROFILE_NAV_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -946,7 +955,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {PROFILE_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -966,7 +975,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {PROFILE_NAV_TABS.active}
             </Text>
           </TouchableOpacity>
 
@@ -986,7 +995,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-bold text-[#E68A00]`}
             >
-              Profile
+              {PROFILE_NAV_TABS.profile}
             </Text>
             <View
               className={`rounded-full bg-[#E68A00] mt-1 ${
@@ -1027,10 +1036,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="ml-3">
                   <Text className="text-base sm:text-lg font-bold text-[#111827] dark:text-white">
-                    Profile Photo
+                    {PROFILE_PHOTO_SOURCE_MODAL.title}
                   </Text>
                   <Text className="text-xs text-[#6B7280] dark:text-slate-400">
-                    Choose an option to update your photo
+                    {PROFILE_PHOTO_SOURCE_MODAL.subtitle}
                   </Text>
                 </View>
               </View>
@@ -1054,10 +1063,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Use Camera
+                  {PROFILE_PHOTO_SOURCE_MODAL.useCameraTitle}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Open camera to capture a picture
+                  {PROFILE_PHOTO_SOURCE_MODAL.useCameraSubtitle}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
@@ -1075,10 +1084,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-900 dark:text-white">
-                  Choose from Gallery
+                  {PROFILE_PHOTO_SOURCE_MODAL.chooseGalleryTitle}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Select a picture from your device library
+                  {PROFILE_PHOTO_SOURCE_MODAL.chooseGallerySubtitle}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={isDark ? "#94A3B8" : "#9CA3AF"} />
@@ -1096,10 +1105,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                    Remove Current Photo
+                    {PROFILE_PHOTO_SOURCE_MODAL.removePhotoTitle}
                   </Text>
                   <Text className="text-xs text-red-400 dark:text-red-300 mt-0.5">
-                    Revert back to default initial letter
+                    {PROFILE_PHOTO_SOURCE_MODAL.removePhotoSubtitle}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#EF4444" />
@@ -1113,7 +1122,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               className="mt-1 py-3.5 rounded-2xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
             >
               <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200">
-                Cancel
+                {PROFILE_PHOTO_SOURCE_MODAL.cancelButton}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1141,10 +1150,10 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 <Ionicons name="person-circle-outline" size={28} color="#E68A00" />
               </View>
               <Text className="text-lg font-bold text-gray-900 dark:text-white text-center">
-                Preview Profile Picture
+                {PROFILE_PHOTO_PREVIEW_MODAL.title}
               </Text>
               <Text className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1 px-2">
-                Check how your photo looks before uploading it as your profile picture
+                {PROFILE_PHOTO_PREVIEW_MODAL.subtitle}
               </Text>
             </View>
 
@@ -1173,7 +1182,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               <View className="flex-row items-center mt-3 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full border border-amber-200/50 dark:border-amber-800/40">
                 <Ionicons name="sparkles" size={12} color="#E68A00" />
                 <Text className="text-[11px] font-semibold text-[#E68A00] ml-1.5">
-                  Looking sharp!
+                  {PROFILE_PHOTO_PREVIEW_MODAL.badgeText}
                 </Text>
               </View>
             </View>
@@ -1195,7 +1204,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               >
                 <Ionicons name="cloud-upload-outline" size={18} color="#FFFFFF" />
                 <Text className="text-sm font-bold text-white ml-2">
-                  Upload as Profile Picture
+                  {PROFILE_PHOTO_PREVIEW_MODAL.uploadButton}
                 </Text>
               </TouchableOpacity>
 
@@ -1207,7 +1216,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
               >
                 <Ionicons name="refresh-outline" size={17} color={isDark ? "#CBD5E1" : "#4B5563"} />
                 <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200 ml-2">
-                  Retake or Choose Again
+                  {PROFILE_PHOTO_PREVIEW_MODAL.selectAgainButton}
                 </Text>
               </TouchableOpacity>
 
@@ -1221,7 +1230,7 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
                 className="w-full py-2.5 items-center justify-center"
               >
                 <Text className="text-xs font-medium text-gray-400 dark:text-slate-500">
-                  Cancel
+                  {PROFILE_PHOTO_PREVIEW_MODAL.cancelButton}
                 </Text>
               </TouchableOpacity>
             </View>
