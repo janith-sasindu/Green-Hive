@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { pool } from './config/db';
 import adminRoutes from './routes/admin.routes';
 import transporterRoutes from './routes/transporter.routes';
+import farmerRoutes from './routes/farmer.routes';
 
 dotenv.config();
 
@@ -21,6 +22,9 @@ app.use('/api/admin', adminRoutes);
 
 // Transporter Routes
 app.use('/api/transporter', transporterRoutes);
+
+// Farmer Routes
+app.use('/api/farmer', farmerRoutes);
 
 // Health Check
 app.get('/api/health', (req: Request, res: Response) => {
