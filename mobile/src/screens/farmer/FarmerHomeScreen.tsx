@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -16,15 +16,23 @@ import { FarmerProductsScreen } from "./FarmerProductsScreen";
 import { FarmerRequirementsScreen } from "./FarmerRequirementsScreen";
 import { FarmerOrdersScreen } from "./FarmerOrdersScreen";
 import { FarmerProfileScreen } from "./FarmerProfileScreen";
+import { getActiveUser } from "../../data/mockAuth";
 
 interface FarmerHomeScreenProps {
   navigation?: any;
+  route?: any;
 }
 
-export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
+export const FarmerHomeScreen = ({ navigation, route }: FarmerHomeScreenProps) => {
   const [activeTab, setActiveTab] = useState<
     "Home" | "Products" | "Requirements" | "Orders" | "Profile"
   >("Home");
+
+  // Dynamically resolve logged-in user profile info
+  const currentUser = route?.params?.user || getActiveUser();
+  const farmerName = route?.params?.userName || currentUser?.name || "Sunil Perera";
+  const avatarLetter = (farmerName.trim()[0] || "S").toUpperCase();
+  const farmerLocation = currentUser?.location || "Nuwara Eliya";
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
@@ -120,7 +128,7 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               <View className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setActiveTab("Profile")} activeOpacity={0.7} className="h-9 w-9 rounded-full bg-[#1E6F38] items-center justify-center">
-              <Text className="text-white font-bold text-base">S</Text>
+              <Text className="text-white font-bold text-base">{avatarLetter}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -137,14 +145,14 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
               <View className="absolute right-12 -bottom-12 h-36 w-36 rounded-full bg-white/5" />
               <View className="flex-row items-center px-4 pt-4">
                 <View className="h-14 w-14 rounded-2xl bg-[#28813F] items-center justify-center mr-3.5 border border-white/10">
-                  <Text className="text-2xl font-bold text-white">S</Text>
+                  <Text className="text-2xl font-bold text-white">{avatarLetter}</Text>
                 </View>
                 <View className="flex-1">
                   <Text className="text-xs text-[#C6E7CD] font-medium">Good morning,</Text>
-                  <Text className="text-xl font-bold text-white mt-0.5">Sunil Perera</Text>
+                  <Text className="text-xl font-bold text-white mt-0.5" numberOfLines={1}>{farmerName}</Text>
                   <View className="flex-row items-center mt-1">
                     <Ionicons name="checkmark-circle-outline" size={14} color="#86EFAC" />
-                    <Text className="text-xs text-[#C6E7CD] ml-1 font-medium">Verified Farmer · Nuwara Eliya</Text>
+                    <Text className="text-xs text-[#C6E7CD] ml-1 font-medium">Verified Farmer · {farmerLocation}</Text>
                   </View>
                 </View>
               </View>
@@ -272,7 +280,16 @@ export const FarmerHomeScreen = ({ navigation }: FarmerHomeScreenProps) => {
         {activeTab === "Products" && <FarmerProductsScreen products={products} onOpenAddModal={() => setIsAddModalOpen(true)} onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
         {activeTab === "Requirements" && <FarmerRequirementsScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
         {activeTab === "Orders" && <FarmerOrdersScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
-        {activeTab === "Profile" && <FarmerProfileScreen onBackToHome={() => setActiveTab("Home")} onLogout={handleLogout} isDark={isDark} setIsDark={setIsDark} />}
+        {activeTab === "Profile" && (
+          <FarmerProfileScreen
+            onBackToHome={() => setActiveTab("Home")}
+            onLogout={handleLogout}
+            isDark={isDark}
+            setIsDark={setIsDark}
+            user={currentUser}
+            farmerName={farmerName}
+          />
+        )}
       </View>
 
       {/* ── Bottom Navigation ── */}
