@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   Image, View, Text, TouchableOpacity, StatusBar,
   Alert, Switch, useWindowDimensions,
@@ -21,6 +21,8 @@ interface FarmerProfileScreenProps {
   onLogout: () => void;
   isDark: boolean;
   setIsDark: (val: boolean) => void;
+  user?: any;
+  farmerName?: string;
 }
 
 export const FarmerProfileScreen = ({
@@ -28,19 +30,24 @@ export const FarmerProfileScreen = ({
   onLogout,
   isDark,
   setIsDark,
+  user,
+  farmerName,
 }: FarmerProfileScreenProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
 
+  const resolvedName = farmerName || user?.name || "Sunil Perera";
+  const resolvedLetter = (resolvedName.trim()[0] || "S").toUpperCase();
+
   const [farmerProfile, setFarmerProfile] = useState<FarmerProfileData>({
-    name: "Sunil Perera",
+    name: resolvedName,
     role: "Verified Farmer",
-    location: "Nuwara Eliya",
-    phone: "+94 77 123 4567",
-    email: "sunil@farmer.lk",
+    location: user?.location || "Nuwara Eliya",
+    phone: user?.phone || "+94 77 123 4567",
+    email: user?.email || "sunil@farmer.lk",
     memberSince: "August 2024",
-    avatarLetter: "S",
+    avatarLetter: resolvedLetter,
     rating: 4.6,
     completedSales: 23,
     totalEarnings: "Rs. 142k",
