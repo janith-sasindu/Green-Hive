@@ -131,10 +131,10 @@ const AccountDetailsScreen = ({
             }
 
             // Register user in mock auth storage so they can sign in later
-            registerMockUser({
-                fullName,
-                email,
-                phone,
+            const newUser = registerMockUser({
+                fullName: fullName.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
                 password,
                 role,
             });
@@ -145,7 +145,7 @@ const AccountDetailsScreen = ({
                 [
                     {
                         text: "Get Started",
-                        onPress: () => navigation.navigate(destination),
+                        onPress: () => navigation.navigate(destination, { user: newUser, userName: fullName.trim() }),
                     },
                 ]
             );
