@@ -115,7 +115,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
           if (d.baseLocation !== undefined) setBaseLocation(d.baseLocation || "");
           if (d.vehicleType) setVehicleType(d.vehicleType);
           if (d.vehiclePlate) setVehiclePlate(d.vehiclePlate);
-          if (d.avatarUrl || d.avatarUri) setAvatarUri(d.avatarUrl || d.avatarUri);
+          setAvatarUri(d.avatarUrl || d.avatarUri || undefined);
         }
       } catch (err) {
         console.log("Error loading profile from API:", err);
@@ -308,7 +308,7 @@ export const TransporterEditProfileScreen: React.FC<TransporterEditProfileScreen
           baseLocation: trimmedLocation,
           vehicleType: trimmedVehicle,
           vehiclePlate: trimmedPlate,
-          avatarUrl: avatarUri,
+          avatarUrl: avatarUri ?? null,
         }),
       });
 

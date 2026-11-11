@@ -321,7 +321,7 @@ export const TransporterConfirmPickupScreen: React.FC<
   const handleConfirmPickup = async () => {
     setIsSubmitting(true);
     try {
-      const targetJobId = currentJob.dbId || currentJob.id.replace("#TR-", "");
+      const targetJobId = currentJob.dbId ?? encodeURIComponent(currentJob.id);
       const res = await fetch(
         TRANSPORTER_API_ENDPOINTS.confirmPickup(targetJobId),
         {

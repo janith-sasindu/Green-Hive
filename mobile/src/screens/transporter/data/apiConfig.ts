@@ -19,6 +19,7 @@ export const TRANSPORTER_API_ENDPOINTS = {
   jobOffers: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/offers`,
   jobStatus: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/status`,
   confirmPickup: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/pickup`,
+  confirmDelivery: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/jobs/${id}/delivery`,
   profile: `${TRANSPORTER_API_BASE_URL}/profile`,
   avatar: `${TRANSPORTER_API_BASE_URL}/profile/avatar`,
   bankDetails: `${TRANSPORTER_API_BASE_URL}/bank-details`,
@@ -29,6 +30,10 @@ export const TRANSPORTER_API_ENDPOINTS = {
   offers: `${TRANSPORTER_API_BASE_URL}/offers`,
   withdrawOffer: (id: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/${id}`,
   latestOffer: `${TRANSPORTER_API_BASE_URL}/offers/latest`,
-  jobOffer: (jobId: string | number) => `${TRANSPORTER_API_BASE_URL}/offers/latest?jobId=${jobId}`,
+  jobOffer: (jobId: string | number) =>
+    `${TRANSPORTER_API_BASE_URL}/offers/latest?jobId=${encodeURIComponent(String(jobId))}`,
+  supportTickets: `${TRANSPORTER_API_BASE_URL}/support/tickets`,
+  vehicleLicense: `${TRANSPORTER_API_BASE_URL}/vehicle-license`,
+  vehicleLicenseDocument: `${TRANSPORTER_API_BASE_URL}/vehicle-license/documents`,
 };
 

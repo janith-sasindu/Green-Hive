@@ -29,6 +29,12 @@ import {
   TransporterProfile,
   TransporterNotificationItem,
   TRANSPORTER_API_ENDPOINTS,
+  ACTIVE_JOB_HEADER,
+  ACTIVE_JOB_CARDS,
+  ACTIVE_JOB_ACTIONS,
+  ACTIVE_JOB_ALERTS,
+  ACTIVE_JOB_NAV_TABS,
+  ACTIVE_JOB_MODALS,
 } from "./data";
 
 export interface TransporterActiveJobScreenProps {
@@ -221,20 +227,21 @@ export const TransporterActiveJobScreen: React.FC<
   // Pickup Confirmation Action
   const handleConfirmPickup = () => {
     if (currentJob.status === "Delivered") {
-      showAlert("Trip Completed", "This cargo delivery is already completed.", {
+      showAlert(ACTIVE_JOB_ALERTS.tripCompleted.title, ACTIVE_JOB_ALERTS.tripCompleted.message, {
         type: "info",
       });
       return;
     }
 
     if (currentJob.status === "In Transit") {
+      const alert = ACTIVE_JOB_ALERTS.cargoAlreadyPickedUp(currentJob.cropName, currentJob.weight, currentJob.dropoff);
       showAlert(
-        "Cargo Already Picked Up",
-        `You have already picked up ${currentJob.cropName} · ${currentJob.weight}. Currently in transit to ${currentJob.dropoff}.`,
+        alert.title,
+        alert.message,
         {
           type: "info",
-          primaryButtonText: "View Pickup Details",
-          secondaryButtonText: "Close",
+          primaryButtonText: alert.primaryButtonText,
+          secondaryButtonText: alert.secondaryButtonText,
           onPrimaryPress: () => {
             navigation?.navigate?.("TransporterConfirmPickup", { job: currentJob });
           },
@@ -251,13 +258,14 @@ export const TransporterActiveJobScreen: React.FC<
   // Delivery Confirmation Action
   const handleConfirmDelivery = () => {
     if (currentJob.status === "Delivered") {
+      const alert = ACTIVE_JOB_ALERTS.jobAlreadyDelivered(currentJob.price);
       showAlert(
-        "Job Already Delivered",
-        `This shipment has already been successfully delivered and payment of ${currentJob.price} was released.`,
+        alert.title,
+        alert.message,
         {
           type: "success",
-          primaryButtonText: "View Delivery Proof",
-          secondaryButtonText: "Close",
+          primaryButtonText: alert.primaryButtonText,
+          secondaryButtonText: alert.secondaryButtonText,
           onPrimaryPress: () => {
             navigation?.navigate?.("TransporterConfirmDelivery", { job: currentJob });
           },
@@ -268,12 +276,12 @@ export const TransporterActiveJobScreen: React.FC<
 
     if (currentJob.status === "In Progress" || currentJob.status === "At Pickup") {
       showAlert(
-        "Pickup Confirmation Required",
-        "Please confirm cargo pickup at the farm before confirming delivery to the seller.",
+        ACTIVE_JOB_ALERTS.pickupRequired.title,
+        ACTIVE_JOB_ALERTS.pickupRequired.message,
         {
           type: "warning",
-          primaryButtonText: "Confirm Pickup First",
-          secondaryButtonText: "Proceed Anyway",
+          primaryButtonText: ACTIVE_JOB_ALERTS.pickupRequired.primaryButtonText,
+          secondaryButtonText: ACTIVE_JOB_ALERTS.pickupRequired.secondaryButtonText,
           onPrimaryPress: () => {
             navigation?.navigate?.("TransporterConfirmPickup", { job: currentJob });
           },
@@ -294,12 +302,12 @@ export const TransporterActiveJobScreen: React.FC<
   const handleSignOut = () => {
     setShowProfileModal(false);
     showAlert(
-      "Log Out",
-      "Are you sure you want to log out of your transporter account?",
+      ACTIVE_JOB_ALERTS.signOut.title,
+      ACTIVE_JOB_ALERTS.signOut.message,
       {
         type: "warning",
-        primaryButtonText: "Log Out",
-        secondaryButtonText: "Cancel",
+        primaryButtonText: ACTIVE_JOB_ALERTS.signOut.primaryButtonText,
+        secondaryButtonText: ACTIVE_JOB_ALERTS.signOut.secondaryButtonText,
         onPrimaryPress: () => {
           if (navigation?.canGoBack && navigation.canGoBack()) {
             navigation.goBack();
@@ -353,7 +361,7 @@ export const TransporterActiveJobScreen: React.FC<
                   : "text-[19px]"
               }`}
             >
-              Active Job
+              {ACTIVE_JOB_HEADER.title}
             </Text>
           </View>
 
@@ -471,7 +479,7 @@ export const TransporterActiveJobScreen: React.FC<
               <View className="flex-row items-center mb-1">
                 <Ionicons name="person-outline" size={13.5} color="#16A34A" />
                 <Text className="text-[11.5px] sm:text-xs font-bold text-[#16A34A] dark:text-emerald-400 ml-1.5">
-                  Farmer / Pickup
+                  {ACTIVE_JOB_CARDS.farmerPickupTitle}
                 </Text>
               </View>
               <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827] dark:text-slate-100">
@@ -487,7 +495,7 @@ export const TransporterActiveJobScreen: React.FC<
               <View className="flex-row items-center mb-1">
                 <Ionicons name="person-outline" size={13.5} color="#2563EB" />
                 <Text className="text-[11.5px] sm:text-xs font-bold text-[#2563EB] dark:text-blue-400 ml-1.5">
-                  Seller / Delivery
+                  {ACTIVE_JOB_CARDS.sellerDeliveryTitle}
                 </Text>
               </View>
               <Text className="text-[14px] sm:text-[15px] font-bold text-[#111827] dark:text-slate-100">
@@ -505,7 +513,7 @@ export const TransporterActiveJobScreen: React.FC<
                   <View className="flex-row items-center">
                     <Ionicons name="camera-outline" size={13.5} color="#16A34A" />
                     <Text className="text-[11.5px] sm:text-xs font-bold text-[#16A34A] dark:text-emerald-400 ml-1.5">
-                      Pickup Proof Attached
+                      {ACTIVE_JOB_CARDS.pickupProofAttached}
                     </Text>
                   </View>
                   {currentJob.pickupTimestamp && (
@@ -529,7 +537,7 @@ export const TransporterActiveJobScreen: React.FC<
                   <View className="flex-row items-center">
                     <Ionicons name="checkmark-done-circle" size={15} color="#2563EB" />
                     <Text className="text-[11.5px] sm:text-xs font-bold text-[#2563EB] dark:text-blue-400 ml-1.5">
-                      Delivery Proof & Handover
+                      {ACTIVE_JOB_CARDS.deliveryProofTitle}
                     </Text>
                   </View>
                   {currentJob.deliveryTimestamp && (
@@ -546,13 +554,13 @@ export const TransporterActiveJobScreen: React.FC<
                 {currentJob.deliveryNotes && (
                   <View className="mt-2 pt-2 border-t border-blue-100 dark:border-blue-900/50">
                     <Text className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium italic">
-                      Note: "{currentJob.deliveryNotes}"
+                      {ACTIVE_JOB_CARDS.deliveryNotePrefix} "{currentJob.deliveryNotes}"
                     </Text>
                   </View>
                 )}
                 {currentJob.receiverName && (
                   <Text className="text-[11px] text-[#1E293B] dark:text-slate-200 font-semibold mt-1">
-                    Received by: {currentJob.receiverName}
+                    {ACTIVE_JOB_CARDS.receivedByPrefix} {currentJob.receiverName}
                   </Text>
                 )}
               </View>
@@ -573,7 +581,7 @@ export const TransporterActiveJobScreen: React.FC<
             }}
           >
             <Text className="text-[11.5px] sm:text-xs text-[#9CA3AF] dark:text-slate-400 font-medium">
-              Your Earnings
+              {ACTIVE_JOB_CARDS.earningsTitle}
             </Text>
             <Text
               className={`font-black text-[#16A34A] dark:text-emerald-400 tracking-tight mt-1 mb-1.5 ${
@@ -585,7 +593,7 @@ export const TransporterActiveJobScreen: React.FC<
             <View className="flex-row items-center">
               <Text className="text-xs mr-1 text-[#6B7280]">🔒</Text>
               <Text className="text-[11.5px] sm:text-xs text-[#6B7280] dark:text-slate-400 font-medium">
-                Held by Green Hive · Released on delivery
+                {ACTIVE_JOB_CARDS.escrowNotice}
               </Text>
             </View>
           </View>
@@ -593,11 +601,11 @@ export const TransporterActiveJobScreen: React.FC<
           {/* ================= CARD 3: SPECIAL INSTRUCTIONS ================= */}
           <View className="rounded-2xl bg-[#FFFDF0] dark:bg-amber-950/30 border border-[#FDE68A] dark:border-amber-700/50 p-3.5 sm:p-4 mb-5">
             <Text className="text-[12px] sm:text-[13px] font-bold text-[#D97706] dark:text-amber-400 mb-1">
-              Special Instructions
+              {ACTIVE_JOB_CARDS.instructionsTitle}
             </Text>
             <Text className="text-[11.5px] sm:text-[12.5px] text-[#92400E] dark:text-amber-200 font-medium leading-relaxed">
               {currentJob.specialInstructions ||
-                "Handle with care. Keep cool. Arrive by 8 AM for market opening."}
+                ACTIVE_JOB_CARDS.defaultInstructions}
             </Text>
           </View>
 
@@ -633,8 +641,8 @@ export const TransporterActiveJobScreen: React.FC<
             >
               {currentJob.status === "In Transit" ||
               currentJob.status === "Delivered"
-                ? "Pickup Confirmed"
-                : "Confirm Pickup"}
+                ? ACTIVE_JOB_ACTIONS.pickupConfirmed
+                : ACTIVE_JOB_ACTIONS.confirmPickup}
             </Text>
           </TouchableOpacity>
 
@@ -667,8 +675,8 @@ export const TransporterActiveJobScreen: React.FC<
               }`}
             >
               {currentJob.status === "Delivered"
-                ? "Delivery Completed ✓"
-                : "Confirm Delivery"}
+                ? ACTIVE_JOB_ACTIONS.deliveryCompleted
+                : ACTIVE_JOB_ACTIONS.confirmDelivery}
             </Text>
           </TouchableOpacity>
         </View>
@@ -701,7 +709,7 @@ export const TransporterActiveJobScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {ACTIVE_JOB_NAV_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -721,7 +729,7 @@ export const TransporterActiveJobScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {ACTIVE_JOB_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -741,7 +749,7 @@ export const TransporterActiveJobScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-bold text-[#FF8C00]`}
             >
-              Active
+              {ACTIVE_JOB_NAV_TABS.active}
             </Text>
             {/* Active Indicator Underline */}
             <View className="h-0.5 w-5 bg-[#FF8C00] rounded-full mt-0.5" />
@@ -763,7 +771,7 @@ export const TransporterActiveJobScreen: React.FC<
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {ACTIVE_JOB_NAV_TABS.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -789,7 +797,7 @@ export const TransporterActiveJobScreen: React.FC<
               <View className="flex-row items-center">
                 <Ionicons name="notifications" size={20} color="#FF8C00" />
                 <Text className="text-base font-bold text-gray-900 dark:text-white ml-2">
-                  Notifications
+                  {ACTIVE_JOB_MODALS.notificationsTitle}
                 </Text>
               </View>
               <TouchableOpacity
@@ -828,7 +836,7 @@ export const TransporterActiveJobScreen: React.FC<
               className="mt-4 py-2.5 rounded-xl bg-[#FF8C00] items-center justify-center shadow-xs"
             >
               <Text className="text-xs font-bold text-white">
-                View All Notifications
+                {ACTIVE_JOB_MODALS.viewAllNotifications}
               </Text>
             </TouchableOpacity>
           </View>
@@ -848,7 +856,7 @@ export const TransporterActiveJobScreen: React.FC<
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Driver Profile
+              {ACTIVE_JOB_MODALS.profileTitle}
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
@@ -890,28 +898,27 @@ export const TransporterActiveJobScreen: React.FC<
                   {profile.email}
                 </Text>
                 <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
-                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                  Completed Trips)
+                  {ACTIVE_JOB_MODALS.tripsSummary(profile.rating, profile.completedJobs)}
                 </Text>
               </View>
 
               {/* Vehicle details */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
-                  Registered Vehicle
+                  {ACTIVE_JOB_MODALS.vehicleSectionTitle}
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    🚚 <Text className="font-semibold">{ACTIVE_JOB_MODALS.typeLabel}</Text>{" "}
                     {profile.vehicleType}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    🔢 <Text className="font-semibold">{ACTIVE_JOB_MODALS.plateLabel}</Text>{" "}
                     {profile.vehiclePlate}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                    Verified
+                    🛡️ <Text className="font-semibold">{ACTIVE_JOB_MODALS.statusLabel}</Text>{" "}
+                    {ACTIVE_JOB_MODALS.verifiedStatus}
                   </Text>
                 </View>
               </View>
@@ -929,10 +936,10 @@ export const TransporterActiveJobScreen: React.FC<
                     </View>
                     <View>
                       <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                        Dark Mode
+                        {ACTIVE_JOB_MODALS.darkModeTitle}
                       </Text>
                       <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                        {isDark ? ACTIVE_JOB_MODALS.darkModeActive : ACTIVE_JOB_MODALS.lightModeActive}
                       </Text>
                     </View>
                   </View>
@@ -952,7 +959,7 @@ export const TransporterActiveJobScreen: React.FC<
                 className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3.5 items-center justify-center mt-2"
               >
                 <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                  Log Out of Transporter Account
+                  {ACTIVE_JOB_MODALS.logOutButton}
                 </Text>
               </TouchableOpacity>
             </View>
