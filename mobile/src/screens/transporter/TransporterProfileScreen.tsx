@@ -72,9 +72,16 @@ export const TransporterProfileScreen: React.FC<TransporterProfileScreenProps> =
       const response = await fetch(BACKEND_URL);
       const json = await response.json();
       if (json.success && json.data) {
+        const nextAvatarUri = json.data.avatarUri || json.data.avatarUrl || undefined;
+        if (nextAvatarUri) {
+          MOCK_TRANSPORTER_PROFILE.avatarUri = nextAvatarUri;
+        } else {
+          delete MOCK_TRANSPORTER_PROFILE.avatarUri;
+        }
         setProfile((prev) => ({
           ...prev,
           ...json.data,
+          avatarUri: nextAvatarUri,
         }));
       }
     } catch (error) {
