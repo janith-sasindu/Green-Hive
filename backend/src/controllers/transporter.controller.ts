@@ -469,6 +469,32 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
 };
 
 /**
+ * Syncs linked order status (and transport fee payment release on delivery) with job transitions.
+ */
+async function syncOrderAndPaymentOnJobStatus(orderId: number | null | undefined, jobStatus: string): Promise<void> {
+    if (!orderId) return;
+    try {
+        if (jobStatus === 'In Transit') {
+            await pool.query(
+                `UPDATE orders SET order_status = 'In Transit' WHERE id = ?`,
+                [orderId]
+            );
+        } else if (jobStatus === 'Delivered') {
+            await pool.query(
+                `UPDATE orders SET order_status = 'Completed' WHERE id = ?`,
+                [orderId]
+            );
+            await pool.query(
+                `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
+                [orderId]
+            );
+        }
+    } catch (err) {
+        console.warn(`Note: Failed syncing order/payment for order #${orderId} on status ${jobStatus}:`, err);
+    }
+}
+
+/**
  * PATCH /api/transporter/jobs/:id/status
  * Updates delivery status (e.g., 'In Transit', 'Delivered')
  */
@@ -524,18 +550,8 @@ export const updateJobStatus = async (req: AuthenticatedRequest, res: Response) 
             [status, finalTimestamp, finalNotes, finalPhoto, job.id]
         );
 
-        // If job is delivered, update order delivery status and release payment
-        if (status === 'Delivered' && job.order_id) {
-            await pool.query(
-                `UPDATE orders SET order_status = 'Delivered' WHERE id = ?`,
-                [job.order_id]
-            ).catch(() => {});
-
-            await pool.query(
-                `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
-                [job.order_id]
-            ).catch(() => {});
-        }
+        // Sync linked order status and payment release
+        await syncOrderAndPaymentOnJobStatus(job.order_id, status);
 
         return res.status(200).json({
             success: true,
@@ -636,12 +652,7 @@ export const confirmJobPickup = async (req: AuthenticatedRequest, res: Response)
         );
 
         // Also update order status to In Transit if linked
-        if (job.order_id) {
-            await pool.query(
-                `UPDATE orders SET status = 'In Transit', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-                [job.order_id]
-            ).catch(() => {});
-        }
+        await syncOrderAndPaymentOnJobStatus(job.order_id, 'In Transit');
 
         const schedule = formatJobSchedule(job.scheduled_date);
 
@@ -771,18 +782,8 @@ export const confirmJobDelivery = async (req: AuthenticatedRequest, res: Respons
             [finalTimestamp, finalNotes, finalProofPhoto, finalReceiverName, job.id]
         );
 
-        // 3. Update linked order to 'Delivered' and release transport fee payment
-        if (job.order_id) {
-            await pool.query(
-                `UPDATE orders SET order_status = 'Delivered' WHERE id = ?`,
-                [job.order_id]
-            ).catch(() => {});
-
-            await pool.query(
-                `UPDATE payments SET status = 'Released', released_at = CURRENT_TIMESTAMP WHERE order_id = ? AND payment_type = 'transport_fee'`,
-                [job.order_id]
-            ).catch(() => {});
-        }
+        // 3. Update linked order to 'Completed' and release transport fee payment
+        await syncOrderAndPaymentOnJobStatus(job.order_id, 'Delivered');
 
         const schedule = formatJobSchedule(job.scheduled_date);
 
