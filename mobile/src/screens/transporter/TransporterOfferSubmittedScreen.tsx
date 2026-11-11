@@ -94,8 +94,9 @@ export const TransporterOfferSubmittedScreen: React.FC<
   // Fetch latest submitted offer from backend
   const fetchLatestOffer = useCallback(async () => {
     try {
-      const endpoint = job?.id
-        ? TRANSPORTER_API_ENDPOINTS.jobOffer(job.id)
+      const targetJobId = job?.dbId ?? job?.id;
+      const endpoint = targetJobId
+        ? TRANSPORTER_API_ENDPOINTS.jobOffer(targetJobId)
         : TRANSPORTER_API_ENDPOINTS.latestOffer;
       const response = await fetch(endpoint);
       const json = await response.json();
@@ -105,7 +106,7 @@ export const TransporterOfferSubmittedScreen: React.FC<
     } catch (err) {
       console.log("Error loading latest offer from API:", err);
     }
-  }, [job?.id]);
+  }, [job?.dbId, job?.id]);
 
   useEffect(() => {
     fetchProfile();
