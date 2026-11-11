@@ -275,7 +275,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
         // 1. Fetch Transporter Profile Details joining profile vehicle data
         const [userRows] = await pool.query<RowDataPacket[]>(
             `SELECT u.id, u.name, u.email, u.phone, u.location, u.verified,
-                    tp.vehicle_type, tp.vehicle_plate, tp.rating
+                    tp.avatar_url, tp.vehicle_type, tp.vehicle_plate, tp.rating, tp.on_time_rate
              FROM users u
              LEFT JOIN transporter_profiles tp ON u.id = tp.user_id
              WHERE u.id = ? AND u.role = 'transporter'`,
@@ -306,13 +306,15 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
             `SELECT COUNT(*) AS count FROM transport_offers WHERE transporter_id = ?`,
             [transporterId]
         );
-        const myOffersCount = Number(offersRows[0]?.count) || DEFAULT_STAT_FALLBACKS.myOffersCount;
+        const myOffersCount = offersRows.length > 0
+            ? Number(offersRows[0].count)
+            : DEFAULT_STAT_FALLBACKS.myOffersCount;
 
         // 3. Fetch Payment Summary
         const [paymentRows] = await pool.query<RowDataPacket[]>(
             `SELECT 
         (SELECT COALESCE(SUM(fee), 0) FROM transport_jobs WHERE transporter_id = ? AND status IN ('Assigned', 'In Transit')) AS pendingRelease,
-        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payee_id = ? AND payment_type = 'transport_fee' AND status = 'Released' AND MONTH(created_at) = MONTH(CURRENT_DATE())) AS thisMonth`,
+        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payee_id = ? AND payment_type = 'transport_fee' AND status = 'Released' AND MONTH(COALESCE(released_at, held_at)) = MONTH(CURRENT_DATE()) AND YEAR(COALESCE(released_at, held_at)) = YEAR(CURRENT_DATE())) AS thisMonth`,
             [transporterId, transporterId]
         );
         const payments = paymentRows[0] || { pendingRelease: 0, thisMonth: 0 };
@@ -345,6 +347,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
         let activeJob = null;
         if (activeJobRows.length > 0) {
             const row = activeJobRows[0];
+            const activeSchedule = formatJobSchedule(row.scheduled_date);
             activeJob = {
                 id: row.job_code || `#TR-${row.id}`,
                 dbId: row.id,
@@ -358,15 +361,7 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
                 farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
                 farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
                 sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
-                pickupDate: row.scheduled_date
-                    ? new Date(row.scheduled_date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })
-                    : 'Today',
+                pickupDate: activeSchedule.combinedStr,
             };
         }
 
@@ -383,36 +378,46 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
         o.product_name,
         o.quantity,
         u_farmer.name AS farmer_name,
-        u_farmer.phone AS farmer_phone
+        u_farmer.phone AS farmer_phone,
+        u_seller.name AS seller_name
        FROM transport_jobs tj
        LEFT JOIN orders o ON tj.order_id = o.id
        LEFT JOIN users u_farmer ON o.farmer_id = u_farmer.id
+       LEFT JOIN users u_seller ON o.seller_id = u_seller.id
        WHERE tj.status = 'Open'
        ORDER BY tj.created_at DESC
        LIMIT 5`
         );
 
-        const availableJobs = availableRows.map((row) => ({
-            id: row.job_code || `#TR-${row.id}`,
-            dbId: row.id,
-            cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
-            weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
-            status: 'Open',
-            pickup: row.pickup_location,
-            dropoff: row.drop_location,
-            price: `Rs. ${Number(row.fee).toLocaleString()}`,
-            pickupTime: row.scheduled_date
-                ? new Date(row.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                : DEFAULT_JOB_METADATA.defaultScheduledDate,
-            farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
-            farmerPhone: row.farmer_phone,
-        }));
+        const availableJobs = availableRows.map((row) => {
+            const schedule = formatJobSchedule(row.scheduled_date);
+            return {
+                id: row.job_code || `#TR-${row.id}`,
+                dbId: row.id,
+                cropName: row.product_name || DEFAULT_JOB_METADATA.defaultCropName,
+                weight: row.quantity ? `${row.quantity} kg` : DEFAULT_JOB_METADATA.defaultWeight,
+                status: 'Open',
+                pickup: row.pickup_location,
+                pickupLocationDetail: row.pickup_location,
+                dropoff: row.drop_location,
+                dropoffLocationDetail: row.drop_location,
+                price: `Rs. ${Number(row.fee).toLocaleString()}`,
+                pickupDate: schedule.dateStr,
+                pickupRequiredTime: schedule.timeStr,
+                pickupTime: schedule.combinedStr,
+                farmerName: row.farmer_name || DEFAULT_JOB_METADATA.defaultFarmerName,
+                farmerPhone: row.farmer_phone || DEFAULT_JOB_METADATA.defaultFarmerPhone,
+                sellerName: row.seller_name || DEFAULT_JOB_METADATA.defaultSellerName,
+                specialInstructions: 'Handle with care. Keep covered during transport.',
+            };
+        });
 
         // Formatted Profile for Screen Header & Banner Card
         const profile = {
             name: user.name,
             greeting,
             avatarLetter: user.name ? user.name.charAt(0).toUpperCase() : 'T',
+            avatarUri: user.avatar_url || undefined,
             email: user.email,
             phone: user.phone || '',
             vehicleType: user.vehicle_type || DEFAULT_TRANSPORTER_PROFILE.vehicleType,
@@ -420,15 +425,21 @@ export const getHomeScreenData = async (req: AuthenticatedRequest, res: Response
             isVerified: Boolean(user.verified),
             rating: Number(user.rating) || DEFAULT_TRANSPORTER_PROFILE.rating,
             completedJobs: Number(statsData.completedJobsCount) || DEFAULT_STAT_FALLBACKS.completedJobsCount,
+            onTimeDeliveryRate: user.on_time_rate || DEFAULT_TRANSPORTER_PROFILE.onTimeRate,
             baseLocation: user.location || DEFAULT_TRANSPORTER_PROFILE.baseLocation,
         };
+
+        const thisMonthAmount = Number(payments.thisMonth) || 0;
 
         // 2x2 Stats Card Object
         const stats = {
             openJobsCount: Number(statsData.openJobsCount) || DEFAULT_STAT_FALLBACKS.openJobsCount,
             myOffersCount,
             activeJobsCount: Number(statsData.activeJobsCount) || DEFAULT_STAT_FALLBACKS.activeJobsCount,
-            thisMonthEarnings: `Rs. ${(Number(payments.thisMonth) / 1000).toFixed(0)}k`,
+            thisMonthEarnings:
+                thisMonthAmount >= 1000
+                    ? `Rs. ${(thisMonthAmount / 1000).toFixed(0)}k`
+                    : `Rs. ${thisMonthAmount.toLocaleString()}`,
         };
 
         // Payment Summary Card Object

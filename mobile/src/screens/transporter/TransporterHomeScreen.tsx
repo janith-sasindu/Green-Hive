@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -54,7 +54,7 @@ import { TransporterProfileScreen } from "./TransporterProfileScreen";
 import { TransporterMyOffersScreen } from "./TransporterMyOffersScreen";
 import { TransporterBankDetailsScreen } from "./TransporterBankDetailsScreen";
 import { useTransporterTheme } from "../../context/TransporterThemeContext";
-import { CommonActions } from "@react-navigation/native";
+import { CommonActions, useFocusEffect } from "@react-navigation/native";
 
 interface TransporterHomeScreenProps {
   navigation?: any;
@@ -82,7 +82,7 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
 
   // Dynamic state loaded from mock data
   const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
-  const avatarUri = MOCK_TRANSPORTER_PROFILE.avatarUri || profile.avatarUri;
+  const avatarUri = profile.avatarUri;
   const [stats, setStats] = useState<TransporterStats>(MOCK_TRANSPORTER_STATS);
   const [activeJob, setActiveJob] = useState<ActiveTransportJob>(MOCK_ACTIVE_JOB);
   const [availableJobsList, setAvailableJobsList] = useState<AvailableTransportJob[]>(MOCK_AVAILABLE_JOBS);
@@ -93,11 +93,16 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
   // Centralized API Endpoint from data folder
   const BACKEND_URL = TRANSPORTER_API_ENDPOINTS.home;
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch(BACKEND_URL);
-        const json = await response.json();
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [homeRes, offersRes, notifRes] = await Promise.allSettled([
+        fetch(BACKEND_URL),
+        fetch(TRANSPORTER_API_ENDPOINTS.offers),
+        fetch(TRANSPORTER_API_ENDPOINTS.notifications),
+      ]);
+
+      if (homeRes.status === "fulfilled" && homeRes.value.ok) {
+        const json = await homeRes.value.json();
         if (json.success && json.data) {
           if (json.data.profile) setProfile(json.data.profile);
           if (json.data.stats) setStats(json.data.stats);
@@ -105,13 +110,37 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
           if (json.data.availableJobs) setAvailableJobsList(json.data.availableJobs);
           if (json.data.paymentSummary) setPaymentSummary(json.data.paymentSummary);
         }
-      } catch (error) {
-        console.log("Error loading dashboard data, falling back to cached/mock data:", error);
       }
-    };
 
-    fetchDashboardData();
-  }, []);
+      if (offersRes.status === "fulfilled" && offersRes.value.ok) {
+        const offersJson = await offersRes.value.json();
+        if (offersJson.success && Array.isArray(offersJson.data)) {
+          setMyOffersList(offersJson.data);
+        }
+      }
+
+      if (notifRes.status === "fulfilled" && notifRes.value.ok) {
+        const notifJson = await notifRes.value.json();
+        if (notifJson.success && Array.isArray(notifJson.data)) {
+          setNotificationsList(notifJson.data);
+        }
+      }
+    } catch (error) {
+      console.log("Error loading dashboard data, falling back to cached/mock data:", error);
+    }
+  }, [BACKEND_URL]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardData();
+    }, [fetchDashboardData])
+  );
+
+  useEffect(() => {
+    if (activeTab === "home") {
+      fetchDashboardData();
+    }
+  }, [activeTab, fetchDashboardData]);
 
   const handleConfirmPickup = () => {
     if (activeJob.status === "In Transit" || activeJob.status === "Delivered") {
@@ -426,7 +455,9 @@ export const TransporterHomeScreen = ({ navigation }: TransporterHomeScreenProps
                 color={colors.icon}
               />
               {/* Unread Alert Dot */}
-              <View className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#EF4444] border border-white dark:border-slate-800" />
+              {notificationsList.some((n) => n.isRead !== true) && (
+                <View className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#EF4444] border border-white dark:border-slate-800" />
+              )}
             </TouchableOpacity>
 
             {/* User Avatar Circle */}
