@@ -1747,6 +1747,26 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
       );
     }
 
+    // 3. Keep transporter_vehicle_license vehicle_type and vehicle_plate in sync
+    if (vehicleType !== undefined || vehiclePlate !== undefined) {
+      await ensureVehicleLicenseTableExists();
+      await pool.query(
+        `INSERT INTO transporter_vehicle_license (transporter_id, license_number, vehicle_type, vehicle_plate)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           vehicle_type = COALESCE(?, vehicle_type),
+           vehicle_plate = COALESCE(?, vehicle_plate)`,
+        [
+          transporterId,
+          DEFAULT_VEHICLE_LICENSE.licenseNumber,
+          trimmedVehicle,
+          trimmedPlate,
+          vehicleType !== undefined ? trimmedVehicle : null,
+          vehiclePlate !== undefined ? trimmedPlate : null,
+        ]
+      ).catch(() => {});
+    }
+
     // Fetch the final avatar_url to return in the response
     const [profRows] = await pool.query<RowDataPacket[]>(
       `SELECT avatar_url, rating, on_time_rate FROM transporter_profiles WHERE user_id = ?`,
