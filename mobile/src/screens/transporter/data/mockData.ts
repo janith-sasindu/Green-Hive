@@ -52,6 +52,7 @@ export interface ActiveTransportJob {
 }
 
 export interface AvailableTransportJob {
+    dbId?: number | string;
     id: string;
     cropName: string;
     weight: string;
