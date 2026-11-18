@@ -11,6 +11,7 @@
     "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
     "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts",
     "test:profile": "ts-node src/scripts/test-profile-api.ts",
+    "db:farmer": "ts-node src/scripts/setup-farmer-db.ts",
     "db:profile": "ts-node src/scripts/setup-profile-db.ts",
     "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
     "test:notifications": "ts-node src/scripts/test-notifications-api.ts",

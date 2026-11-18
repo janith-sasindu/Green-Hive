@@ -64,6 +64,19 @@ export interface RegisteredMockUser {
 export const registeredMockUsers: RegisteredMockUser[] = [];
 
 /**
+ * Tracks the currently logged-in / active user session
+ */
+let activeUser: User | null = null;
+
+export const setActiveUser = (user: User | null) => {
+  activeUser = user;
+};
+
+export const getActiveUser = (): User | null => {
+  return activeUser;
+};
+
+/**
  * Register a new mock user from the registration form.
  */
 export const registerMockUser = (userData: {
@@ -97,6 +110,8 @@ export const registerMockUser = (userData: {
     user: newUser,
   });
 
+  activeUser = newUser;
+
   return newUser;
 };
 
@@ -128,6 +143,7 @@ export const verifyMockLogin = (
     normalizedInput === MOCK_LOGIN_CREDENTIALS.email.toLowerCase();
 
   if (isDefaultUser && password === MOCK_LOGIN_CREDENTIALS.password) {
+    activeUser = MOCK_USER;
     return {
       success: true,
       data: {
@@ -145,6 +161,7 @@ export const verifyMockLogin = (
       normalizedInput === `${key}@greenhive.com`;
 
     if (isRoleMatch && (password === key || password === "password" || password === "12345678")) {
+      activeUser = user;
       return {
         success: true,
         data: {
@@ -163,6 +180,7 @@ export const verifyMockLogin = (
   );
 
   if (registered) {
+    activeUser = registered.user;
     return {
       success: true,
       data: {

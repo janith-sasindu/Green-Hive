@@ -15,7 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { registerMockUser } from "../../data/mockAuth";
+import { registerMockUser, setActiveUser } from "../../data/mockAuth";
+import { registerFarmerApi } from "../../api/farmerApi";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -130,14 +131,42 @@ const AccountDetailsScreen = ({
                 destination = "TransporterHome";
             }
 
-            // Register user in mock auth storage so they can sign in later
-            registerMockUser({
-                fullName,
-                email,
-                phone,
+            let registeredUser: any = null;
+
+            // 1. If role is Farmer, attempt to persist directly into MySQL database via backend API
+            if (roleKey.includes("farmer")) {
+                try {
+                    const apiResponse = await registerFarmerApi({
+                        fullName: fullName.trim(),
+                        email: email.trim(),
+                        phone: phone.trim(),
+                        password,
+                        location: "Nuwara Eliya",
+                    });
+
+                    if (apiResponse.success && apiResponse.user) {
+                        registeredUser = apiResponse.user;
+                        setActiveUser(registeredUser);
+                    }
+                } catch (apiErr: any) {
+                    console.log("Database API call info:", apiErr?.message);
+                    if (apiErr?.response?.status === 409) {
+                        Alert.alert("Account Exists", "An account with this email address already exists.");
+                        return;
+                    }
+                }
+            }
+
+            // 2. Also register in local mockAuth storage so they can sign in later locally
+            const newUser = registerMockUser({
+                fullName: fullName.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
                 password,
                 role,
             });
+
+            const finalUser = registeredUser || newUser;
 
             Alert.alert(
                 "Account Created Successfully!",
@@ -145,7 +174,7 @@ const AccountDetailsScreen = ({
                 [
                     {
                         text: "Get Started",
-                        onPress: () => navigation.navigate(destination),
+                        onPress: () => navigation.navigate(destination, { user: finalUser, userName: fullName.trim() }),
                     },
                 ]
             );
