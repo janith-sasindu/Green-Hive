@@ -78,7 +78,7 @@ const RoleSelectionScreen = ({
     const isSmallDevice = screenHeight < 700;
 
     const handleRoleSelect = (role: string) => {
-        navigation.navigate("AccountDetailsScreen", {
+        navigation.navigate("CreateAccountScreen", {
             role: role,
         });
     };
@@ -121,7 +121,7 @@ const RoleSelectionScreen = ({
 
                     {/* Step Indicator */}
                     <Text className="mb-0.5 text-xs font-semibold text-[#B9E2C1]">
-                        Step 1 of 2
+                        Step 1 of 4
                     </Text>
 
                     {/* Title */}
