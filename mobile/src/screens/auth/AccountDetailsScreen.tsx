@@ -236,7 +236,7 @@ const AccountDetailsScreen = ({
                             </TouchableOpacity>
 
                             <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
-                                Step 2 of 2
+                                Step 3 of 4
                             </Text>
 
                             <Text
