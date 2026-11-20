@@ -5,10 +5,10 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  StatusBar,
   Modal,
   Alert,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { AddProductModal } from "./AddProductModal";
@@ -90,7 +90,7 @@ export const FarmerHomeScreen = ({ navigation, route }: FarmerHomeScreenProps) =
     notifBadgeBg: isDark ? "#1A3D22" : "#DCFCE7",
     notifBadgeText: isDark ? "#4ADE80" : "#166534",
     closeBtnBg: isDark ? "#2A3D2E" : "#F3F4F6",
-    statusBarStyle: (isDark ? "light-content" : "dark-content") as "light-content" | "dark-content",
+    statusBarStyle: (isDark ? "light" : "dark") as "light" | "dark",
   };
 
   const navTabs = [
@@ -103,7 +103,7 @@ export const FarmerHomeScreen = ({ navigation, route }: FarmerHomeScreenProps) =
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <StatusBar barStyle={t.statusBarStyle} backgroundColor={t.bg} />
+      <StatusBar style={t.statusBarStyle} />
 
       {/* ── Header ── */}
       <SafeAreaView edges={["top"]} style={{ backgroundColor: t.headerBg }}>
@@ -278,7 +278,7 @@ export const FarmerHomeScreen = ({ navigation, route }: FarmerHomeScreenProps) =
         )}
 
         {activeTab === "Products" && <FarmerProductsScreen products={products} onOpenAddModal={() => setIsAddModalOpen(true)} onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
-        {activeTab === "Requirements" && <FarmerRequirementsScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
+        {activeTab === "Requirements" && <FarmerRequirementsScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} farmerId={currentUser?.id} />}
         {activeTab === "Orders" && <FarmerOrdersScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
         {activeTab === "Profile" && (
           <FarmerProfileScreen

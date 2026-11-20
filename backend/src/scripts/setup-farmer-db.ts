@@ -268,6 +268,45 @@ async function setupFarmerDb() {
         (?, 'Transporter Assigned', 'Nimal Bandara (Lorry WP-LH-4821) scheduled for pickup tomorrow morning.', 'pickup', 1, '🚚', '#GH-2041')
     `, [farmerUserId, farmerUserId, farmerUserId]);
 
+    // 12. Seed Buyer/Seller Accounts and Buyer Requirement Ads
+    console.log('--- Step 12: Seeding Buyer Requirements for Farmer to fulfill ---');
+    // Ensure test seller users exist
+    await pool.query(`
+      INSERT INTO users (id, name, email, phone, password_hash, role, location, verified, status)
+      VALUES 
+        (10, 'Colombo Fresh Supermarket', 'colombo.fresh@seller.lk', '+94 11 234 5678', ?, 'seller', 'Pettah, Colombo', 1, 'active'),
+        (11, 'Kandy Wholesale Veg', 'kandy.wholesale@seller.lk', '+94 81 223 3445', ?, 'seller', 'Katugastota, Kandy', 1, 'active'),
+        (12, 'Galle Organic Store', 'galle.organic@seller.lk', '+94 91 345 6789', ?, 'seller', 'Fort, Galle', 1, 'active')
+      ON DUPLICATE KEY UPDATE name = VALUES(name), location = VALUES(location);
+    `, [defaultPasswordHash, defaultPasswordHash, defaultPasswordHash]);
+
+    // Check requirement_ads columns to insert with the correct field names
+    const [reqCols]: any = await pool.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'requirement_ads'
+    `);
+    const reqColNames = reqCols.map((c: any) => c.COLUMN_NAME);
+    const hasTargetPrice = reqColNames.includes('target_price_per_kg');
+    const hasQtyRequired = reqColNames.includes('quantity_required');
+
+    const priceField = hasTargetPrice ? 'target_price_per_kg' : 'offered_price_per_kg';
+    const qtyField = hasQtyRequired ? 'quantity_required' : 'quantity_needed';
+
+    await pool.query(`
+      INSERT INTO requirement_ads (id, seller_id, title, category, ${priceField}, ${qtyField}, unit, location, deadline, description, status)
+      VALUES 
+        (101, 10, 'Fresh Cabbage', 'Vegetables', 85.00, 250.00, 'kg', 'Pettah, Colombo', 'Within 3 days', 'Highland crisp green cabbage needed for supermarket wholesale distribution.', 'active'),
+        (102, 11, 'Organic Carrots', 'Vegetables', 130.00, 400.00, 'kg', 'Katugastota, Kandy', 'Within 5 days', 'Graded medium-sized organic carrots urgently required.', 'active'),
+        (103, 12, 'Leeks', 'Vegetables', 210.00, 150.00, 'kg', 'Fort, Galle', 'Next week', 'Export quality leeks with fresh green tops needed.', 'active'),
+        (104, 10, 'Red Onions', 'Vegetables', 175.00, 500.00, 'kg', 'Dambulla', 'Within 4 days', 'Clean, dry local red onions required for wholesale pack.', 'active')
+      ON DUPLICATE KEY UPDATE 
+        title = VALUES(title),
+        ${priceField} = VALUES(${priceField}),
+        ${qtyField} = VALUES(${qtyField}),
+        status = 'active';
+    `);
+    console.log('✅ Seeded 4 active buyer requirements.');
+
     console.log('========================================================');
     console.log('🎉 Farmer Module Database tables and initial seeds ready!');
     console.log('========================================================');

@@ -133,7 +133,7 @@ const AccountDetailsScreen = ({
 
             let registeredUser: any = null;
 
-            // 1. If role is Farmer, attempt to persist directly into MySQL database via backend API
+            // 1. If role is Farmer, persist directly into MySQL database via backend API
             if (roleKey.includes("farmer")) {
                 try {
                     const apiResponse = await registerFarmerApi({
@@ -149,11 +149,37 @@ const AccountDetailsScreen = ({
                         setActiveUser(registeredUser);
                     }
                 } catch (apiErr: any) {
-                    console.log("Database API call info:", apiErr?.message);
+                    console.error("Database registration error:", apiErr);
                     if (apiErr?.response?.status === 409) {
-                        Alert.alert("Account Exists", "An account with this email address already exists.");
+                        Alert.alert("Account Exists", "An account with this email address already exists in the database.");
                         return;
                     }
+
+                    const errorDetail = apiErr?.response?.data?.message || apiErr?.message || "Server unreachable";
+                    Alert.alert(
+                        "Database Connection Notice",
+                        `Could not connect to the backend database:\n${errorDetail}\n\nPlease ensure your backend server is running with 'npm run dev' in the backend directory.`,
+                        [
+                            {
+                                text: "Cancel",
+                                style: "cancel",
+                            },
+                            {
+                                text: "Test Offline",
+                                onPress: () => {
+                                    const offlineUser = registerMockUser({
+                                        fullName: fullName.trim(),
+                                        email: email.trim(),
+                                        phone: phone.trim(),
+                                        password,
+                                        role,
+                                    });
+                                    navigation.navigate(destination, { user: offlineUser, userName: fullName.trim() });
+                                },
+                            },
+                        ]
+                    );
+                    return;
                 }
             }
 
@@ -170,7 +196,7 @@ const AccountDetailsScreen = ({
 
             Alert.alert(
                 "Account Created Successfully!",
-                `Welcome to Green-Hive! Your registration as a ${role} is complete.`,
+                `Welcome to Green-Hive! Your registration as a ${role} has been saved to the database.`,
                 [
                     {
                         text: "Get Started",
