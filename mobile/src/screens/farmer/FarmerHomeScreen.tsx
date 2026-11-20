@@ -278,7 +278,7 @@ export const FarmerHomeScreen = ({ navigation, route }: FarmerHomeScreenProps) =
         )}
 
         {activeTab === "Products" && <FarmerProductsScreen products={products} onOpenAddModal={() => setIsAddModalOpen(true)} onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
-        {activeTab === "Requirements" && <FarmerRequirementsScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
+        {activeTab === "Requirements" && <FarmerRequirementsScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} farmerId={currentUser?.id} />}
         {activeTab === "Orders" && <FarmerOrdersScreen onBackToHome={() => setActiveTab("Home")} isDark={isDark} />}
         {activeTab === "Profile" && (
           <FarmerProfileScreen
