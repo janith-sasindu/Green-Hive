@@ -17,7 +17,15 @@ const DEADLINE_OPTIONS = [
   { days: 30, label: 'In 1 month' },
 ];
 
-type FieldErrors = Partial<Record<'productName' | 'quantity' | 'maxBudget' | 'deliveryLocation', string>>;
+const MIN_NAME_LENGTH = 2;
+const MIN_LOCATION_LENGTH = 3;
+const MAX_QUANTITY_KG = 100000;
+const MAX_PRICE_PER_KG = 100000;
+const MAX_DESCRIPTION_LENGTH = 300;
+
+type FieldErrors = Partial<
+  Record<'productName' | 'quantity' | 'maxBudget' | 'deliveryLocation' | 'description', string>
+>;
 
 export const CreateRequirementScreen = () => {
   const navigation = useSellerNavigation();
@@ -39,10 +47,15 @@ export const CreateRequirementScreen = () => {
   const deadlineDate = toDateString(addDays(new Date(), deadlineDays));
 
   const errors: FieldErrors = {};
-  if (productName.trim() === '') errors.productName = 'Enter the product you need.';
+  if (productName.trim().length < MIN_NAME_LENGTH) errors.productName = 'Enter the product you need (at least 2 letters).';
   if (quantityKg === null) errors.quantity = 'Enter the quantity in kg.';
+  else if (quantityKg > MAX_QUANTITY_KG) errors.quantity = `Quantity cannot be more than ${MAX_QUANTITY_KG} kg.`;
   if (maxBudgetPerKg === null) errors.maxBudget = 'Enter the most you will pay per kg.';
-  if (deliveryLocation.trim() === '') errors.deliveryLocation = 'Enter where the goods are needed.';
+  else if (maxBudgetPerKg > MAX_PRICE_PER_KG) errors.maxBudget = `Price cannot be more than Rs. ${MAX_PRICE_PER_KG} per kg.`;
+  if (deliveryLocation.trim().length < MIN_LOCATION_LENGTH) errors.deliveryLocation = 'Enter where the goods are needed.';
+  if (description.length > MAX_DESCRIPTION_LENGTH) {
+    errors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer.`;
+  }
   const visibleErrors: FieldErrors = showErrors ? errors : {};
 
   const handleSubmit = () => {
@@ -153,6 +166,7 @@ export const CreateRequirementScreen = () => {
             onChangeText={setDescription}
             placeholder="Quality, grade, packing or any other details"
             multiline
+            error={visibleErrors.description ?? (description.length > 240 ? `${description.length}/${MAX_DESCRIPTION_LENGTH}` : undefined)}
           />
         </Card>
       </ScrollView>
