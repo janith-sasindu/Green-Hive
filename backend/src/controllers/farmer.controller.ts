@@ -248,3 +248,215 @@ export const getFarmerProfile = async (req: Request, res: Response): Promise<voi
   }
 };
 
+/**
+ * GET /api/farmer/requirements
+ * Fetches all active buyer requirements matching farmer crops,
+ * including any fulfillment status if the farmer has already submitted an offer.
+ */
+export const getFarmerRequirements = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const farmerId = Number(req.query.farmerId) || 0;
+
+    // Check which columns exist in requirement_ads to prevent ER_BAD_FIELD_ERROR
+    const [cols]: any = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'requirement_ads'`
+    );
+    const colList = cols.map((c: any) => c.COLUMN_NAME);
+
+    const priceCol = colList.includes('target_price_per_kg')
+      ? 'r.target_price_per_kg'
+      : colList.includes('offered_price_per_kg')
+      ? 'r.offered_price_per_kg'
+      : '0';
+
+    const qtyCol = colList.includes('quantity_required')
+      ? 'r.quantity_required'
+      : colList.includes('quantity_needed')
+      ? 'r.quantity_needed'
+      : '0';
+
+    const query = `
+      SELECT 
+        r.id,
+        r.seller_id,
+        COALESCE(u.name, 'Wholesale Buyer') AS buyer_name,
+        COALESCE(u.phone, '') AS buyer_phone,
+        r.title AS crop_name,
+        r.category,
+        ${qtyCol} AS quantity_required,
+        ${priceCol} AS target_price,
+        COALESCE(r.unit, 'kg') AS unit,
+        r.location,
+        COALESCE(r.deadline, 'Within 3 days') AS deadline,
+        r.description,
+        r.status,
+        r.created_at,
+        fr.id AS fulfillment_id,
+        fr.status AS my_offer_status,
+        fr.offered_quantity_kg,
+        fr.offered_price_per_kg
+      FROM requirement_ads r
+      LEFT JOIN users u ON r.seller_id = u.id
+      LEFT JOIN fulfillment_requests fr ON r.id = fr.requirement_id AND fr.farmer_id = ?
+      WHERE r.status = 'active'
+      ORDER BY r.created_at DESC
+    `;
+
+    const [rows] = await pool.query<RowDataPacket[]>(query, [farmerId]);
+
+    // Format for easy consumption by mobile app
+    const formatted = rows.map((r: any) => ({
+      id: `REQ-${r.id}`,
+      rawId: r.id,
+      buyerName: r.buyer_name,
+      buyerPhone: r.buyer_phone,
+      cropName: r.crop_name,
+      category: r.category,
+      requiredQuantity: `${Number(r.quantity_required)} ${r.unit}`,
+      quantityValue: Number(r.quantity_required),
+      targetPrice: `Rs. ${Number(r.target_price)} / ${r.unit}`,
+      targetPriceValue: Number(r.target_price),
+      unit: r.unit,
+      location: r.location,
+      deadline: r.deadline,
+      description: r.description,
+      status: r.status,
+      myOfferStatus: r.my_offer_status || null,
+      offeredQuantityKg: r.offered_quantity_kg ? Number(r.offered_quantity_kg) : null,
+      offeredPricePerKg: r.offered_price_per_kg ? Number(r.offered_price_per_kg) : null,
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formatted.length,
+      requirements: formatted,
+    });
+  } catch (error) {
+    console.error('Error in getFarmerRequirements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve buyer requirements',
+      error: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * POST /api/farmer/requirements/:id/fulfill
+ * Submit a fulfillment offer for a buyer requirement
+ */
+export const submitFulfillmentRequest = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const requirementId = Number(req.params.id || req.body.requirementId);
+    const { farmerId, offeredQuantityKg, offeredPricePerKg, notes } = req.body;
+
+    if (!requirementId || !farmerId || !offeredQuantityKg || !offeredPricePerKg) {
+      res.status(400).json({
+        success: false,
+        message: 'requirementId, farmerId, offeredQuantityKg, and offeredPricePerKg are required',
+      });
+      return;
+    }
+
+    // Verify requirement exists
+    const [reqRows] = await pool.query<RowDataPacket[]>(
+      'SELECT id, title, seller_id, status FROM requirement_ads WHERE id = ?',
+      [requirementId]
+    );
+
+    if (reqRows.length === 0) {
+      res.status(404).json({ success: false, message: 'Requirement ad not found' });
+      return;
+    }
+
+    const requirement = reqRows[0];
+
+    // Insert or update fulfillment request
+    const [result] = await pool.query<ResultSetHeader>(
+      `INSERT INTO fulfillment_requests 
+        (requirement_id, farmer_id, offered_quantity_kg, offered_price_per_kg, notes, status)
+       VALUES (?, ?, ?, ?, ?, 'PENDING')
+       ON DUPLICATE KEY UPDATE 
+         offered_quantity_kg = VALUES(offered_quantity_kg),
+         offered_price_per_kg = VALUES(offered_price_per_kg),
+         notes = VALUES(notes),
+         status = 'PENDING'`,
+      [requirementId, farmerId, offeredQuantityKg, offeredPricePerKg, notes || '']
+    );
+
+    // Add confirmation notification to farmer
+    await pool.query(
+      `INSERT INTO farmer_notifications (farmer_id, title, message, type, is_read, icon_emoji, order_id)
+       VALUES (?, 'Offer Submitted', ?, 'system', 0, '📋', ?)`,
+      [
+        farmerId,
+        `Your offer of ${offeredQuantityKg} kg @ Rs. ${offeredPricePerKg}/kg for ${requirement.title} has been submitted to the buyer.`,
+        `#REQ-${requirementId}`,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Fulfillment offer submitted successfully! The buyer has been notified.',
+      fulfillmentId: result.insertId || requirementId,
+      status: 'PENDING',
+    });
+  } catch (error) {
+    console.error('Error in submitFulfillmentRequest:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit fulfillment offer',
+      error: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * GET /api/farmer/fulfillments
+ * Get all fulfillment requests submitted by a farmer
+ */
+export const getFarmerFulfillments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const farmerId = Number(req.query.farmerId || req.params.farmerId);
+
+    if (!farmerId) {
+      res.status(400).json({ success: false, message: 'farmerId query param is required' });
+      return;
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        fr.id,
+        fr.requirement_id,
+        r.title AS crop_name,
+        r.category,
+        COALESCE(u.name, 'Wholesale Buyer') AS buyer_name,
+        fr.offered_quantity_kg,
+        fr.offered_price_per_kg,
+        fr.notes,
+        fr.status,
+        fr.created_at
+       FROM fulfillment_requests fr
+       JOIN requirement_ads r ON fr.requirement_id = r.id
+       LEFT JOIN users u ON r.seller_id = u.id
+       WHERE fr.farmer_id = ?
+       ORDER BY fr.created_at DESC`,
+      [farmerId]
+    );
+
+    res.status(200).json({
+      success: true,
+      count: rows.length,
+      fulfillments: rows,
+    });
+  } catch (error) {
+    console.error('Error in getFarmerFulfillments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve fulfillment history',
+      error: (error as Error).message,
+    });
+  }
+};
+
