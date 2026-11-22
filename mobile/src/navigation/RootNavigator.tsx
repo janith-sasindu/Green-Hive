@@ -34,7 +34,7 @@ export type RootStackParamList = {
   AccountDetails: { role: string };
   IdentityVerificationScreen: { role?: string } | undefined;
   IdentityVerification: { role?: string } | undefined;
-  FarmerHome: undefined;
+  FarmerHome: { user?: any; userName?: string } | undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
   TransporterAvailableJobs: undefined;

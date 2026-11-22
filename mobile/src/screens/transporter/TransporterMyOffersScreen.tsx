@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   StatusBar,
   useWindowDimensions,
   Platform,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +21,11 @@ import {
   DEFAULT_OFFER_NOTE,
   TransportOffer,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
+  OFFER_FILTERS,
+  OfferFilterType,
+  MY_OFFERS_TEXTS,
+  MY_OFFERS_MESSAGES,
 } from "./data";
 
 export interface TransporterMyOffersScreenProps {
@@ -27,6 +34,12 @@ export interface TransporterMyOffersScreenProps {
   onSelectTab?: (tab: "home" | "jobs" | "active" | "profile" | "offers") => void;
   activeTab?: string;
 }
+
+export type TransporterOfferItem = TransportOffer & {
+  offerId?: number | string;
+  jobId?: number | string;
+  jobCode?: string;
+};
 
 export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps> = ({
   navigation,
@@ -42,9 +55,12 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
 
   // State
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
-  const [offers, setOffers] = useState<TransportOffer[]>(MOCK_MY_OFFERS);
-  const [selectedFilter, setSelectedFilter] = useState<"All" | "Submitted" | "Accepted">("All");
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [offers, setOffers] = useState<TransporterOfferItem[]>(MOCK_MY_OFFERS);
+  const [selectedFilter, setSelectedFilter] = useState<OfferFilterType>("All");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState<string | null>(null);
 
   // Alert Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -57,6 +73,49 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
     secondaryButtonText?: string;
     onSecondaryPress?: () => void;
   } | null>(null);
+
+  // Fetch active transporter profile
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch(TRANSPORTER_API_ENDPOINTS.profile);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setProfile((prev) => ({
+          ...prev,
+          ...json.data,
+        }));
+      }
+    } catch (err) {
+      console.log("Error loading profile for offers screen:", err);
+    }
+  }, []);
+
+  // Fetch my offers from live backend API
+  const fetchOffers = useCallback(async () => {
+    try {
+      const response = await fetch(TRANSPORTER_API_ENDPOINTS.offers);
+      const json = await response.json();
+      if (json.success && Array.isArray(json.data)) {
+        setOffers(json.data);
+      }
+    } catch (error) {
+      console.log("Error loading transporter offers from API:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchOffers();
+  }, [fetchProfile, fetchOffers]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOffers();
+    fetchProfile();
+  };
 
   const handleGoBack = () => {
     if (onBack) {
@@ -84,24 +143,93 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
     }
   };
 
-  const handleWithdrawOffer = (offerId: string) => {
+  // Live Backend Withdraw Offer
+  const handleWithdrawOffer = (targetOffer: TransporterOfferItem) => {
+    const offerIdentifier = targetOffer.offerId || targetOffer.id;
+    const displayLabel = targetOffer.id.startsWith("Job")
+      ? targetOffer.id
+      : `Job ${targetOffer.id}`;
+
+    if (targetOffer.status === "Accepted") {
+      setAlertConfig({
+        visible: true,
+        title: MY_OFFERS_MESSAGES.cannotWithdrawAccepted.title,
+        message: MY_OFFERS_MESSAGES.cannotWithdrawAccepted.message,
+        type: "warning",
+        primaryButtonText: MY_OFFERS_MESSAGES.cannotWithdrawAccepted.primaryButton,
+        onPrimaryPress: () => setAlertConfig(null),
+      });
+      return;
+    }
+
     setAlertConfig({
       visible: true,
-      title: "Withdraw Offer",
-      message: `Are you sure you want to withdraw your submitted offer for ${offerId}? The seller will no longer be able to accept your quote.`,
+      title: MY_OFFERS_MESSAGES.withdrawConfirm.title,
+      message: MY_OFFERS_MESSAGES.withdrawConfirm.message(displayLabel),
       type: "warning",
-      primaryButtonText: "Withdraw",
-      secondaryButtonText: "Keep Offer",
-      onPrimaryPress: () => {
-        setOffers((prev) => prev.filter((o) => o.id !== offerId));
-        setAlertConfig({
-          visible: true,
-          title: "Offer Withdrawn",
-          message: `Your transport offer for ${offerId} has been successfully withdrawn.`,
-          type: "success",
-          primaryButtonText: "OK",
-          onPrimaryPress: () => setAlertConfig(null),
-        });
+      primaryButtonText: MY_OFFERS_MESSAGES.withdrawConfirm.primaryButton,
+      secondaryButtonText: MY_OFFERS_MESSAGES.withdrawConfirm.secondaryButton,
+      onPrimaryPress: async () => {
+        setAlertConfig(null);
+        setIsWithdrawing(String(offerIdentifier));
+        try {
+          const endpoint = TRANSPORTER_API_ENDPOINTS.withdrawOffer(offerIdentifier);
+          const response = await fetch(endpoint, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const json = await response.json();
+
+          if (json.success) {
+            setOffers((prev) =>
+              prev.filter(
+                (o) =>
+                  o.id !== targetOffer.id &&
+                  (targetOffer.offerId ? o.offerId !== targetOffer.offerId : true)
+              )
+            );
+
+            // Sync fallback mock data
+            const mockIdx = MOCK_MY_OFFERS.findIndex(
+              (o) => o.id === targetOffer.id
+            );
+            if (mockIdx !== -1) {
+              MOCK_MY_OFFERS.splice(mockIdx, 1);
+            }
+
+            setAlertConfig({
+              visible: true,
+              title: MY_OFFERS_MESSAGES.withdrawSuccess.title,
+              message: MY_OFFERS_MESSAGES.withdrawSuccess.message(displayLabel),
+              type: "success",
+              primaryButtonText: MY_OFFERS_MESSAGES.withdrawSuccess.primaryButton,
+              onPrimaryPress: () => setAlertConfig(null),
+            });
+          } else {
+            setAlertConfig({
+              visible: true,
+              title: MY_OFFERS_MESSAGES.withdrawError.title,
+              message: json.message || MY_OFFERS_MESSAGES.withdrawError.message,
+              type: "error",
+              primaryButtonText: MY_OFFERS_MESSAGES.withdrawError.primaryButton,
+              onPrimaryPress: () => setAlertConfig(null),
+            });
+          }
+        } catch (error) {
+          console.log("Error withdrawing offer:", error);
+          setAlertConfig({
+            visible: true,
+            title: MY_OFFERS_MESSAGES.withdrawError.title,
+            message: MY_OFFERS_MESSAGES.withdrawError.message,
+            type: "error",
+            primaryButtonText: MY_OFFERS_MESSAGES.withdrawError.primaryButton,
+            onPrimaryPress: () => setAlertConfig(null),
+          });
+        } finally {
+          setIsWithdrawing(null);
+        }
       },
       onSecondaryPress: () => setAlertConfig(null),
     });
@@ -174,10 +302,10 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                     : "text-[20px]"
                 }`}
               >
-                Transport Offers
+                {MY_OFFERS_TEXTS.headerTitle}
               </Text>
               <Text className="text-[11px] sm:text-[11.5px] font-medium text-[#6B7280] dark:text-slate-400">
-                Submitted to seller job cards
+                {MY_OFFERS_TEXTS.headerSubtitle}
               </Text>
             </View>
           </View>
@@ -218,68 +346,45 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className="px-4 sm:px-5 pb-2.5 pt-1 flex-row gap-2"
         >
-          {/* All */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setSelectedFilter("All")}
-            className={`px-3 py-1.5 rounded-full border ${
-              selectedFilter === "All"
+          {OFFER_FILTERS.map((filter) => {
+            const isSelected = selectedFilter === filter.id;
+            const count =
+              filter.id === "All"
+                ? offers.length
+                : filter.id === "Submitted"
+                ? submittedCount
+                : acceptedCount;
+
+            const selectedBg =
+              filter.id === "All"
                 ? "bg-[#E68A00] border-[#E68A00]"
-                : "bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700"
-            }`}
-          >
-            <Text
-              className={`text-xs font-bold ${
-                selectedFilter === "All"
-                  ? "text-white"
-                  : "text-[#4B5563] dark:text-slate-300"
-              }`}
-            >
-              All ({offers.length})
-            </Text>
-          </TouchableOpacity>
-
-          {/* Submitted */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setSelectedFilter("Submitted")}
-            className={`px-3 py-1.5 rounded-full border ${
-              selectedFilter === "Submitted"
+                : filter.id === "Submitted"
                 ? "bg-[#2563EB] border-[#2563EB]"
-                : "bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700"
-            }`}
-          >
-            <Text
-              className={`text-xs font-bold ${
-                selectedFilter === "Submitted"
-                  ? "text-white"
-                  : "text-[#4B5563] dark:text-slate-300"
-              }`}
-            >
-              Submitted ({submittedCount})
-            </Text>
-          </TouchableOpacity>
+                : "bg-[#059669] border-[#059669]";
 
-          {/* Accepted */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setSelectedFilter("Accepted")}
-            className={`px-3 py-1.5 rounded-full border ${
-              selectedFilter === "Accepted"
-                ? "bg-[#059669] border-[#059669]"
-                : "bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700"
-            }`}
-          >
-            <Text
-              className={`text-xs font-bold ${
-                selectedFilter === "Accepted"
-                  ? "text-white"
-                  : "text-[#4B5563] dark:text-slate-300"
-              }`}
-            >
-              Accepted ({acceptedCount})
-            </Text>
-          </TouchableOpacity>
+            return (
+              <TouchableOpacity
+                key={filter.id}
+                activeOpacity={0.8}
+                onPress={() => setSelectedFilter(filter.id)}
+                className={`px-3 py-1.5 rounded-full border ${
+                  isSelected
+                    ? selectedBg
+                    : "bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700"
+                }`}
+              >
+                <Text
+                  className={`text-xs font-bold ${
+                    isSelected
+                      ? "text-white"
+                      : "text-[#4B5563] dark:text-slate-300"
+                  }`}
+                >
+                  {filter.label} ({count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </SafeAreaView>
 
@@ -294,18 +399,36 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
         }}
         showsVerticalScrollIndicator={false}
         bounces={Platform.OS === "ios"}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#E68A00"
+            colors={["#E68A00"]}
+          />
+        }
       >
         <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+          {/* Subtle Initial Loading Bar */}
+          {loading && !refreshing && (
+            <View className="flex-row items-center justify-center py-2.5 mb-2 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/50 dark:border-amber-900/40">
+              <ActivityIndicator size="small" color="#E68A00" />
+              <Text className="text-xs font-medium text-[#E68A00] ml-2">
+                {MY_OFFERS_TEXTS.loadingText}
+              </Text>
+            </View>
+          )}
+
           {filteredOffers.length === 0 ? (
             <View className="items-center justify-center py-16 px-6">
               <View className="h-16 w-16 rounded-full bg-white dark:bg-slate-800 items-center justify-center shadow-xs border border-gray-100 dark:border-slate-700 mb-3.5">
-                <Text className="text-2xl">📋</Text>
+                <Text className="text-2xl">{MY_OFFERS_TEXTS.emptyState.emoji}</Text>
               </View>
               <Text className="text-base font-bold text-[#111827] dark:text-white text-center">
-                No Transport Offers Found
+                {MY_OFFERS_TEXTS.emptyState.title}
               </Text>
               <Text className="text-xs text-[#6B7280] dark:text-slate-400 text-center mt-1 max-w-[280px]">
-                You haven't submitted any offers in this category yet.
+                {MY_OFFERS_TEXTS.emptyState.description}
               </Text>
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -313,7 +436,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                 className="mt-5 rounded-full bg-[#E68A00] px-6 py-2.5 shadow-xs"
               >
                 <Text className="text-xs font-bold text-white">
-                  Browse Available Jobs
+                  {MY_OFFERS_TEXTS.browseJobsButton}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -324,10 +447,12 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                 offer.status === "Submitted" ||
                 offer.status === "Under Review" ||
                 offer.status === "Pending Farmer Approval";
+              const offerKey = String(offer.offerId || offer.id);
+              const isItemWithdrawing = isWithdrawing === offerKey;
 
               return (
                 <View
-                  key={offer.id}
+                  key={offerKey}
                   className="mb-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100/90 dark:border-slate-700 p-4 shadow-2xs"
                   style={{
                     shadowColor: "#000000",
@@ -348,14 +473,14 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                       <View className="flex-row items-center rounded-full bg-[#ECFDF5] dark:bg-emerald-500/20 px-2.5 py-1">
                         <View className="h-2 w-2 rounded-full bg-[#059669] mr-1.5" />
                         <Text className="text-[11px] font-bold text-[#059669] dark:text-emerald-400">
-                          Accepted
+                          {MY_OFFERS_TEXTS.filterAccepted}
                         </Text>
                       </View>
                     ) : (
                       <View className="flex-row items-center rounded-full bg-[#EFF6FF] dark:bg-blue-500/20 px-2.5 py-1">
                         <View className="h-2 w-2 rounded-full bg-[#2563EB] mr-1.5" />
                         <Text className="text-[11px] font-bold text-[#2563EB] dark:text-blue-400">
-                          Submitted
+                          {MY_OFFERS_TEXTS.filterSubmitted}
                         </Text>
                       </View>
                     )}
@@ -378,7 +503,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                     {/* Your Cost */}
                     <View className="flex-1 pr-2">
                       <Text className="text-[11.5px] font-medium text-[#6B7280] dark:text-slate-400">
-                        Your Cost
+                        {MY_OFFERS_TEXTS.yourCostLabel}
                       </Text>
                       <Text className="text-[16px] sm:text-[17px] font-black text-[#059669] dark:text-emerald-400 mt-0.5">
                         {offer.quotePrice}
@@ -388,7 +513,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                     {/* Est. Delivery */}
                     <View className="flex-1 items-end pl-2">
                       <Text className="text-[11.5px] font-medium text-[#6B7280] dark:text-slate-400">
-                        Est. Delivery
+                        {MY_OFFERS_TEXTS.estDeliveryLabel}
                       </Text>
                       <Text className="text-[12.5px] sm:text-[13px] font-bold text-[#1F2937] dark:text-slate-200 mt-0.5 text-right">
                         {offer.estimatedDelivery || MOCK_MY_OFFERS[0].estimatedDelivery}
@@ -396,7 +521,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                     </View>
                   </View>
 
-                  {/* Note Bubble (Italic callout box matching design) */}
+                  {/* Note Bubble */}
                   <View className="mt-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-700/60 p-3 border border-slate-100/90 dark:border-slate-700/40">
                     <Text className="text-[12px] sm:text-[12.5px] italic text-[#4B5563] dark:text-slate-300 leading-relaxed">
                       {offer.notes || DEFAULT_OFFER_NOTE}
@@ -406,7 +531,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                   {/* Footer Line: Submitted Date & Actions */}
                   <View className="mt-3 flex-row items-center justify-between pt-1">
                     <Text className="text-[11px] sm:text-[11.5px] font-medium text-[#9CA3AF] dark:text-slate-400">
-                      Submitted {offer.submittedDate || MOCK_MY_OFFERS[0].submittedDate}
+                      {MY_OFFERS_TEXTS.submittedPrefix} {offer.submittedDate || MOCK_MY_OFFERS[0].submittedDate}
                     </Text>
 
                     {/* Action button */}
@@ -417,18 +542,26 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                         className="flex-row items-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 border border-emerald-200 dark:border-emerald-800"
                       >
                         <Text className="text-[11.5px] font-bold text-[#059669] dark:text-emerald-400">
-                          Active Trip →
+                          {MY_OFFERS_TEXTS.activeTripButton}
                         </Text>
                       </TouchableOpacity>
                     ) : isSubmitted ? (
                       <TouchableOpacity
                         activeOpacity={0.7}
-                        onPress={() => handleWithdrawOffer(offer.id)}
+                        disabled={isItemWithdrawing}
+                        onPress={() => handleWithdrawOffer(offer)}
                         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                        className="flex-row items-center px-2 py-1"
+                        className={`flex-row items-center px-2 py-1 ${
+                          isItemWithdrawing ? "opacity-50" : ""
+                        }`}
                       >
+                        {isItemWithdrawing ? (
+                          <ActivityIndicator size="small" color="#EF4444" style={{ marginRight: 4 }} />
+                        ) : null}
                         <Text className="text-[11.5px] font-semibold text-red-500 dark:text-red-400">
-                          Withdraw
+                          {isItemWithdrawing
+                            ? MY_OFFERS_TEXTS.withdrawingButton
+                            : MY_OFFERS_TEXTS.withdrawButton}
                         </Text>
                       </TouchableOpacity>
                     ) : null}
@@ -471,7 +604,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                   : "font-medium text-[#9CA3AF] dark:text-slate-400"
               }`}
             >
-              Home
+              {MY_OFFERS_TEXTS.bottomTabs.home}
             </Text>
           </TouchableOpacity>
 
@@ -491,7 +624,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {MY_OFFERS_TEXTS.bottomTabs.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -511,7 +644,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {MY_OFFERS_TEXTS.bottomTabs.active}
             </Text>
           </TouchableOpacity>
 
@@ -531,7 +664,7 @@ export const TransporterMyOffersScreen: React.FC<TransporterMyOffersScreenProps>
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {MY_OFFERS_TEXTS.bottomTabs.profile}
             </Text>
           </TouchableOpacity>
         </View>

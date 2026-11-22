@@ -29,6 +29,7 @@ export interface TransporterStats {
 
 export interface ActiveTransportJob {
     id: string;
+    dbId?: number | string;
     cropName: string;
     weight: string;
     status: "In Progress" | "At Pickup" | "In Transit" | "Delivered";
@@ -51,6 +52,7 @@ export interface ActiveTransportJob {
 }
 
 export interface AvailableTransportJob {
+    dbId?: number | string;
     id: string;
     cropName: string;
     weight: string;

@@ -2,10 +2,15 @@ import { Router } from 'express';
 import {
   getHomeScreenData,
   updateJobStatus,
+  confirmJobPickup,
+  confirmJobDelivery,
   getAvailableJobs,
   getActiveJob,
   getJobById,
   submitJobOffer,
+  getMyOffers,
+  withdrawOffer,
+  getLatestOffer,
   getProfile,
   updateProfile,
   updateAvatar,
@@ -17,6 +22,11 @@ import {
   markAllNotificationsRead,
   getNotificationSettings,
   updateNotificationSettings,
+  getSupportTickets,
+  createSupportTicket,
+  getVehicleLicense,
+  updateVehicleLicense,
+  updateVehicleLicenseDocument,
 } from '../controllers/transporter.controller';
 import { authenticateToken } from '../middleware/auth';
 
@@ -35,8 +45,17 @@ router.get('/jobs/available', getAvailableJobs);
 router.get('/jobs/:id', getJobById);
 router.post('/jobs/:id/offers', authenticateToken, submitJobOffer);
 
+// Transporter My Offers Endpoints
+router.get('/offers', authenticateToken, getMyOffers);
+router.get('/offers/latest', authenticateToken, getLatestOffer);
+router.delete('/offers/:id', authenticateToken, withdrawOffer);
+
 // Update Status (Confirm pickup / Confirm delivery)
 router.patch('/jobs/:id/status', authenticateToken, updateJobStatus);
+router.patch('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
+router.post('/jobs/:id/pickup', authenticateToken, confirmJobPickup);
+router.patch('/jobs/:id/delivery', authenticateToken, confirmJobDelivery);
+router.post('/jobs/:id/delivery', authenticateToken, confirmJobDelivery);
 
 // Profile Endpoints
 router.get('/profile', authenticateToken, getProfile);
@@ -49,6 +68,7 @@ router.delete('/profile/avatar', authenticateToken, removeAvatar);
 // Bank Details Endpoints
 router.get('/bank-details', authenticateToken, getBankDetails);
 router.put('/bank-details', authenticateToken, updateBankDetails);
+router.post('/bank-details', authenticateToken, updateBankDetails);
 
 // Notification Endpoints
 router.get('/notifications', authenticateToken, getNotifications);
@@ -58,5 +78,15 @@ router.patch('/notifications/:id/read', authenticateToken, markNotificationRead)
 // Notification Settings Endpoints
 router.get('/notification-settings', authenticateToken, getNotificationSettings);
 router.put('/notification-settings', authenticateToken, updateNotificationSettings);
+
+// Help & Support Endpoints
+router.get('/support/tickets', authenticateToken, getSupportTickets);
+router.post('/support/tickets', authenticateToken, createSupportTicket);
+
+// Vehicle & Driver License Endpoints
+router.get('/vehicle-license', authenticateToken, getVehicleLicense);
+router.put('/vehicle-license', authenticateToken, updateVehicleLicense);
+router.post('/vehicle-license/documents', authenticateToken, updateVehicleLicenseDocument);
+router.patch('/vehicle-license/documents', authenticateToken, updateVehicleLicenseDocument);
 
 export default router;

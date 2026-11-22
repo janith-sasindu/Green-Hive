@@ -29,6 +29,11 @@ import {
   TransporterNotificationItem,
   TransporterProfile,
   TRANSPORTER_API_ENDPOINTS,
+  NOTIFICATIONS_HEADER,
+  NOTIFICATIONS_EMPTY_STATE,
+  NOTIFICATIONS_ALERTS,
+  NOTIFICATIONS_PROFILE_MODAL,
+  NOTIFICATIONS_NAV_TABS,
 } from "./data";
 
 export interface TransporterNotificationsScreenProps {
@@ -137,8 +142,8 @@ export const TransporterNotificationsScreen = ({
   const handleMarkAllRead = async () => {
     if (unreadCount === 0) {
       Alert.alert(
-        "All Caught Up",
-        "All notifications are already marked as read."
+        NOTIFICATIONS_ALERTS.allCaughtUp.title,
+        NOTIFICATIONS_ALERTS.allCaughtUp.message
       );
       return;
     }
@@ -153,11 +158,11 @@ export const TransporterNotificationsScreen = ({
       });
       const json = await response.json();
       if (json.success) {
-        Alert.alert("Success", "All notifications marked as read.");
+        Alert.alert(NOTIFICATIONS_ALERTS.markAllSuccess.title, NOTIFICATIONS_ALERTS.markAllSuccess.message);
       }
     } catch (error) {
       console.log("Error marking all notifications read:", error);
-      Alert.alert("Success", "All notifications marked as read.");
+      Alert.alert(NOTIFICATIONS_ALERTS.markAllSuccess.title, NOTIFICATIONS_ALERTS.markAllSuccess.message);
     }
   };
 
@@ -178,11 +183,11 @@ export const TransporterNotificationsScreen = ({
     if (item.jobId) {
       Alert.alert(
         item.title,
-        `${item.message}\n\nJob Reference: ${item.jobId}`,
+        `${item.message}\n\n${NOTIFICATIONS_ALERTS.jobReferenceLabel} ${item.jobId}`,
         [
-          { text: "Dismiss", style: "cancel" },
+          { text: NOTIFICATIONS_ALERTS.dismissButton, style: "cancel" },
           {
-            text: "View Job Details",
+            text: NOTIFICATIONS_ALERTS.viewJobDetailsButton,
             onPress: () => {
               if (navigation?.navigate) {
                 navigation.navigate("TransporterHome");
@@ -212,20 +217,24 @@ export const TransporterNotificationsScreen = ({
 
   const handleSignOut = () => {
     setShowProfileModal(false);
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => {
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate?.("Welcome");
-          }
+    Alert.alert(
+      NOTIFICATIONS_ALERTS.signOut.title,
+      NOTIFICATIONS_ALERTS.signOut.message,
+      [
+        { text: NOTIFICATIONS_ALERTS.signOut.cancelButton, style: "cancel" },
+        {
+          text: NOTIFICATIONS_ALERTS.signOut.confirmButton,
+          style: "destructive",
+          onPress: () => {
+            if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation?.navigate?.("Welcome");
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
@@ -272,7 +281,7 @@ export const TransporterNotificationsScreen = ({
                   : "text-[20px]"
               }`}
             >
-              Notifications
+              {NOTIFICATIONS_HEADER.title}
             </Text>
           </View>
 
@@ -347,7 +356,7 @@ export const TransporterNotificationsScreen = ({
               isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
             }`}
           >
-            {unreadCount} unread
+            {NOTIFICATIONS_HEADER.unreadLabel(unreadCount)}
           </Text>
 
           <TouchableOpacity
@@ -366,7 +375,7 @@ export const TransporterNotificationsScreen = ({
                 isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
               }`}
             >
-              Mark all read
+              {NOTIFICATIONS_HEADER.markAllReadButton}
             </Text>
           </TouchableOpacity>
         </View>
@@ -396,7 +405,7 @@ export const TransporterNotificationsScreen = ({
               <View className="py-20 items-center justify-center">
                 <ActivityIndicator size="large" color="#E68A00" />
                 <Text className="text-xs font-semibold text-gray-400 dark:text-slate-500 mt-3">
-                  Loading notifications...
+                  {NOTIFICATIONS_EMPTY_STATE.loading}
                 </Text>
               </View>
             ) : (
@@ -506,10 +515,10 @@ export const TransporterNotificationsScreen = ({
                   />
                 </View>
                 <Text className="text-base font-bold text-gray-700 dark:text-slate-200">
-                  No Notifications
+                  {NOTIFICATIONS_EMPTY_STATE.title}
                 </Text>
                 <Text className="text-xs text-gray-400 dark:text-slate-400 text-center max-w-[240px] mt-1">
-                  You have caught up with all your transport alerts and updates.
+                  {NOTIFICATIONS_EMPTY_STATE.description}
                 </Text>
               </View>
             )}
@@ -544,7 +553,7 @@ export const TransporterNotificationsScreen = ({
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {NOTIFICATIONS_NAV_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -564,7 +573,7 @@ export const TransporterNotificationsScreen = ({
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {NOTIFICATIONS_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -584,7 +593,7 @@ export const TransporterNotificationsScreen = ({
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {NOTIFICATIONS_NAV_TABS.active}
             </Text>
           </TouchableOpacity>
 
@@ -604,7 +613,7 @@ export const TransporterNotificationsScreen = ({
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
               } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {NOTIFICATIONS_NAV_TABS.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -623,7 +632,7 @@ export const TransporterNotificationsScreen = ({
             className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
             <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              Driver Profile
+              {NOTIFICATIONS_PROFILE_MODAL.title}
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
@@ -674,28 +683,27 @@ export const TransporterNotificationsScreen = ({
                   {profile.email}
                 </Text>
                 <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
-                  ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                  Completed Trips)
+                  {NOTIFICATIONS_PROFILE_MODAL.tripsSummary(profile.rating, profile.completedJobs)}
                 </Text>
               </View>
 
               {/* Vehicle details */}
               <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
                 <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
-                  Registered Vehicle
+                  {NOTIFICATIONS_PROFILE_MODAL.vehicleSectionTitle}
                 </Text>
                 <View className="space-y-1.5 gap-1.5">
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🚚 <Text className="font-semibold">Type:</Text>{" "}
+                    🚚 <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.typeLabel}</Text>{" "}
                     {profile.vehicleType}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🔢 <Text className="font-semibold">Plate:</Text>{" "}
+                    🔢 <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.plateLabel}</Text>{" "}
                     {profile.vehiclePlate}
                   </Text>
                   <Text className="text-xs text-gray-700 dark:text-slate-300">
-                    🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                    Verified
+                    🛡️ <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.statusLabel}</Text>{" "}
+                    {NOTIFICATIONS_PROFILE_MODAL.verifiedStatus}
                   </Text>
                 </View>
               </View>
@@ -713,10 +721,10 @@ export const TransporterNotificationsScreen = ({
                     </View>
                     <View>
                       <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                        Dark Mode
+                        {NOTIFICATIONS_PROFILE_MODAL.darkModeTitle}
                       </Text>
                       <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                        {isDark ? "Dark theme is active" : "Light theme is active"}
+                        {isDark ? NOTIFICATIONS_PROFILE_MODAL.darkModeActive : NOTIFICATIONS_PROFILE_MODAL.lightModeActive}
                       </Text>
                     </View>
                   </View>
@@ -736,7 +744,7 @@ export const TransporterNotificationsScreen = ({
                 className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3 sm:py-3.5 items-center justify-center mt-2"
               >
                 <Text className="text-sm font-bold text-red-600 dark:text-red-400">
-                  Log Out of Transporter Account
+                  {NOTIFICATIONS_PROFILE_MODAL.logOutButton}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -11,11 +11,20 @@
     "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
     "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts",
     "test:profile": "ts-node src/scripts/test-profile-api.ts",
+    "db:farmer": "ts-node src/scripts/setup-farmer-db.ts",
     "db:profile": "ts-node src/scripts/setup-profile-db.ts",
     "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
     "test:notifications": "ts-node src/scripts/test-notifications-api.ts",
     "db:notification-settings": "ts-node src/scripts/setup-notification-settings-db.ts",
-    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts"
+    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts",
+    "test:edit-profile": "ts-node src/scripts/test-edit-profile-api.ts",
+    "test:my-offers": "ts-node src/scripts/test-my-offers-api.ts",
+    "test:offer-submitted": "ts-node src/scripts/test-offer-submitted-api.ts",
+    "test:confirm-pickup": "ts-node src/scripts/test-confirm-pickup-api.ts",
+    "test:confirm-delivery": "ts-node src/scripts/test-confirm-delivery-api.ts",
+    "test:bank-details": "ts-node src/scripts/test-bank-details-api.ts",
+    "test:support": "ts-node src/scripts/test-support-api.ts",
+    "test:vehicle-license": "ts-node src/scripts/test-vehicle-license-api.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
