@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import {
-  Image, View, Text, TouchableOpacity, StatusBar,
+  Image, View, Text, TouchableOpacity,
   Alert, Switch, useWindowDimensions,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -82,7 +83,7 @@ export const FarmerProfileScreen = ({
     chevron:     isDark ? "#4B7A54" : "#9CA3AF",
     notifBellBg: isDark ? "#1C2B1F" : "#FFFFFF",
     notifBellBorder: isDark ? "#2A3D2E" : "rgba(243,244,246,0.9)",
-    statusBar:   (isDark ? "light-content" : "dark-content") as "light-content" | "dark-content",
+    statusBar:   (isDark ? "light" : "dark") as "light" | "dark",
   };
 
   const handleMenuPress = (itemTitle: string) => {
@@ -177,7 +178,7 @@ export const FarmerProfileScreen = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: t.screenBg }}>
-      <StatusBar barStyle={t.statusBar} backgroundColor={t.screenBg} />
+      <StatusBar style={t.statusBar} />
 
       {/* Header */}
       <SafeAreaView edges={["top"]} style={{ backgroundColor: t.headerBg }}>

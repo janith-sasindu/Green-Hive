@@ -56,3 +56,60 @@ export const getFarmerProfileApi = async (farmerId: number | string) => {
   return response.data;
 };
 
+export interface RequirementItemResponse {
+  id: string;
+  rawId: number;
+  buyerName: string;
+  buyerPhone: string;
+  cropName: string;
+  category: string;
+  requiredQuantity: string;
+  quantityValue: number;
+  targetPrice: string;
+  targetPriceValue: number;
+  unit: string;
+  location: string;
+  deadline: string;
+  description: string;
+  status: string;
+  myOfferStatus?: string | null;
+  offeredQuantityKg?: number | null;
+  offeredPricePerKg?: number | null;
+}
+
+export interface SubmitFulfillmentPayload {
+  requirementId: number;
+  farmerId: number;
+  offeredQuantityKg: number;
+  offeredPricePerKg: number;
+  notes?: string;
+}
+
+/**
+ * Fetch live buyer requirements from the database
+ */
+export const getFarmerRequirementsApi = async (farmerId?: number): Promise<{ success: boolean; requirements: RequirementItemResponse[] }> => {
+  const response = await apiClient.get('/farmer/requirements', {
+    params: { farmerId },
+  });
+  return response.data;
+};
+
+/**
+ * Submit a fulfillment offer from the farmer to the buyer
+ */
+export const submitFulfillmentApi = async (payload: SubmitFulfillmentPayload): Promise<{ success: boolean; message: string; fulfillmentId: number }> => {
+  const response = await apiClient.post(`/farmer/requirements/${payload.requirementId}/fulfill`, payload);
+  return response.data;
+};
+
+/**
+ * Fetch all fulfillment offers submitted by this farmer
+ */
+export const getFarmerFulfillmentsApi = async (farmerId: number) => {
+  const response = await apiClient.get('/farmer/fulfillments', {
+    params: { farmerId },
+  });
+  return response.data;
+};
+
