@@ -1,27 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StatusBar,
   Modal,
   Alert,
+  Switch,
   useWindowDimensions,
   Platform,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   SmoothScrollView,
   SMOOTH_SCROLL_PROPS,
 } from "../../components/common/SmoothScrollView";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
 
-// Mock Data imported from dedicated transporter data folder
+// Mock Data imported from dedicated transporter data folder as fallback
 import {
   MOCK_TRANSPORTER_PROFILE,
   MOCK_DETAILED_NOTIFICATIONS,
   TransporterNotificationItem,
   TransporterProfile,
+  TRANSPORTER_API_ENDPOINTS,
+  NOTIFICATIONS_HEADER,
+  NOTIFICATIONS_EMPTY_STATE,
+  NOTIFICATIONS_ALERTS,
+  NOTIFICATIONS_PROFILE_MODAL,
+  NOTIFICATIONS_NAV_TABS,
 } from "./data";
 
 export interface TransporterNotificationsScreenProps {
@@ -36,20 +48,85 @@ export const TransporterNotificationsScreen = ({
   onSelectTab,
 }: TransporterNotificationsScreenProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, toggleDarkMode, colors } = useTransporterTheme();
 
   // Responsive Breakpoints
+  const isExtraSmall = screenWidth < 360;
   const isSmallDevice = screenWidth < 380 || screenHeight < 700;
   const isTablet = screenWidth >= 600;
 
+  // Backend Endpoints from centralized data config
+  const NOTIFICATIONS_URL = TRANSPORTER_API_ENDPOINTS.notifications;
+  const PROFILE_URL = TRANSPORTER_API_ENDPOINTS.profile;
+
   // State
-  const [profile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
-  const [notifications, setNotifications] = useState<
-    TransporterNotificationItem[]
-  >(MOCK_DETAILED_NOTIFICATIONS);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [notifications, setNotifications] = useState<TransporterNotificationItem[]>(
+    MOCK_DETAILED_NOTIFICATIONS
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+
+  const avatarUri = profile.avatarUri || MOCK_TRANSPORTER_PROFILE.avatarUri;
 
   // Derived state
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Fetch Notifications from Backend
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch(NOTIFICATIONS_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setNotifications(Array.isArray(json.data) ? json.data : json.data.notifications || []);
+      }
+    } catch (error) {
+      console.log("Error fetching notifications from backend:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [NOTIFICATIONS_URL]);
+
+  // Fetch Profile for top avatar and modal details
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch(PROFILE_URL);
+      const json = await response.json();
+      if (json.success && json.data) {
+        setProfile((prev) => ({
+          ...prev,
+          name: json.data.name || prev.name,
+          email: json.data.email || prev.email,
+          phone: json.data.phone || prev.phone,
+          vehicleType: json.data.vehicleType || prev.vehicleType,
+          vehiclePlate: json.data.vehiclePlate || prev.vehiclePlate,
+          avatarUri: json.data.avatarUri || prev.avatarUri,
+          avatarLetter: json.data.avatarLetter || json.data.name?.charAt(0) || "T",
+          rating: json.data.rating ?? prev.rating,
+          completedJobs: json.data.completedJobs ?? prev.completedJobs,
+        }));
+      }
+    } catch (error) {
+      console.log("Error fetching profile in notifications screen:", error);
+    }
+  }, [PROFILE_URL]);
+
+  // Auto-fetch data whenever screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+      fetchProfile();
+    }, [fetchNotifications, fetchProfile])
+  );
+
+  // Pull-to-refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
+    fetchProfile();
+  };
 
   // Handlers
   const handleGoBack = () => {
@@ -62,32 +139,55 @@ export const TransporterNotificationsScreen = ({
     }
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     if (unreadCount === 0) {
       Alert.alert(
-        "All Caught Up",
-        "All notifications are already marked as read."
+        NOTIFICATIONS_ALERTS.allCaughtUp.title,
+        NOTIFICATIONS_ALERTS.allCaughtUp.message
       );
       return;
     }
+
+    // Optimistic UI update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    Alert.alert("Success", "All notifications marked as read.");
+
+    try {
+      const response = await fetch(`${NOTIFICATIONS_URL}/read-all`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await response.json();
+      if (json.success) {
+        Alert.alert(NOTIFICATIONS_ALERTS.markAllSuccess.title, NOTIFICATIONS_ALERTS.markAllSuccess.message);
+      }
+    } catch (error) {
+      console.log("Error marking all notifications read:", error);
+      Alert.alert(NOTIFICATIONS_ALERTS.markAllSuccess.title, NOTIFICATIONS_ALERTS.markAllSuccess.message);
+    }
   };
 
   const handleNotificationPress = (item: TransporterNotificationItem) => {
-    // Mark as read
+    // Optimistically mark as read in local state
     setNotifications((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+    );
+
+    // Call backend API to persist read state
+    fetch(`${NOTIFICATIONS_URL}/${item.id}/read`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    }).catch((e) =>
+      console.log("Failed to mark notification read on backend:", e)
     );
 
     if (item.jobId) {
       Alert.alert(
         item.title,
-        `${item.message}\n\nJob Reference: ${item.jobId}`,
+        `${item.message}\n\n${NOTIFICATIONS_ALERTS.jobReferenceLabel} ${item.jobId}`,
         [
-          { text: "Dismiss", style: "cancel" },
+          { text: NOTIFICATIONS_ALERTS.dismissButton, style: "cancel" },
           {
-            text: "View Job Details",
+            text: NOTIFICATIONS_ALERTS.viewJobDetailsButton,
             onPress: () => {
               if (navigation?.navigate) {
                 navigation.navigate("TransporterHome");
@@ -109,36 +209,43 @@ export const TransporterNotificationsScreen = ({
     } else if (tab === "jobs") {
       navigation?.navigate?.("TransporterAvailableJobs");
     } else if (tab === "active") {
-      navigation?.navigate?.("TransporterHome");
+      navigation?.navigate?.("TransporterActiveJob");
     } else if (tab === "profile") {
-      setShowProfileModal(true);
+      navigation?.navigate?.("TransporterProfile");
     }
   };
 
   const handleSignOut = () => {
     setShowProfileModal(false);
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => {
-          if (navigation?.canGoBack && navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation?.navigate?.("Welcome");
-          }
+    Alert.alert(
+      NOTIFICATIONS_ALERTS.signOut.title,
+      NOTIFICATIONS_ALERTS.signOut.message,
+      [
+        { text: NOTIFICATIONS_ALERTS.signOut.cancelButton, style: "cancel" },
+        {
+          text: NOTIFICATIONS_ALERTS.signOut.confirmButton,
+          style: "destructive",
+          onPress: () => {
+            if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation?.navigate?.("Welcome");
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
-    <View className="flex-1 bg-[#F5F8F6]">
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F8F6" />
+    <View className="flex-1 bg-[#F5F8F6] dark:bg-slate-900">
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0F172A" : "#F5F8F6"}
+      />
 
       {/* ================= TOP HEADER ================= */}
-      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6]">
+      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6] dark:bg-slate-900">
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
           className={`px-4 sm:px-5 flex-row items-center justify-between ${
@@ -155,55 +262,85 @@ export const TransporterNotificationsScreen = ({
             >
               <Ionicons
                 name="arrow-back"
-                size={isSmallDevice ? 22 : isTablet ? 26 : 24}
-                color="#1F2937"
+                size={isExtraSmall ? 20 : isSmallDevice ? 22 : isTablet ? 26 : 24}
+                color={isDark ? "#FFFFFF" : "#1F2937"}
               />
             </TouchableOpacity>
 
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
-              className={`font-black text-gray-900 tracking-tight flex-1 ${
-                isSmallDevice
+              minimumFontScale={0.85}
+              className={`font-black text-gray-900 dark:text-white tracking-tight flex-1 ${
+                isExtraSmall
+                  ? "text-[16px]"
+                  : isSmallDevice
                   ? "text-[18px]"
                   : isTablet
                   ? "text-[22px]"
                   : "text-[20px]"
               }`}
             >
-              Notifications
+              {NOTIFICATIONS_HEADER.title}
             </Text>
           </View>
 
           {/* Right Action Icons */}
-          <View className="flex-row items-center space-x-2.5 sm:space-x-3 gap-2.5 sm:gap-3">
-            {/* Notification Bell */}
-            <View className="relative p-1.5 rounded-full">
+          <View className="flex-row items-center space-x-2 sm:space-x-2.5 gap-2 sm:gap-2.5">
+            {/* Settings button leading to Notification Settings */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate("TransporterNotificationSettings");
+                }
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className="p-1.5 rounded-full"
+            >
               <Ionicons
-                name="notifications-outline"
-                size={isSmallDevice ? 21 : isTablet ? 25 : 23}
-                color="#4B5563"
+                name="settings-outline"
+                size={isExtraSmall ? 19 : isSmallDevice ? 21 : isTablet ? 25 : 23}
+                color={colors.icon}
               />
-              {unreadCount > 0 && (
-                <View className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              )}
-            </View>
+            </TouchableOpacity>
 
             {/* Profile Avatar Pill */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setShowProfileModal(true)}
-              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs ${
-                isSmallDevice ? "h-8 w-8" : isTablet ? "h-10 w-10" : "h-9 w-9"
+              onPress={() => handleTabPress("profile")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className={`rounded-full bg-[#E68A00] items-center justify-center shadow-xs overflow-hidden ${
+                isExtraSmall
+                  ? "h-8 w-8"
+                  : isSmallDevice
+                  ? "h-8.5 w-8.5"
+                  : isTablet
+                  ? "h-10 w-10"
+                  : "h-9 w-9"
               }`}
             >
-              <Text
-                className={`font-extrabold text-white ${
-                  isSmallDevice ? "text-xs" : isTablet ? "text-base" : "text-sm"
-                }`}
-              >
-                {profile.avatarLetter}
-              </Text>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text
+                  className={`font-extrabold text-white ${
+                    isExtraSmall
+                      ? "text-xs"
+                      : isSmallDevice
+                      ? "text-xs"
+                      : isTablet
+                      ? "text-base"
+                      : "text-sm"
+                  }`}
+                >
+                  {profile.avatarLetter}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -215,11 +352,11 @@ export const TransporterNotificationsScreen = ({
         >
           <Text
             numberOfLines={1}
-            className={`font-medium text-gray-500 ${
-              isSmallDevice ? "text-[12px]" : "text-[13.5px]"
+            className={`font-medium text-gray-500 dark:text-slate-400 ${
+              isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
             }`}
           >
-            {unreadCount} unread
+            {NOTIFICATIONS_HEADER.unreadLabel(unreadCount)}
           </Text>
 
           <TouchableOpacity
@@ -231,14 +368,14 @@ export const TransporterNotificationsScreen = ({
             <Ionicons
               name="checkmark"
               size={isSmallDevice ? 14 : 15}
-              color="#16A34A"
+              color={isDark ? "#34D399" : "#16A34A"}
             />
             <Text
-              className={`font-bold text-[#16A34A] ml-1 ${
-                isSmallDevice ? "text-[12px]" : "text-[13.5px]"
+              className={`font-bold text-[#16A34A] dark:text-emerald-400 ml-1 ${
+                isSmallDevice ? "text-[11.5px]" : "text-[13.5px]"
               }`}
             >
-              Mark all read
+              {NOTIFICATIONS_HEADER.markAllReadButton}
             </Text>
           </TouchableOpacity>
         </View>
@@ -247,134 +384,152 @@ export const TransporterNotificationsScreen = ({
       {/* ================= MAIN SCROLLABLE BODY ================= */}
       <SmoothScrollView
         className="flex-1"
-        {...SMOOTH_SCROLL_PROPS}
         contentContainerStyle={{
-          maxWidth: 640,
-          width: "100%",
-          alignSelf: "center",
-          paddingBottom: isSmallDevice ? 24 : 36,
+          paddingBottom: isSmallDevice ? 32 : 44,
           paddingTop: isSmallDevice ? 4 : 8,
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        bounces={true}
-        alwaysBounceVertical={true}
-        scrollEventThrottle={16}
-        decelerationRate="normal"
-        overScrollMode="never"
-        nestedScrollEnabled={true}
-        keyboardShouldPersistTaps="handled"
-        directionalLockEnabled={true}
-        removeClippedSubviews={Platform.OS === "android"}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#E68A00"]}
+            tintColor="#E68A00"
+          />
+        }
       >
-        <View className="px-4 sm:px-5 space-y-3 gap-3">
-          {notifications.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.8}
-              onPress={() => handleNotificationPress(item)}
-              className={`rounded-3xl bg-white border border-gray-100 shadow-xs flex-row items-start ${
-                isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
-              }`}
-              style={{
-                elevation: 1.5,
-                shadowColor: "#000",
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                shadowOffset: { width: 0, height: 2 },
-              }}
-            >
-              {/* Left icon badge container */}
-              <View
-                className={`rounded-2xl bg-[#FEF3C7] items-center justify-center mr-3 sm:mr-3.5 ${
-                  isSmallDevice
-                    ? "h-10 w-10"
-                    : isTablet
-                    ? "h-14 w-14"
-                    : "h-12 w-12"
-                }`}
-              >
-                <Text
-                  className={
-                    isSmallDevice
-                      ? "text-lg"
-                      : isTablet
-                      ? "text-3xl"
-                      : "text-2xl"
-                  }
-                >
-                  {item.iconEmoji || "🚚"}
+        <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+          <View className="px-4 sm:px-5 space-y-2.5 sm:space-y-3 gap-2.5 sm:gap-3">
+            {loading && notifications.length === 0 ? (
+              <View className="py-20 items-center justify-center">
+                <ActivityIndicator size="large" color="#E68A00" />
+                <Text className="text-xs font-semibold text-gray-400 dark:text-slate-500 mt-3">
+                  {NOTIFICATIONS_EMPTY_STATE.loading}
                 </Text>
               </View>
-
-              {/* Notification text content */}
-              <View className="flex-1 pr-1.5 sm:pr-2">
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  className={`font-extrabold text-gray-900 mb-0.5 ${
-                    isSmallDevice
-                      ? "text-[14px]"
-                      : isTablet
-                      ? "text-[17px]"
-                      : "text-[15.5px]"
+            ) : (
+              notifications.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => handleNotificationPress(item)}
+                  className={`rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xs flex-row items-start ${
+                    isExtraSmall ? "p-3" : isSmallDevice ? "p-3.5" : "p-4 sm:p-5"
                   }`}
+                  style={{
+                    elevation: 1.5,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.03,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 2 },
+                  }}
                 >
-                  {item.title}
-                </Text>
-                <Text
-                  className={`text-gray-600 font-medium ${
-                    isSmallDevice
-                      ? "text-[11.5px] leading-[17px]"
-                      : "text-[13px] leading-5"
-                  }`}
-                >
-                  {item.message}
-                </Text>
-                {item.timestamp && (
-                  <Text
-                    className={`font-medium text-gray-400 mt-1.5 sm:mt-2 ${
-                      isSmallDevice ? "text-[10.5px]" : "text-[11.5px]"
+                  {/* Left icon badge container */}
+                  <View
+                    className={`rounded-2xl bg-[#FEF3C7] dark:bg-amber-950/60 items-center justify-center mr-2.5 sm:mr-3.5 shrink-0 ${
+                      isExtraSmall
+                        ? "h-9 w-9"
+                        : isSmallDevice
+                        ? "h-10 w-10"
+                        : isTablet
+                        ? "h-14 w-14"
+                        : "h-12 w-12"
                     }`}
                   >
-                    {item.timestamp}
-                  </Text>
-                )}
-              </View>
+                    <Text
+                      className={
+                        isExtraSmall
+                          ? "text-base"
+                          : isSmallDevice
+                          ? "text-lg"
+                          : isTablet
+                          ? "text-3xl"
+                          : "text-2xl"
+                      }
+                    >
+                      {item.iconEmoji || "🚚"}
+                    </Text>
+                  </View>
 
-              {/* Unread indicator dot */}
-              {!item.isRead && (
-                <View
-                  className={`rounded-full bg-[#16A34A] ${
-                    isSmallDevice
-                      ? "h-2 w-2 mt-1"
-                      : "h-2.5 w-2.5 mt-1.5"
-                  }`}
-                />
-              )}
-            </TouchableOpacity>
-          ))}
+                  {/* Notification text content */}
+                  <View className="flex-1 pr-1.5 sm:pr-2">
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                      className={`font-extrabold text-gray-900 dark:text-white mb-0.5 ${
+                        isExtraSmall
+                          ? "text-[13px]"
+                          : isSmallDevice
+                          ? "text-[14px]"
+                          : isTablet
+                          ? "text-[17px]"
+                          : "text-[15.5px]"
+                      }`}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      className={`text-gray-600 dark:text-slate-300 font-medium ${
+                        isSmallDevice
+                          ? "text-[11.5px] leading-[17px]"
+                          : "text-[13px] leading-5"
+                      }`}
+                    >
+                      {item.message}
+                    </Text>
+                    {item.timestamp && (
+                      <Text
+                        className={`font-medium text-gray-400 dark:text-slate-400 mt-1 sm:mt-1.5 ${
+                          isSmallDevice ? "text-[10px]" : "text-[11.5px]"
+                        }`}
+                      >
+                        {item.timestamp}
+                      </Text>
+                    )}
+                  </View>
 
-          {/* Empty state fallback if notifications cleared */}
-          {notifications.length === 0 && (
-            <View className="py-16 items-center justify-center">
-              <View className="h-16 w-16 rounded-full bg-gray-100 items-center justify-center mb-3">
-                <Ionicons name="notifications-off-outline" size={28} color="#9CA3AF" />
+                  {/* Unread indicator dot */}
+                  {!item.isRead && (
+                    <View
+                      className={`rounded-full bg-[#16A34A] shrink-0 ${
+                        isSmallDevice
+                          ? "h-2 w-2 mt-1"
+                          : "h-2.5 w-2.5 mt-1.5"
+                      }`}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
+
+            {/* Empty state fallback if notifications cleared */}
+            {!loading && notifications.length === 0 && (
+              <View className="py-16 items-center justify-center">
+                <View className="h-16 w-16 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center mb-3">
+                  <Ionicons
+                    name="notifications-off-outline"
+                    size={28}
+                    color={colors.iconMuted}
+                  />
+                </View>
+                <Text className="text-base font-bold text-gray-700 dark:text-slate-200">
+                  {NOTIFICATIONS_EMPTY_STATE.title}
+                </Text>
+                <Text className="text-xs text-gray-400 dark:text-slate-400 text-center max-w-[240px] mt-1">
+                  {NOTIFICATIONS_EMPTY_STATE.description}
+                </Text>
               </View>
-              <Text className="text-base font-bold text-gray-700">No Notifications</Text>
-              <Text className="text-xs text-gray-400 text-center max-w-[240px] mt-1">
-                You have caught up with all your transport alerts and updates.
-              </Text>
-            </View>
-          )}
+            )}
+          </View>
         </View>
       </SmoothScrollView>
 
       {/* ================= BOTTOM NAVIGATION BAR ================= */}
       <SafeAreaView
         edges={["bottom"]}
-        className="bg-white border-t border-gray-200/60"
+        className="bg-white dark:bg-slate-800 border-t border-gray-200/60 dark:border-slate-700"
       >
         <View
           style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
@@ -386,19 +541,19 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("home")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="home-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Home
+              {NOTIFICATIONS_NAV_TABS.home}
             </Text>
           </TouchableOpacity>
 
@@ -406,19 +561,19 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("jobs")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="location-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Jobs
+              {NOTIFICATIONS_NAV_TABS.jobs}
             </Text>
           </TouchableOpacity>
 
@@ -426,19 +581,19 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("active")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="bus-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Active
+              {NOTIFICATIONS_NAV_TABS.active}
             </Text>
           </TouchableOpacity>
 
@@ -446,19 +601,19 @@ export const TransporterNotificationsScreen = ({
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleTabPress("profile")}
-            className="items-center px-3 sm:px-4 min-w-[54px]"
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
           >
             <Ionicons
               name="person-outline"
               size={isSmallDevice ? 20 : 22}
-              color="#9CA3AF"
+              color={colors.iconMuted}
             />
             <Text
               className={`mt-0.5 ${
                 isSmallDevice ? "text-[10px]" : "text-[11px]"
-              } font-medium text-[#9CA3AF]`}
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
             >
-              Profile
+              {NOTIFICATIONS_NAV_TABS.profile}
             </Text>
           </TouchableOpacity>
         </View>
@@ -471,103 +626,128 @@ export const TransporterNotificationsScreen = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <SafeAreaView className="flex-1 bg-[#F9FAFB]">
+        <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F9FAFB] dark:bg-slate-900">
           <View
             style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
-            className="px-5 py-3.5 flex-row items-center justify-between border-b border-gray-200 bg-white"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 flex-row items-center justify-between border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800"
           >
-            <Text className="text-lg font-bold text-gray-900">
-              Driver Profile
+            <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+              {NOTIFICATIONS_PROFILE_MODAL.title}
             </Text>
             <TouchableOpacity
               onPress={() => setShowProfileModal(false)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="p-1 rounded-full bg-gray-100"
+              className="p-1 rounded-full bg-gray-100 dark:bg-slate-700"
             >
-              <Ionicons name="close" size={22} color="#4B5563" />
+              <Ionicons name="close" size={22} color={colors.iconMuted} />
             </TouchableOpacity>
           </View>
 
           <SmoothScrollView
-            className="p-4 flex-1"
-            {...SMOOTH_SCROLL_PROPS}
+            className="p-3.5 sm:p-4 flex-1"
             contentContainerStyle={{
-              maxWidth: 640,
-              width: "100%",
-              alignSelf: "center",
               paddingBottom: 40,
               flexGrow: 1,
             }}
             showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            bounces={true}
-            alwaysBounceVertical={true}
-            scrollEventThrottle={16}
-            decelerationRate="normal"
-            overScrollMode="never"
             nestedScrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-            directionalLockEnabled={true}
-            removeClippedSubviews={Platform.OS === "android"}
           >
-            {/* Driver Card */}
-            <View className="rounded-2xl bg-white p-5 border border-gray-100 shadow-2xs items-center mb-4">
-              <View
-                className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 ${
-                  isSmallDevice ? "h-14 w-14" : "h-16 w-16"
-                }`}
-              >
-                <Text
-                  className={`font-black text-white ${
-                    isSmallDevice ? "text-xl" : "text-2xl"
+            <View style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}>
+              {/* Driver Card */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-2xs items-center mb-4">
+                <View
+                  className={`rounded-full bg-[#E68A00] items-center justify-center mb-2 overflow-hidden ${
+                    isSmallDevice ? "h-14 w-14" : "h-16 w-16"
                   }`}
                 >
-                  {profile.avatarLetter}
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text
+                      className={`font-black text-white ${
+                        isSmallDevice ? "text-xl" : "text-2xl"
+                      }`}
+                    >
+                      {profile.avatarLetter}
+                    </Text>
+                  )}
+                </View>
+                <Text className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white">
+                  {profile.name}
+                </Text>
+                <Text className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                  {profile.email}
+                </Text>
+                <Text className="text-xs text-amber-700 dark:text-amber-400 font-bold mt-1">
+                  {NOTIFICATIONS_PROFILE_MODAL.tripsSummary(profile.rating, profile.completedJobs)}
                 </Text>
               </View>
-              <Text className="text-lg font-extrabold text-gray-900">
-                {profile.name}
-              </Text>
-              <Text className="text-xs font-semibold text-gray-500">
-                {profile.email}
-              </Text>
-              <Text className="text-xs text-amber-700 font-bold mt-1">
-                ⭐ {profile.rating.toFixed(1)} Rating ({profile.completedJobs}{" "}
-                Completed Trips)
-              </Text>
-            </View>
 
-            {/* Vehicle details */}
-            <View className="rounded-2xl bg-white p-4 border border-gray-100 shadow-2xs mb-4">
-              <Text className="text-xs font-bold text-gray-500 uppercase mb-2">
-                Registered Vehicle
-              </Text>
-              <View className="space-y-1.5">
-                <Text className="text-xs text-gray-700">
-                  🚚 <Text className="font-semibold">Type:</Text>{" "}
-                  {profile.vehicleType}
+              {/* Vehicle details */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <Text className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">
+                  {NOTIFICATIONS_PROFILE_MODAL.vehicleSectionTitle}
                 </Text>
-                <Text className="text-xs text-gray-700">
-                  🔢 <Text className="font-semibold">Plate:</Text>{" "}
-                  {profile.vehiclePlate}
-                </Text>
-                <Text className="text-xs text-gray-700">
-                  🛡️ <Text className="font-semibold">Status:</Text> Green-Hive
-                  Verified
-                </Text>
+                <View className="space-y-1.5 gap-1.5">
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🚚 <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.typeLabel}</Text>{" "}
+                    {profile.vehicleType}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🔢 <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.plateLabel}</Text>{" "}
+                    {profile.vehiclePlate}
+                  </Text>
+                  <Text className="text-xs text-gray-700 dark:text-slate-300">
+                    🛡️ <Text className="font-semibold">{NOTIFICATIONS_PROFILE_MODAL.statusLabel}</Text>{" "}
+                    {NOTIFICATIONS_PROFILE_MODAL.verifiedStatus}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            {/* Sign Out Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleSignOut}
-              className="rounded-2xl bg-red-50 border border-red-200 py-3.5 items-center justify-center mt-2"
-            >
-              <Text className="text-sm font-bold text-red-600">
-                Log Out of Transporter Account
-              </Text>
-            </TouchableOpacity>
+              {/* Dark Mode Toggle Card */}
+              <View className="rounded-2xl bg-white dark:bg-slate-800 p-3.5 sm:p-4 border border-gray-100 dark:border-slate-700 shadow-2xs mb-4">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="h-8 w-8 rounded-full bg-amber-50 dark:bg-slate-700 items-center justify-center mr-3">
+                      <Ionicons
+                        name={isDark ? "moon" : "sunny"}
+                        size={18}
+                        color={isDark ? "#F59E0B" : "#D97706"}
+                      />
+                    </View>
+                    <View>
+                      <Text className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                        {NOTIFICATIONS_PROFILE_MODAL.darkModeTitle}
+                      </Text>
+                      <Text className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                        {isDark ? NOTIFICATIONS_PROFILE_MODAL.darkModeActive : NOTIFICATIONS_PROFILE_MODAL.lightModeActive}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={isDark}
+                    onValueChange={toggleDarkMode}
+                    trackColor={{ false: "#D1D5DB", true: "#E68A00" }}
+                    thumbColor={isDark ? "#FFFFFF" : "#FFFFFF"}
+                  />
+                </View>
+              </View>
+
+              {/* Sign Out Button */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleSignOut}
+                className="rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 py-3 sm:py-3.5 items-center justify-center mt-2"
+              >
+                <Text className="text-sm font-bold text-red-600 dark:text-red-400">
+                  {NOTIFICATIONS_PROFILE_MODAL.logOutButton}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </SmoothScrollView>
         </SafeAreaView>
       </Modal>

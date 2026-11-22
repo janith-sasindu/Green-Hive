@@ -53,7 +53,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                 } else if (userRole === "TRANSPORTER") {
                     navigation.navigate("TransporterHome");
                 } else {
-                    navigation.navigate("FarmerHome");
+                    navigation.navigate("FarmerHome", { user: result.data.user, userName: result.data.user.name });
                 }
             } else {
                 Alert.alert(

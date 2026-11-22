@@ -7,13 +7,17 @@ export interface TransporterProfile {
     name: string;
     greeting: string;
     avatarLetter: string;
+    avatarUri?: string;
     email: string;
     phone: string;
     vehicleType: string;
     vehiclePlate: string;
+    baseLocation?: string;
     isVerified: boolean;
     rating: number;
     completedJobs: number;
+    totalEarnings?: string;
+    onTimeDeliveryRate?: string;
 }
 
 export interface TransporterStats {
@@ -25,6 +29,7 @@ export interface TransporterStats {
 
 export interface ActiveTransportJob {
     id: string;
+    dbId?: number | string;
     cropName: string;
     weight: string;
     status: "In Progress" | "At Pickup" | "In Transit" | "Delivered";
@@ -35,29 +40,53 @@ export interface ActiveTransportJob {
     farmerName: string;
     farmerPhone: string;
     pickupDate: string;
+    sellerName?: string;
+    specialInstructions?: string;
+    proofPhotoUri?: string;
+    pickupTimestamp?: string;
+    pickupNotes?: string;
+    deliveryProofPhotoUri?: string;
+    deliveryTimestamp?: string;
+    deliveryNotes?: string;
+    receiverName?: string;
 }
 
 export interface AvailableTransportJob {
+    dbId?: number | string;
     id: string;
     cropName: string;
     weight: string;
     status: "Open" | "Assigned";
     pickup: string;
+    pickupLocationDetail?: string;
     dropoff: string;
+    dropoffLocationDetail?: string;
+    pickupDate?: string;
+    pickupRequiredTime?: string;
     pickupTime: string;
     price: string;
     distance?: string;
     farmerName?: string;
     farmerPhone?: string;
+    sellerName?: string;
+    specialInstructions?: string;
 }
 
 export interface TransportOffer {
     id: string;
     cropName: string;
     weight: string;
-    route: string;
+    route?: string;
     quotePrice: string;
-    status: string;
+    status: "Submitted" | "Accepted" | "Under Review" | "Declined" | "Pending Farmer Approval" | string;
+    title?: string;
+    estimatedDelivery?: string;
+    notes?: string;
+    submittedDate?: string;
+    sellerName?: string;
+    pickupLocation?: string;
+    dropoffLocation?: string;
+    distance?: string;
 }
 
 export interface PaymentSummaryData {
@@ -83,13 +112,16 @@ export const MOCK_TRANSPORTER_PROFILE: TransporterProfile = {
     name: "Ruwan Bandara",
     greeting: "Good morning,",
     avatarLetter: "R",
-    email: "transporter@greenhive.com",
-    phone: "+94 77 777 8899",
+    email: "ruwan@transport.lk",
+    phone: "+94 76 345 6789",
     vehicleType: "Lorry - 3 Ton",
     vehiclePlate: "WP-LH-4821",
+    baseLocation: "Colombo",
     isVerified: true,
     rating: 4.8,
     completedJobs: 47,
+    totalEarnings: "Rs. 320k",
+    onTimeDeliveryRate: "98%",
 };
 
 /**
@@ -97,7 +129,7 @@ export const MOCK_TRANSPORTER_PROFILE: TransporterProfile = {
  */
 export const MOCK_TRANSPORTER_STATS: TransporterStats = {
     openJobsCount: 2,
-    myOffersCount: 1,
+    myOffersCount: 3,
     activeJobsCount: 1,
     thisMonthEarnings: "Rs. 42k",
 };
@@ -113,10 +145,12 @@ export const MOCK_ACTIVE_JOB: ActiveTransportJob = {
     pickup: "Nuwara Eliya Farm, Hanguranketha Road",
     dropoff: "Colombo Fresh Market, Colombo 07",
     distance: "142 km",
-    price: "Rs. 18,500",
-    farmerName: "Sunil Rathnayake",
+    price: "Rs. 1,500",
+    farmerName: "Sunil Perera",
     farmerPhone: "+94 77 123 4567",
     pickupDate: "Today, 06:30 AM",
+    sellerName: "Colombo Fresh Market",
+    specialInstructions: "Handle with care. Keep cool. Arrive by 8 AM for market opening.",
 };
 
 /**
@@ -127,27 +161,39 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
         id: "#GH-T1025",
         cropName: "Ripe Tomatoes",
         weight: "150 kg",
-        pickup: "Dambulla Agricultural Zone",
-        dropoff: "Colombo Fresh Market",
+        pickup: "Dambulla Agricultural Zone, Plot 14",
+        pickupLocationDetail: "Dambulla Agricultural Zone, Plot 14",
+        dropoff: "Colombo Fresh Market, Colombo 03",
+        dropoffLocationDetail: "Colombo Fresh Market, Colombo 03",
         pickupTime: "2026-08-31 · 06:00 AM",
+        pickupDate: "2026-08-31",
+        pickupRequiredTime: "06:00 AM",
         status: "Open",
         price: "Rs. 15,500",
         distance: "148 km",
-        farmerName: "Jagath Samarasinghe",
+        farmerName: "Kamal Jayasinghe",
         farmerPhone: "+94 77 234 5678",
+        sellerName: "Colombo Fresh Market",
+        specialInstructions: "Fragile. Use padded transport. Early morning delivery required.",
     },
     {
         id: "#GH-T1020",
         cropName: "Organic Carrots",
         weight: "200 kg",
-        pickup: "Nuwara Eliya Highlands Farm",
-        dropoff: "Kandy Supermart",
+        pickup: "Nuwara Eliya Highlands Farm, Section 4",
+        pickupLocationDetail: "Nuwara Eliya Highlands Farm, Section 4",
+        dropoff: "Kandy Supermart, Peradeniya Road",
+        dropoffLocationDetail: "Kandy Supermart, Peradeniya Road",
         pickupTime: "2026-08-29 · 07:00 AM",
+        pickupDate: "2026-08-29",
+        pickupRequiredTime: "07:00 AM",
         status: "Open",
         price: "Rs. 14,000",
         distance: "78 km",
         farmerName: "Wasantha Kumara",
         farmerPhone: "+94 71 876 5432",
+        sellerName: "Kandy Supermart",
+        specialInstructions: "Keep refrigerated. Handle with care during mountain transit.",
     },
 ];
 
@@ -156,20 +202,52 @@ export const MOCK_AVAILABLE_JOBS: AvailableTransportJob[] = [
  */
 export const MOCK_MY_OFFERS: TransportOffer[] = [
     {
-        id: "#GH-T1019",
+        id: "Job #GH-T1025",
+        title: "Transportation Offer",
+        cropName: "Ripe Tomatoes",
+        weight: "150 kg",
+        route: "Dambulla Agricultural Zone → Colombo Fresh Market",
+        quotePrice: "Rs. 2,000",
+        estimatedDelivery: "2026-08-31 08:00 AM",
+        notes: "I have refrigerated vehicle available. On-time delivery guaranteed.",
+        submittedDate: "2026-08-28",
+        status: "Submitted",
+        sellerName: "Colombo Fresh Market",
+        pickupLocation: "Dambulla Agricultural Zone, Plot 14",
+        dropoffLocation: "Colombo Fresh Market, Colombo 03",
+        distance: "148 km",
+    },
+    {
+        id: "Job #GH-T1019",
+        title: "Transportation Offer",
         cropName: "Red Potatoes",
         weight: "500 kg",
         route: "Nuwara Eliya → Colombo Wholesale Market",
         quotePrice: "Rs. 22,000",
-        status: "Pending Farmer Approval",
+        estimatedDelivery: "2026-09-02 10:00 AM",
+        notes: "Heavy duty 3-ton lorry ready for farm gate pickup with waterproof tarpaulin.",
+        submittedDate: "2026-08-27",
+        status: "Submitted",
+        sellerName: "Nuwara Eliya Wholesale Hub",
+        pickupLocation: "Nuwara Eliya Highlands Farm",
+        dropoffLocation: "Colombo Wholesale Market",
+        distance: "165 km",
     },
     {
-        id: "#GH-T1016",
+        id: "Job #GH-T1016",
+        title: "Transportation Offer",
         cropName: "Sweet Corn",
         weight: "300 kg",
         route: "Anuradhapura → Kurunegala Town",
         quotePrice: "Rs. 19,500",
+        estimatedDelivery: "2026-08-30 02:00 PM",
+        notes: "Insulated transport with temperature tracking. Delivery on schedule.",
+        submittedDate: "2026-08-25",
         status: "Accepted",
+        sellerName: "Kurunegala Fresh Veggie Mart",
+        pickupLocation: "Anuradhapura Central Farm",
+        dropoffLocation: "Kurunegala Town Center",
+        distance: "95 km",
     },
 ];
 
@@ -219,4 +297,252 @@ export const MOCK_DETAILED_NOTIFICATIONS: TransporterNotificationItem[] = [
         iconEmoji: "🚚",
         jobId: "#GH-T1024",
     },
+];
+
+/**
+ * Transporter Phone Notification Settings
+ */
+export interface TransporterNotificationSettings {
+    newJobsPush: boolean;
+    currentJobUpdatesPush: boolean;
+    offerStatusPush: boolean;
+    paymentPush: boolean;
+    soundAndVibration: boolean;
+}
+
+export const MOCK_TRANSPORTER_NOTIFICATION_SETTINGS: TransporterNotificationSettings = {
+    newJobsPush: true,
+    currentJobUpdatesPush: true,
+    offerStatusPush: true,
+    paymentPush: true,
+    soundAndVibration: true,
+};
+
+/**
+ * Transporter Driving License & Vehicle Details
+ */
+export interface TransporterVehicleAndLicense {
+    // Driver's License
+    driverName: string;
+    licenseNumber: string;
+    licenseExpiry: string;
+    licenseIssueDate: string;
+    licenseCategories: string[];
+    nicNumber: string;
+    bloodGroup: string;
+    licenseFrontPhotoUri?: string;
+    licenseBackPhotoUri?: string;
+    licenseStatus: "Verified" | "Pending Review" | "Expired";
+
+    // Vehicle Details
+    vehicleType: string;
+    vehiclePlate: string;
+    vehicleMakeModel: string;
+    vehicleYear: string;
+    vehicleColor: string;
+    maxCapacityKg: number;
+    cargoDimensions: string;
+    fuelType: string;
+    refrigerated: boolean;
+    vehiclePhotoUri?: string;
+
+    // Legal & Permits
+    revenueLicenseNo: string;
+    revenueLicenseExpiry: string;
+    insuranceProvider: string;
+    insurancePolicyNo: string;
+    insuranceExpiry: string;
+    emissionCertificateStatus: "Passed" | "Pending";
+    emissionCertificateExpiry: string;
+    verificationDate: string;
+    verificationStatus: "Verified" | "Under Review" | "Action Required";
+}
+
+export const MOCK_TRANSPORTER_VEHICLE_LICENSE: TransporterVehicleAndLicense = {
+    driverName: "Ruwan Bandara",
+    licenseNumber: "B3849201",
+    licenseExpiry: "14/03/2028",
+    licenseIssueDate: "15/03/2018",
+    licenseCategories: ["B (Dual Purpose)", "C1 (Light Lorry)", "C (Heavy Lorry 3T+)"],
+    nicNumber: "198923401234",
+    bloodGroup: "O+",
+    licenseFrontPhotoUri: "https://images.unsplash.com/photo-1589330694653-dad6d3240a2b?auto=format&fit=crop&w=800&q=80",
+    licenseBackPhotoUri: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+    licenseStatus: "Verified",
+
+    vehicleType: "Lorry - 3 Ton",
+    vehiclePlate: "WP-LH-4821",
+    vehicleMakeModel: "Isuzu Elf NPR 71",
+    vehicleYear: "2020",
+    vehicleColor: "Polar White",
+    maxCapacityKg: 3000,
+    cargoDimensions: "14.5 ft × 6.2 ft × 6.0 ft",
+    fuelType: "Diesel",
+    refrigerated: false,
+    vehiclePhotoUri: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80",
+
+    revenueLicenseNo: "RL-2025-98321",
+    revenueLicenseExpiry: "30/11/2026",
+    insuranceProvider: "Sri Lanka Insurance Corporation (SLIC)",
+    insurancePolicyNo: "SLIC-CV-783921",
+    insuranceExpiry: "15/01/2027",
+    emissionCertificateStatus: "Passed",
+    emissionCertificateExpiry: "24/10/2026",
+    verificationDate: "12 Jan 2026",
+    verificationStatus: "Verified",
+};
+
+
+
+/**
+ * Vehicle Presets
+ */
+export const VEHICLE_PRESETS: string[] = [
+    "Lorry - 3 Ton",
+    "Mini Lorry - 1.5 Ton",
+    "Pickup Truck",
+    "Van - 1 Ton",
+    "Refrigerated Truck",
+    "Heavy Lorry - 5 Ton",
+];
+
+export const VEHICLE_TYPE_PRESETS = VEHICLE_PRESETS;
+
+/**
+ * Support Problem Categories & Ticket Types
+ */
+export interface SupportProblemCategory {
+    id: string;
+    label: string;
+    icon: string;
+}
+
+export const PROBLEM_CATEGORIES: SupportProblemCategory[] = [
+    { id: "payment", label: "Payment & Wallet", icon: "wallet-outline" },
+    { id: "trip", label: "Trip & Delivery Issue", icon: "bus-outline" },
+    { id: "pickup", label: "Farm Pickup Discrepancy", icon: "cube-outline" },
+    { id: "account", label: "Account & Verification", icon: "shield-checkmark-outline" },
+    { id: "technical", label: "App Bug / Technical", icon: "bug-outline" },
+    { id: "other", label: "Other Inquiry", icon: "help-circle-outline" },
+];
+
+export const TRANSPORTER_PROBLEM_CATEGORIES = PROBLEM_CATEGORIES;
+
+export interface SupportTicketItem {
+    id: string;
+    category: string;
+    subject: string;
+    message: string;
+    imageUri?: string;
+    status: "Pending" | "In Review" | "Resolved";
+    submittedAt: string;
+    adminReply?: string;
+}
+
+/**
+ * Mock Support Tickets
+ */
+export const MOCK_SUPPORT_TICKETS: SupportTicketItem[] = [
+    {
+        id: "#SUP-8104",
+        category: "Payment & Wallet",
+        subject: "Highway toll charge reimbursement for Colombo trip",
+        message:
+            "Expressway toll of Rs. 400 was incurred during transit from Nuwara Eliya. Receipt attached.",
+        status: "Resolved",
+        submittedAt: "Oct 28, 2026 · 11:20 AM",
+        adminReply:
+            "Toll fee of Rs. 400 has been credited to your transporter wallet. Thank you!",
+    },
+    {
+        id: "#SUP-7942",
+        category: "Trip & Delivery Issue",
+        subject: "Receiver delayed gate entry at Colombo Fresh Market",
+        message: "Waited 45 mins at unloading bay 3 due to gate security delay.",
+        status: "Resolved",
+        submittedAt: "Oct 19, 2026 · 08:45 AM",
+        adminReply:
+            "Issue acknowledged with destination hub manager. Unloading prioritized.",
+    },
+];
+
+/**
+ * Transporter Support & Contact Hotline
+ */
+export interface TransporterSupportContact {
+    hotline: string;
+    email: string;
+    message: string;
+}
+
+export const MOCK_TRANSPORTER_SUPPORT_CONTACT: TransporterSupportContact = {
+    hotline: "1920",
+    email: "support@greenhive.lk",
+    message: "For carrier support, contact our 24/7 hotline at 1920 or email support@greenhive.lk",
+};
+
+/**
+ * Sample / Demo Evidence & Proof Photo URIs
+ */
+export const SAMPLE_SUPPORT_PHOTO_URI =
+    "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80";
+
+export const SAMPLE_PICKUP_PROOF_PHOTO_URI =
+    "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80";
+
+export const SAMPLE_DELIVERY_PROOF_PHOTO_URI =
+    "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80";
+
+/**
+ * Default Offer Notes
+ */
+export const DEFAULT_OFFER_NOTE =
+    "I have refrigerated vehicle available. On-time delivery guaranteed.";
+
+
+/**
+ * Transporter Bank Account & Payout Details
+ */
+export interface TransporterBankAccount {
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    branchCode: string;
+    accountNumber: string;
+    accountType: "Savings" | "Current" | string;
+    isVerified: boolean;
+    verificationStatus: "Verified" | "Pending" | "Rejected";
+    payoutMethod: string;
+    notes?: string;
+}
+
+export const MOCK_TRANSPORTER_BANK_ACCOUNT: TransporterBankAccount = {
+    accountHolderName: "Ruwan Bandara",
+    bankName: "Commercial Bank of Ceylon",
+    branchName: "Colombo Fort Branch",
+    branchCode: "016",
+    accountNumber: "8204918234",
+    accountType: "Savings",
+    isVerified: true,
+    verificationStatus: "Verified",
+    payoutMethod: "Direct Bank Transfer (LANKAQR / SLIPS)",
+    notes: "Primary account for Green-Hive trip payouts and toll reimbursements.",
+};
+
+export const POPULAR_SRI_LANKAN_BANKS: string[] = [
+    "Commercial Bank of Ceylon",
+    "Bank of Ceylon (BOC)",
+    "People's Bank",
+    "Hatton National Bank (HNB)",
+    "Sampath Bank",
+    "Seylan Bank",
+    "Nations Trust Bank (NTB)",
+    "National Development Bank (NDB)",
+    "DFCC Bank",
+    "Pan Asia Bank",
+];
+
+export const BANK_ACCOUNT_TYPES: string[] = [
+    "Savings",
+    "Current",
 ];

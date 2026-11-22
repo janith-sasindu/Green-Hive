@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
+import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import AccountDetailsScreen from '../screens/auth/AccountDetailsScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
@@ -10,6 +11,18 @@ import {
   TransporterHomeScreen,
   TransporterAvailableJobsScreen,
   TransporterNotificationsScreen,
+  TransporterSubmitOfferScreen,
+  TransporterOfferSubmittedScreen,
+  TransporterActiveJobScreen,
+  TransporterProfileScreen,
+  TransporterEditProfileScreen,
+  TransporterBankDetailsScreen,
+  TransporterNotificationSettingsScreen,
+  TransporterMyOffersScreen,
+  TransporterConfirmPickupScreen,
+  TransporterConfirmDeliveryScreen,
+  TransporterVehicleLicenseScreen,
+  TransporterHelpSupportScreen,
 } from '../screens/transporter';
 
 export type RootStackParamList = {
@@ -18,15 +31,29 @@ export type RootStackParamList = {
   LoginScreen: undefined;
   RoleSelection: undefined;
   RoleSelectionScreen: undefined;
+  CreateAccount: { role?: string } | undefined;
+  CreateAccountScreen: { role?: string } | undefined;
   AccountDetailsScreen: { role: string };
   AccountDetails: { role: string };
   IdentityVerificationScreen: { role?: string } | undefined;
   IdentityVerification: { role?: string } | undefined;
-  FarmerHome: undefined;
+  FarmerHome: { user?: any; userName?: string } | undefined;
   SellerHome: undefined;
   TransporterHome: undefined;
   TransporterAvailableJobs: undefined;
   TransporterNotifications: undefined;
+  TransporterSubmitOffer: { job?: any } | undefined;
+  TransporterOfferSubmitted: { job?: any; offerData?: any } | undefined;
+  TransporterActiveJob: { job?: any } | undefined;
+  TransporterProfile: undefined;
+  TransporterEditProfile: undefined;
+  TransporterBankDetails: undefined;
+  TransporterNotificationSettings: undefined;
+  TransporterMyOffers: undefined;
+  TransporterConfirmPickup: { job?: any } | undefined;
+  TransporterConfirmDelivery: { job?: any } | undefined;
+  TransporterVehicleLicense: undefined;
+  TransporterHelpSupport: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,6 +70,9 @@ export default function RootNavigator() {
 
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
+
+      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="CreateAccountScreen" component={CreateAccountScreen} />
 
       <Stack.Screen name="AccountDetailsScreen" component={AccountDetailsScreen} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsScreen} />
@@ -73,6 +103,66 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TransporterNotifications"
         component={TransporterNotificationsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterSubmitOffer"
+        component={TransporterSubmitOfferScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterOfferSubmitted"
+        component={TransporterOfferSubmittedScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterActiveJob"
+        component={TransporterActiveJobScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterProfile"
+        component={TransporterProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterEditProfile"
+        component={TransporterEditProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterBankDetails"
+        component={TransporterBankDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterNotificationSettings"
+        component={TransporterNotificationSettingsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterMyOffers"
+        component={TransporterMyOffersScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmPickup"
+        component={TransporterConfirmPickupScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterConfirmDelivery"
+        component={TransporterConfirmDeliveryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterVehicleLicense"
+        component={TransporterVehicleLicenseScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TransporterHelpSupport"
+        component={TransporterHelpSupportScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

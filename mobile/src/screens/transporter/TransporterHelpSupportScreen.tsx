@@ -1,0 +1,1140 @@
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+  Modal,
+  useWindowDimensions,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import {
+  SmoothScrollView,
+  ThemedAlertModal,
+  ThemedAlertModalType,
+} from "../../components/common";
+import { useTransporterTheme } from "../../context/TransporterThemeContext";
+
+// Data
+import {
+  MOCK_TRANSPORTER_PROFILE,
+  MOCK_ACTIVE_JOB,
+  MOCK_SUPPORT_TICKETS,
+  SAMPLE_SUPPORT_PHOTO_URI,
+  TransporterProfile,
+  SupportTicketItem,
+  TRANSPORTER_API_ENDPOINTS,
+  HELP_SUPPORT_HEADER,
+  HELP_SUPPORT_SWITCHER,
+  HELP_SUPPORT_CATEGORIES,
+  HELP_SUPPORT_FORM,
+  HELP_SUPPORT_PHOTO,
+  HELP_SUPPORT_MODAL,
+  HELP_SUPPORT_PREVIEW,
+  HELP_SUPPORT_HISTORY,
+  HELP_SUPPORT_CONTACT,
+  HELP_SUPPORT_ALERTS,
+  HELP_SUPPORT_LOADING,
+  HELP_SUPPORT_NAV_TABS,
+} from "./data";
+
+export { SupportTicketItem };
+
+export interface TransporterHelpSupportScreenProps {
+  navigation?: any;
+  onBack?: () => void;
+  onSelectTab?: (tab: "home" | "jobs" | "active" | "profile") => void;
+  activeTab?: "home" | "jobs" | "active" | "profile";
+}
+
+export const TransporterHelpSupportScreen: React.FC<
+  TransporterHelpSupportScreenProps
+> = ({
+  navigation,
+  onBack,
+  onSelectTab,
+  activeTab = "profile",
+}) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { isDark, colors } = useTransporterTheme();
+
+  // Responsive breakpoints
+  const isExtraSmall = screenWidth < 360;
+  const isSmallDevice = screenWidth < 380 || screenHeight < 700;
+
+  const [profile, setProfile] = useState<TransporterProfile>(MOCK_TRANSPORTER_PROFILE);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Form State
+  const [selectedCategory, setSelectedCategory] = useState<string>("payment");
+  const [subject, setSubject] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [relatedJobId, setRelatedJobId] = useState<string>(MOCK_ACTIVE_JOB.id);
+  const [attachedPhotoUri, setAttachedPhotoUri] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Tab: New Message vs My Inquiries
+  const [activeViewTab, setActiveViewTab] = useState<"compose" | "history">(
+    "compose"
+  );
+
+  // List of submitted inquiries initialized from shared mock data
+  const [pastTickets, setPastTickets] = useState<SupportTicketItem[]>([
+    ...MOCK_SUPPORT_TICKETS,
+  ]);
+
+  // Modals
+  const [showPhotoSourceModal, setShowPhotoSourceModal] = useState(false);
+  const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
+
+  // Themed Alert State
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+    type?: ThemedAlertModalType;
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+  } | null>(null);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    options?: {
+      type?: ThemedAlertModalType;
+      primaryButtonText?: string;
+      onPrimaryPress?: () => void;
+    }
+  ) => {
+    setAlertConfig({
+      title,
+      message,
+      type: options?.type || "info",
+      primaryButtonText: options?.primaryButtonText || "OK",
+      onPrimaryPress: options?.onPrimaryPress,
+    });
+  };
+
+  // Hydrate support inquiries and transporter profile from backend
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTicketsAndProfile = async () => {
+      try {
+        const [ticketsRes, profileRes] = await Promise.allSettled([
+          fetch(TRANSPORTER_API_ENDPOINTS.supportTickets),
+          fetch(TRANSPORTER_API_ENDPOINTS.profile),
+        ]);
+
+        if (isMounted && ticketsRes.status === "fulfilled" && ticketsRes.value.ok) {
+          const json = await ticketsRes.value.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setPastTickets(json.data);
+          }
+        }
+
+        if (isMounted && profileRes.status === "fulfilled" && profileRes.value.ok) {
+          const profileJson = await profileRes.value.json();
+          if (profileJson.success && profileJson.data) {
+            setProfile((prev) => ({
+              ...prev,
+              ...profileJson.data,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load support tickets or profile:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchTicketsAndProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Header Back Button
+  const handleGoBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (navigation?.canGoBack && navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (navigation?.navigate) {
+      navigation.navigate("TransporterProfile");
+    }
+  };
+
+  // Tab Press Navigation
+  const handleTabPress = (tab: "home" | "jobs" | "active" | "profile") => {
+    if (onSelectTab) {
+      onSelectTab(tab);
+    } else if (tab === "home") {
+      navigation?.navigate?.("TransporterHome");
+    } else if (tab === "jobs") {
+      navigation?.navigate?.("TransporterAvailableJobs");
+    } else if (tab === "active") {
+      navigation?.navigate?.("TransporterActiveJob");
+    } else if (tab === "profile") {
+      navigation?.navigate?.("TransporterProfile");
+    }
+  };
+
+  // Photo handlers
+  const handleTakePhoto = async () => {
+    setShowPhotoSourceModal(false);
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        showAlert(
+          HELP_SUPPORT_ALERTS.cameraPermission.title,
+          HELP_SUPPORT_ALERTS.cameraPermission.message,
+          { type: "warning" }
+        );
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setAttachedPhotoUri(result.assets[0].uri);
+      }
+    } catch {
+      showAlert(
+        HELP_SUPPORT_ALERTS.cameraError.title,
+        HELP_SUPPORT_ALERTS.cameraError.message,
+        { type: "error" }
+      );
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    setShowPhotoSourceModal(false);
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        showAlert(
+          HELP_SUPPORT_ALERTS.galleryPermission.title,
+          HELP_SUPPORT_ALERTS.galleryPermission.message,
+          { type: "warning" }
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setAttachedPhotoUri(result.assets[0].uri);
+      }
+    } catch {
+      showAlert(
+        HELP_SUPPORT_ALERTS.galleryError.title,
+        HELP_SUPPORT_ALERTS.galleryError.message,
+        { type: "error" }
+      );
+    }
+  };
+
+  // Sample screenshot / photo for testing from shared mock data
+  const handleUseSamplePhoto = () => {
+    setShowPhotoSourceModal(false);
+    setAttachedPhotoUri(SAMPLE_SUPPORT_PHOTO_URI);
+  };
+
+  const handleRemovePhoto = () => {
+    setAttachedPhotoUri(null);
+  };
+
+  // Submit Problem Form to Admins
+  const handleSubmitProblem = async () => {
+    if (!subject.trim()) {
+      showAlert(
+        HELP_SUPPORT_ALERTS.missingSubject.title,
+        HELP_SUPPORT_ALERTS.missingSubject.message,
+        { type: "warning" }
+      );
+      return;
+    }
+
+    if (!message.trim()) {
+      showAlert(
+        HELP_SUPPORT_ALERTS.missingMessage.title,
+        HELP_SUPPORT_ALERTS.missingMessage.message,
+        { type: "warning" }
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const matchedCategory =
+        HELP_SUPPORT_CATEGORIES.find((c) => c.id === selectedCategory)?.label ||
+        "Payment & Wallet";
+
+      const res = await fetch(TRANSPORTER_API_ENDPOINTS.supportTickets, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          category: matchedCategory,
+          subject: subject.trim(),
+          message: message.trim(),
+          relatedJobId: relatedJobId.trim() || undefined,
+          imageUri: attachedPhotoUri || undefined,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || HELP_SUPPORT_ALERTS.submitFailure.message);
+      }
+
+      const createdTicket: SupportTicketItem = json.data;
+      setPastTickets((prev) => [createdTicket, ...prev]);
+
+      // Reset form
+      setSubject("");
+      setMessage("");
+      setAttachedPhotoUri(null);
+
+      showAlert(
+        HELP_SUPPORT_ALERTS.submitSuccess.title,
+        HELP_SUPPORT_ALERTS.submitSuccess.message(createdTicket.id),
+        {
+          type: "success",
+          primaryButtonText: HELP_SUPPORT_ALERTS.submitSuccess.buttonText,
+          onPrimaryPress: () => {
+            setActiveViewTab("history");
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error("Failed to submit support problem:", err);
+      showAlert(
+        HELP_SUPPORT_ALERTS.submitFailure.title,
+        err?.message || HELP_SUPPORT_ALERTS.submitFailure.message,
+        {
+          type: "error",
+          primaryButtonText: HELP_SUPPORT_ALERTS.submitFailure.buttonText,
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <View className="flex-1 bg-[#F5F8F6] dark:bg-slate-900">
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0F172A" : "#F5F8F6"}
+      />
+
+      {/* ================= 1. TOP HEADER ================= */}
+      <SafeAreaView edges={["top"]} className="bg-[#F5F8F6] dark:bg-slate-900">
+        <View
+          style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          className={`flex-row items-center justify-between px-4 sm:px-5 ${
+            isSmallDevice ? "py-2" : "py-2.5"
+          }`}
+        >
+          {/* Left: Back Arrow and Title */}
+          <View className="flex-row items-center flex-1">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleGoBack}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={HELP_SUPPORT_HEADER.backAccessibilityLabel}
+              className="p-1 -ml-1 mr-2.5 rounded-full"
+            >
+              <Ionicons
+                name="arrow-back"
+                size={isExtraSmall ? 22 : 24}
+                color={isDark ? "#FFFFFF" : "#1E293B"}
+              />
+            </TouchableOpacity>
+            <View>
+              <Text
+                className={`font-bold text-[#1E293B] dark:text-white ${
+                  isExtraSmall ? "text-lg" : "text-xl"
+                }`}
+              >
+                {HELP_SUPPORT_HEADER.title}
+              </Text>
+              <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                {HELP_SUPPORT_HEADER.subtitle}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* ================= 2. MAIN SCROLLABLE CONTENT ================= */}
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center p-6">
+          <ActivityIndicator size="large" color="#FF8C00" />
+          <Text className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-3">
+            {HELP_SUPPORT_LOADING.message}
+          </Text>
+        </View>
+      ) : (
+        <SmoothScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: screenWidth < 360 ? 12 : 16,
+            paddingTop: 8,
+            paddingBottom: 28,
+            alignItems: "center",
+          }}
+        >
+          <View style={{ maxWidth: 640, width: "100%" }}>
+            {/* Mode Switcher: Send Message vs My Inquiries */}
+            <View className="flex-row p-1 rounded-2xl bg-gray-200/70 dark:bg-slate-800 mb-4">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveViewTab("compose")}
+                className={`flex-1 py-2 sm:py-2.5 rounded-xl items-center justify-center flex-row ${
+                  activeViewTab === "compose"
+                    ? "bg-white dark:bg-slate-700 shadow-2xs"
+                    : ""
+                }`}
+              >
+                <Ionicons
+                  name="chatbox-ellipses-outline"
+                  size={16}
+                  color={
+                    activeViewTab === "compose"
+                      ? "#FF8C00"
+                      : isDark
+                      ? "#94A3B8"
+                      : "#64748B"
+                  }
+                />
+                <Text
+                  className={`text-xs sm:text-sm font-bold ml-1.5 ${
+                    activeViewTab === "compose"
+                      ? "text-[#FF8C00]"
+                      : "text-gray-600 dark:text-slate-400"
+                  }`}
+                >
+                  {HELP_SUPPORT_SWITCHER.composeTab}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveViewTab("history")}
+                className={`flex-1 py-2 sm:py-2.5 rounded-xl items-center justify-center flex-row ${
+                  activeViewTab === "history"
+                    ? "bg-white dark:bg-slate-700 shadow-2xs"
+                    : ""
+                }`}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={16}
+                  color={
+                    activeViewTab === "history"
+                      ? "#FF8C00"
+                      : isDark
+                      ? "#94A3B8"
+                      : "#64748B"
+                  }
+                />
+                <Text
+                  className={`text-xs sm:text-sm font-bold ml-1.5 ${
+                    activeViewTab === "history"
+                      ? "text-[#FF8C00]"
+                      : "text-gray-600 dark:text-slate-400"
+                  }`}
+                >
+                  {HELP_SUPPORT_SWITCHER.historyTab(pastTickets.length)}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* ================= VIEW 1: COMPOSE PROBLEM MESSAGE ================= */}
+            {activeViewTab === "compose" ? (
+              <View className="rounded-3xl bg-white dark:bg-slate-800 p-4 sm:p-5 border border-gray-100 dark:border-slate-700 shadow-xs mb-4">
+                <View className="mb-3.5">
+                  <Text className="text-base font-bold text-gray-900 dark:text-white">
+                    {HELP_SUPPORT_FORM.cardTitle}
+                  </Text>
+                  <Text className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+                    {HELP_SUPPORT_FORM.cardSubtitle}
+                  </Text>
+                </View>
+
+                {/* 1. Category Selector */}
+                <View className="mb-4">
+                  <Text className="text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    {HELP_SUPPORT_FORM.categoryLabel}
+                  </Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {HELP_SUPPORT_CATEGORIES.map((cat) => {
+                      const isSelected = selectedCategory === cat.id;
+                      return (
+                        <TouchableOpacity
+                          key={cat.id}
+                          activeOpacity={0.7}
+                          onPress={() => setSelectedCategory(cat.id)}
+                          className={`flex-row items-center px-3 py-2 rounded-xl border ${
+                            isSelected
+                              ? "bg-[#FFF5E6] dark:bg-amber-950/50 border-[#FF8C00]"
+                              : "bg-gray-50 dark:bg-slate-700/60 border-gray-200/80 dark:border-slate-600"
+                          }`}
+                        >
+                          <Ionicons
+                            name={cat.icon as any}
+                            size={15}
+                            color={
+                              isSelected
+                                ? "#FF8C00"
+                                : isDark
+                                ? "#CBD5E1"
+                                : "#64748B"
+                            }
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text
+                            className={`text-xs font-semibold ${
+                              isSelected
+                                ? "text-[#FF8C00] font-bold"
+                                : "text-gray-700 dark:text-slate-300"
+                            }`}
+                          >
+                            {cat.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* 2. Related Active Job (optional helper) */}
+                <View className="mb-4">
+                  <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
+                    {HELP_SUPPORT_FORM.relatedJobLabel}
+                  </Text>
+                  <View className="flex-row items-center bg-gray-50 dark:bg-slate-700/60 border border-gray-200/80 dark:border-slate-600 rounded-xl px-3.5 py-2.5">
+                    <Ionicons
+                      name="bus-outline"
+                      size={17}
+                      color={isDark ? "#94A3B8" : "#64748B"}
+                      style={{ marginRight: 8 }}
+                    />
+                    <TextInput
+                      value={relatedJobId}
+                      onChangeText={setRelatedJobId}
+                      placeholder={HELP_SUPPORT_FORM.relatedJobPlaceholder}
+                      placeholderTextColor="#94A3B8"
+                      className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white p-0"
+                    />
+                  </View>
+                </View>
+
+                {/* 3. Subject / Title */}
+                <View className="mb-4">
+                  <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
+                    {HELP_SUPPORT_FORM.subjectLabel}
+                  </Text>
+                  <View className="bg-gray-50 dark:bg-slate-700/60 border border-gray-200/80 dark:border-slate-600 rounded-xl px-3.5 py-2.5">
+                    <TextInput
+                      value={subject}
+                      onChangeText={setSubject}
+                      placeholder={HELP_SUPPORT_FORM.subjectPlaceholder}
+                      placeholderTextColor="#94A3B8"
+                      className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white p-0"
+                    />
+                  </View>
+                </View>
+
+                {/* 4. Message Description */}
+                <View className="mb-4">
+                  <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
+                    {HELP_SUPPORT_FORM.messageLabel}
+                  </Text>
+                  <View className="bg-gray-50 dark:bg-slate-700/60 border border-gray-200/80 dark:border-slate-600 rounded-xl p-3.5">
+                    <TextInput
+                      value={message}
+                      onChangeText={setMessage}
+                      placeholder={HELP_SUPPORT_FORM.messagePlaceholder}
+                      placeholderTextColor="#94A3B8"
+                      multiline
+                      numberOfLines={5}
+                      textAlignVertical="top"
+                      className="text-xs sm:text-sm text-gray-900 dark:text-white p-0 min-h-[110px]"
+                    />
+                  </View>
+                </View>
+
+                {/* 5. Optional Image / Screenshot Attachment */}
+                <View className="mb-5">
+                  <View className="flex-row items-center justify-between mb-1.5">
+                    <Text className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      {HELP_SUPPORT_PHOTO.sectionTitle}
+                    </Text>
+                    <Text className="text-[11px] text-[#64748B] dark:text-slate-400">
+                      {HELP_SUPPORT_PHOTO.optionalBadge}
+                    </Text>
+                  </View>
+
+                  {attachedPhotoUri ? (
+                    /* Attached Photo Preview */
+                    <View className="rounded-2xl bg-gray-50 dark:bg-slate-700/40 p-3 border border-emerald-300 dark:border-emerald-800 shadow-2xs">
+                      <View className="flex-row items-center justify-between mb-2">
+                        <View className="flex-row items-center bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={13}
+                            color="#16A34A"
+                          />
+                          <Text className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 ml-1">
+                            {HELP_SUPPORT_PHOTO.attachedBadge}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={handleRemovePhoto}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          className="flex-row items-center px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/40"
+                        >
+                          <Ionicons name="trash" size={13} color="#EF4444" />
+                          <Text className="text-xs font-bold text-red-500 ml-1">
+                            {HELP_SUPPORT_PHOTO.removeButton}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Image Preview Box */}
+                      <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={() => setPreviewPhotoUri(attachedPhotoUri)}
+                        className="rounded-xl overflow-hidden h-40 bg-slate-100 dark:bg-slate-900 relative"
+                      >
+                        <Image
+                          source={{ uri: attachedPhotoUri }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                        />
+                        <View className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded-md flex-row items-center">
+                          <Ionicons name="expand" size={11} color="#FFFFFF" />
+                          <Text className="text-[10.5px] text-white font-medium ml-1">
+                            {HELP_SUPPORT_PHOTO.tapToEnlarge}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Change photo button */}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => setShowPhotoSourceModal(true)}
+                        className="mt-2.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 items-center justify-center flex-row"
+                      >
+                        <Ionicons
+                          name="camera-outline"
+                          size={15}
+                          color={isDark ? "#CBD5E1" : "#4B5563"}
+                        />
+                        <Text className="text-xs font-semibold text-gray-700 dark:text-slate-200 ml-1.5">
+                          {HELP_SUPPORT_PHOTO.changePhotoButton}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    /* Empty Upload Box */
+                    <TouchableOpacity
+                      activeOpacity={0.75}
+                      onPress={() => setShowPhotoSourceModal(true)}
+                      className="rounded-2xl border-2 border-dashed border-[#CBD5E1] dark:border-slate-600 bg-gray-50 dark:bg-slate-700/30 py-5 px-4 items-center justify-center"
+                    >
+                      <View className="h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-950/40 items-center justify-center mb-1.5">
+                        <Ionicons name="image-outline" size={20} color="#FF8C00" />
+                      </View>
+                      <Text className="text-xs sm:text-sm font-bold text-gray-800 dark:text-slate-200">
+                        {HELP_SUPPORT_PHOTO.uploadBoxTitle}
+                      </Text>
+                      <Text className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
+                        {HELP_SUPPORT_PHOTO.uploadBoxSubtitle}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Submit Button */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleSubmitProblem}
+                  disabled={isSubmitting}
+                  className="rounded-2xl bg-[#FF8C00] py-3.5 sm:py-4 items-center justify-center shadow-xs flex-row"
+                  style={{
+                    elevation: 3,
+                    shadowColor: "#FF8C00",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 3 },
+                  }}
+                >
+                  {isSubmitting ? (
+                    <View className="flex-row items-center">
+                      <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                      <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
+                        {HELP_SUPPORT_FORM.submittingButton}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="flex-row items-center">
+                      <Ionicons
+                        name="send"
+                        size={17}
+                        color="#FFFFFF"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text className="text-sm sm:text-base font-bold text-white tracking-wide">
+                        {HELP_SUPPORT_FORM.submitButton}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* ================= VIEW 2: MY PAST INQUIRIES ================= */
+              <View className="space-y-3 gap-3 mb-4">
+                <View className="flex-row items-center justify-between px-1">
+                  <Text className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    {HELP_SUPPORT_SWITCHER.historyTitle}
+                  </Text>
+                  <Text className="text-xs font-semibold text-[#FF8C00]">
+                    {HELP_SUPPORT_SWITCHER.historyCountBadge(pastTickets.length)}
+                  </Text>
+                </View>
+
+                {pastTickets.length === 0 ? (
+                  <View className="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-100 dark:border-slate-700 items-center justify-center">
+                    <Ionicons name="chatbubbles-outline" size={36} color="#94A3B8" />
+                    <Text className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 text-center mt-2">
+                      {HELP_SUPPORT_HISTORY.emptyMessage}
+                    </Text>
+                  </View>
+                ) : (
+                  pastTickets.map((ticket) => (
+                    <View
+                      key={ticket.id}
+                      className="rounded-2xl bg-white dark:bg-slate-800 p-4 border border-gray-100 dark:border-slate-700 shadow-2xs"
+                    >
+                      <View className="flex-row items-center justify-between pb-2.5 border-b border-gray-100 dark:border-slate-700 mb-2.5">
+                        <View className="flex-row items-center">
+                          <Text className="text-xs font-black text-[#FF8C00] mr-2">
+                            {ticket.id}
+                          </Text>
+                          <View className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-700">
+                            <Text className="text-[10.5px] font-semibold text-gray-700 dark:text-slate-300">
+                              {ticket.category}
+                            </Text>
+                          </View>
+                        </View>
+                        <View
+                          className={`px-2 py-0.5 rounded-full ${
+                            ticket.status === "Resolved"
+                              ? "bg-emerald-50 dark:bg-emerald-950/40"
+                              : "bg-amber-50 dark:bg-amber-950/40"
+                          }`}
+                        >
+                          <Text
+                            className={`text-[10.5px] font-bold ${
+                              ticket.status === "Resolved"
+                                ? "text-emerald-700 dark:text-emerald-300"
+                                : ticket.status === "In Review"
+                                ? "text-blue-700 dark:text-blue-300"
+                                : "text-amber-700 dark:text-amber-300"
+                            }`}
+                          >
+                            {ticket.status === "Resolved"
+                              ? HELP_SUPPORT_HISTORY.statusResolved
+                              : ticket.status === "In Review"
+                              ? HELP_SUPPORT_HISTORY.statusInReview
+                              : HELP_SUPPORT_HISTORY.statusPending}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Subject & User Message */}
+                      <Text className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+                        {ticket.subject}
+                      </Text>
+                      <Text className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
+                        {ticket.message}
+                      </Text>
+
+                      {/* Attached Image Thumbnail if exists */}
+                      {ticket.imageUri && (
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => setPreviewPhotoUri(ticket.imageUri || null)}
+                          className="mt-2.5 rounded-xl overflow-hidden h-24 w-36 bg-slate-100 dark:bg-slate-900 relative"
+                        >
+                          <Image
+                            source={{ uri: ticket.imageUri }}
+                            className="w-full h-full"
+                            resizeMode="cover"
+                          />
+                          <View className="absolute bottom-1 right-1 bg-black/60 px-1.5 py-0.5 rounded flex-row items-center">
+                            <Ionicons name="expand" size={10} color="#FFFFFF" />
+                            <Text className="text-[9.5px] text-white ml-0.5">
+                              {HELP_SUPPORT_PREVIEW.proofBadge}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+
+                      {/* Admin Reply Card */}
+                      {ticket.adminReply && (
+                        <View className="mt-3 p-3 rounded-xl bg-[#F0FDF4] dark:bg-emerald-950/30 border border-[#DCFCE7] dark:border-emerald-800/40">
+                          <View className="flex-row items-center mb-1">
+                            <Ionicons name="shield-checkmark" size={13} color="#16A34A" />
+                            <Text className="text-[11px] font-bold text-[#166534] dark:text-emerald-300 ml-1">
+                              {HELP_SUPPORT_HISTORY.adminResponseLabel}
+                            </Text>
+                          </View>
+                          <Text className="text-xs text-gray-800 dark:text-slate-200">
+                            {ticket.adminReply}
+                          </Text>
+                        </View>
+                      )}
+
+                      <Text className="text-[10px] text-gray-400 dark:text-slate-500 mt-2.5">
+                        {HELP_SUPPORT_HISTORY.submittedPrefix}
+                        {ticket.submittedAt}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+
+            {/* User Contact Summary Card */}
+            <View className="rounded-2xl bg-gray-50 dark:bg-slate-800/60 p-3.5 border border-gray-200/80 dark:border-slate-700 mt-1 mb-2">
+              <Text className="text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {HELP_SUPPORT_CONTACT.cardTitle}
+              </Text>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Ionicons name="person-circle-outline" size={18} color="#FF8C00" />
+                  <Text className="text-xs font-bold text-gray-900 dark:text-white ml-1.5">
+                    {profile.name || HELP_SUPPORT_CONTACT.fallbackName}
+                  </Text>
+                </View>
+                <Text className="text-xs text-gray-600 dark:text-slate-300">
+                  {profile.phone || HELP_SUPPORT_CONTACT.fallbackPhone}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </SmoothScrollView>
+      )}
+
+      {/* ================= 3. BOTTOM TAB NAVIGATION ================= */}
+      <SafeAreaView
+        edges={["bottom"]}
+        className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800"
+      >
+        <View
+          style={{ maxWidth: 640, width: "100%", alignSelf: "center" }}
+          className={`flex-row justify-around items-center ${
+            isSmallDevice ? "py-1.5" : "py-2"
+          }`}
+        >
+          {/* Home Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("home")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="home-outline"
+              size={isSmallDevice ? 20 : 22}
+              color={colors.iconMuted}
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
+            >
+              {HELP_SUPPORT_NAV_TABS.home}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Jobs Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("jobs")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="location-outline"
+              size={isSmallDevice ? 20 : 22}
+              color={colors.iconMuted}
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
+            >
+              {HELP_SUPPORT_NAV_TABS.jobs}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Active Tab */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("active")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="bus-outline"
+              size={isSmallDevice ? 20 : 22}
+              color={colors.iconMuted}
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-medium text-[#9CA3AF] dark:text-slate-400`}
+            >
+              {HELP_SUPPORT_NAV_TABS.active}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Profile Tab (Active Highlighted) */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleTabPress("profile")}
+            className="items-center px-2.5 sm:px-4 min-w-[50px] sm:min-w-[54px]"
+          >
+            <Ionicons
+              name="person"
+              size={isSmallDevice ? 20 : 22}
+              color="#FF8C00"
+            />
+            <Text
+              className={`mt-0.5 ${
+                isSmallDevice ? "text-[10px]" : "text-[11px]"
+              } font-bold text-[#FF8C00]`}
+            >
+              {HELP_SUPPORT_NAV_TABS.profile}
+            </Text>
+            {/* Active Indicator Underline */}
+            <View className="h-0.5 w-5 bg-[#FF8C00] rounded-full mt-0.5" />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+
+      {/* ================= 4. PHOTO SOURCE PICKER MODAL ================= */}
+      <Modal
+        visible={showPhotoSourceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPhotoSourceModal(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setShowPhotoSourceModal(false)}
+          className="flex-1 bg-black/50 justify-end sm:justify-center items-center p-4"
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={{ maxWidth: 420, width: "100%" }}
+            className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-xl border border-gray-100 dark:border-slate-700"
+          >
+            <View className="flex-row items-center justify-between mb-4">
+              <View>
+                <Text className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  {HELP_SUPPORT_MODAL.modalTitle}
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400">
+                  {HELP_SUPPORT_MODAL.modalSubtitle}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowPhotoSourceModal(false)}
+                className="h-8 w-8 rounded-full bg-gray-100 dark:bg-slate-700 items-center justify-center"
+              >
+                <Ionicons
+                  name="close"
+                  size={18}
+                  color={isDark ? "#CBD5E1" : "#4B5563"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Option 1: Camera */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleTakePhoto}
+              className="flex-row items-center p-3.5 mb-2.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40"
+            >
+              <View className="h-10 w-10 rounded-xl bg-[#FF8C00] items-center justify-center mr-3.5">
+                <Ionicons name={HELP_SUPPORT_MODAL.optionCamera.icon} size={20} color="#FFFFFF" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-900 dark:text-white">
+                  {HELP_SUPPORT_MODAL.optionCamera.title}
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400">
+                  {HELP_SUPPORT_MODAL.optionCamera.description}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.iconMuted}
+              />
+            </TouchableOpacity>
+
+            {/* Option 2: Gallery */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handlePickFromGallery}
+              className="flex-row items-center p-3.5 mb-2.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-gray-200 dark:border-slate-600/60"
+            >
+              <View className="h-10 w-10 rounded-xl bg-blue-500 items-center justify-center mr-3.5">
+                <Ionicons name={HELP_SUPPORT_MODAL.optionGallery.icon} size={20} color="#FFFFFF" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-900 dark:text-white">
+                  {HELP_SUPPORT_MODAL.optionGallery.title}
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400">
+                  {HELP_SUPPORT_MODAL.optionGallery.description}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.iconMuted}
+              />
+            </TouchableOpacity>
+
+            {/* Option 3: Sample Receipt/Issue Photo */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleUseSamplePhoto}
+              className="flex-row items-center p-3.5 mb-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40"
+            >
+              <View className="h-10 w-10 rounded-xl bg-[#16A34A] items-center justify-center mr-3.5">
+                <Ionicons name={HELP_SUPPORT_MODAL.optionSample.icon} size={20} color="#FFFFFF" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-900 dark:text-white">
+                  {HELP_SUPPORT_MODAL.optionSample.title}
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400">
+                  {HELP_SUPPORT_MODAL.optionSample.description}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.iconMuted}
+              />
+            </TouchableOpacity>
+
+            {/* Cancel Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setShowPhotoSourceModal(false)}
+              className="py-3 rounded-xl bg-gray-100 dark:bg-slate-700 items-center justify-center"
+            >
+              <Text className="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-200">
+                {HELP_SUPPORT_MODAL.cancelButton}
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ================= 5. FULL PHOTO ENLARGED PREVIEW MODAL ================= */}
+      <Modal
+        visible={!!previewPhotoUri}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewPhotoUri(null)}
+      >
+        <View className="flex-1 bg-black/90 justify-center items-center p-4">
+          <SafeAreaView edges={["top"]} className="w-full">
+            <View className="flex-row items-center justify-between py-2 px-2">
+              <Text className="text-white font-bold text-base">
+                {HELP_SUPPORT_PREVIEW.title}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setPreviewPhotoUri(null)}
+                className="h-9 w-9 rounded-full bg-white/20 items-center justify-center"
+              >
+                <Ionicons name="close" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+
+          <View className="flex-1 w-full justify-center items-center">
+            {previewPhotoUri && (
+              <Image
+                source={{ uri: previewPhotoUri }}
+                className="w-full h-full max-h-[70vh] rounded-2xl"
+                resizeMode="contain"
+              />
+            )}
+          </View>
+
+          <SafeAreaView edges={["bottom"]} className="w-full">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setPreviewPhotoUri(null)}
+              className="py-3 rounded-xl bg-white/20 items-center justify-center mt-2"
+            >
+              <Text className="text-white font-bold text-sm">
+                {HELP_SUPPORT_PREVIEW.closeButton}
+              </Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
+      </Modal>
+
+      {/* ================= 6. THEMED ALERT MODAL ================= */}
+      {alertConfig && (
+        <ThemedAlertModal
+          visible={!!alertConfig}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={() => {
+            const cb = alertConfig.onPrimaryPress;
+            setAlertConfig(null);
+            cb?.();
+          }}
+          onClose={() => setAlertConfig(null)}
+        />
+      )}
+    </View>
+  );
+};
+
+export default TransporterHelpSupportScreen;

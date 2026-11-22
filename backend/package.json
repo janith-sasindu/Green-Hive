@@ -6,23 +6,42 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "seed:jobs": "ts-node src/scripts/seed-available-jobs.ts",
+    "test:jobs": "ts-node src/scripts/test-available-jobs-api.ts",
+    "test:active-job": "ts-node src/scripts/test-active-jobs-api.ts",
+    "test:profile": "ts-node src/scripts/test-profile-api.ts",
+    "db:farmer": "ts-node src/scripts/setup-farmer-db.ts",
+    "db:profile": "ts-node src/scripts/setup-profile-db.ts",
+    "setup:notifications": "ts-node src/scripts/setup-notifications-db.ts",
+    "test:notifications": "ts-node src/scripts/test-notifications-api.ts",
+    "db:notification-settings": "ts-node src/scripts/setup-notification-settings-db.ts",
+    "test:notification-settings": "ts-node src/scripts/test-notification-settings-api.ts",
+    "test:edit-profile": "ts-node src/scripts/test-edit-profile-api.ts",
+    "test:my-offers": "ts-node src/scripts/test-my-offers-api.ts",
+    "test:offer-submitted": "ts-node src/scripts/test-offer-submitted-api.ts",
+    "test:confirm-pickup": "ts-node src/scripts/test-confirm-pickup-api.ts",
+    "test:confirm-delivery": "ts-node src/scripts/test-confirm-delivery-api.ts",
+    "test:bank-details": "ts-node src/scripts/test-bank-details-api.ts",
+    "test:support": "ts-node src/scripts/test-support-api.ts",
+    "test:vehicle-license": "ts-node src/scripts/test-vehicle-license-api.ts"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.9.7"
-  },
-  "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.7",
-    "ts-node-dev": "^2.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.9.7",
     "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0"
   }
 }

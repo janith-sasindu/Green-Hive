@@ -10,17 +10,17 @@ interface RoleCardProps {
 export default function RoleCard({ count, label, emoji, theme }: RoleCardProps) {
   const themeStyles = {
     emerald: {
-      card: 'bg-emerald-50/60 border-emerald-100/80',
+      card: 'bg-emerald-50/60 border-emerald-300',
       count: 'text-emerald-700',
       label: 'text-emerald-600',
     },
     blue: {
-      card: 'bg-blue-50/60 border-blue-100/80',
+      card: 'bg-blue-50/60 border-blue-300',
       count: 'text-blue-700',
       label: 'text-blue-600',
     },
     amber: {
-      card: 'bg-amber-50/60 border-amber-100/80',
+      card: 'bg-amber-50/60 border-amber-300',
       count: 'text-amber-700',
       label: 'text-amber-600',
     },

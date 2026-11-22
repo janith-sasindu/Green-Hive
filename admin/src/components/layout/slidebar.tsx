@@ -26,11 +26,13 @@ interface NavSection {
 interface SidebarProps {
     activeItem?: string;
     onSelectItem?: (id: string) => void;
+     onLogout?: () => void;
 }
 
 export default function Sidebar({
     activeItem = 'Dashboard',
     onSelectItem,
+    onLogout,
 }: SidebarProps){
     const [currentActive, setCurrentActive] = useState(activeItem);
 
@@ -158,13 +160,20 @@ export default function Sidebar({
               <p className="text-xs text-slate-400">Admin</p>
             </div>
           </div>
+           <button
+    title="Logout"
+    onClick={onLogout} 
+    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+  >
+    <LogOut className="w-4 h-4" />
+  </button>
           {/* Logout Button */}
-          <button
+          {/* <button
             title="Logout"
             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <LogOut className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
       </div>
     </aside>
