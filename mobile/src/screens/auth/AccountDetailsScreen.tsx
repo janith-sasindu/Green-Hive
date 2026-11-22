@@ -15,7 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { registerMockUser } from "../../data/mockAuth";
+import { registerMockUser, setActiveUser } from "../../data/mockAuth";
+import { registerFarmerApi } from "../../api/farmerApi";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -130,22 +131,76 @@ const AccountDetailsScreen = ({
                 destination = "TransporterHome";
             }
 
-            // Register user in mock auth storage so they can sign in later
-            registerMockUser({
-                fullName,
-                email,
-                phone,
+            let registeredUser: any = null;
+
+            // 1. If role is Farmer, persist directly into MySQL database via backend API
+            if (roleKey.includes("farmer")) {
+                try {
+                    const apiResponse = await registerFarmerApi({
+                        fullName: fullName.trim(),
+                        email: email.trim(),
+                        phone: phone.trim(),
+                        password,
+                        location: "Nuwara Eliya",
+                    });
+
+                    if (apiResponse.success && apiResponse.user) {
+                        registeredUser = apiResponse.user;
+                        setActiveUser(registeredUser);
+                    }
+                } catch (apiErr: any) {
+                    console.error("Database registration error:", apiErr);
+                    if (apiErr?.response?.status === 409) {
+                        Alert.alert("Account Exists", "An account with this email address already exists in the database.");
+                        return;
+                    }
+
+                    const errorDetail = apiErr?.response?.data?.message || apiErr?.message || "Server unreachable";
+                    Alert.alert(
+                        "Database Connection Notice",
+                        `Could not connect to the backend database:\n${errorDetail}\n\nPlease ensure your backend server is running with 'npm run dev' in the backend directory.`,
+                        [
+                            {
+                                text: "Cancel",
+                                style: "cancel",
+                            },
+                            {
+                                text: "Test Offline",
+                                onPress: () => {
+                                    const offlineUser = registerMockUser({
+                                        fullName: fullName.trim(),
+                                        email: email.trim(),
+                                        phone: phone.trim(),
+                                        password,
+                                        role,
+                                    });
+                                    navigation.navigate(destination, { user: offlineUser, userName: fullName.trim() });
+                                },
+                            },
+                        ]
+                    );
+                    return;
+                }
+            }
+
+            // 2. Also register in local mockAuth storage so they can sign in later locally
+            const newUser = registerMockUser({
+                fullName: fullName.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
                 password,
                 role,
             });
 
+            const finalUser = registeredUser || newUser;
+
             Alert.alert(
                 "Account Created Successfully!",
-                `Welcome to Green-Hive! Your registration as a ${role} is complete.`,
+                `Welcome to Green-Hive! Your registration as a ${role} has been saved to the database.`,
                 [
                     {
                         text: "Get Started",
-                        onPress: () => navigation.navigate(destination),
+                        onPress: () => navigation.navigate(destination, { user: finalUser, userName: fullName.trim() }),
                     },
                 ]
             );
@@ -207,7 +262,7 @@ const AccountDetailsScreen = ({
                             </TouchableOpacity>
 
                             <Text className={`mb-1 font-semibold text-[#B9E2C1] ${isSmallDevice ? "text-base" : "text-lg"}`}>
-                                Step 2 of 2
+                                Step 3 of 4
                             </Text>
 
                             <Text

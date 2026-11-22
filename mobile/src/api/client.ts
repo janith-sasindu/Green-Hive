@@ -1,27 +1,41 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 /**
- * Dynamically resolves backend API base URL for physical devices (via Expo Go) and emulators.
+ * Dynamically resolves backend API base URL for physical devices (via Expo Go), emulators, and web.
  */
 const getBaseUrl = (): string => {
-  if (process.env.EXPO_PUBLIC_API_URL) {
+  // If explicitly pointing to a remote cloud server (e.g. Render / Heroku / AWS), use it
+  if (
+    process.env.EXPO_PUBLIC_API_URL &&
+    !process.env.EXPO_PUBLIC_API_URL.includes('localhost') &&
+    !process.env.EXPO_PUBLIC_API_URL.includes('127.0.0.1')
+  ) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // Fallback: extract development host machine IP from Expo Constants
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const hostIp = hostUri.split(':')[0];
-    return `http://${hostIp}:5000/api`;
+  // On physical mobile devices (Expo Go / standalone), 'localhost' points to the phone itself.
+  // Extract your computer's local Wi-Fi IP automatically from Expo Constants.
+  if (Platform.OS !== 'web') {
+    const hostUri = Constants.expoConfig?.hostUri;
+    if (hostUri) {
+      const hostIp = hostUri.split(':')[0];
+      return `http://${hostIp}:5000/api`;
+    }
   }
 
+  // Default for Web / Local browser
   return 'http://localhost:5000/api';
 };
 
+const resolvedBaseUrl = getBaseUrl();
+console.log('🌐 Mobile API Base URL:', resolvedBaseUrl);
+
 // API Base Client Configuration
 export const apiClient = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: resolvedBaseUrl,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
