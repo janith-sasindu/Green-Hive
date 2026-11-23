@@ -1,10 +1,9 @@
-import type { FarmerSummary, MarketplaceProduct, SellerState, TransporterSummary } from '../types/seller';
-import { addDays, toDateString } from '../utils/format';
+import type { FarmerSummary, MarketplaceProduct, SellerState, TransporterSummary } from '../../src/types/seller';
+import { addDays, toDateString } from '../../src/utils/format';
 
 /**
- * Sample data for the Retail Seller module.
- * Stands in for the seller REST endpoints until the backend routes are implemented,
- * so dates are generated relative to today to keep the demo data current.
+ * Test fixture only: sample data for the seller workflow unit tests (not used by the app).
+ * Dates are generated relative to today so the fixture stays current.
  */
 
 const SELLER_ID = 1;

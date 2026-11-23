@@ -1,5 +1,5 @@
 // Seller checkout screen.
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -31,7 +31,6 @@ const QUANTITY_STEP_KG = 10;
 const DELIVERY_DAY_OPTIONS = 5;
 const TIME_SLOTS = ['06:00 AM', '08:00 AM', '10:00 AM', '02:00 PM', '04:00 PM'];
 // Stands in for the payment gateway round trip until PayHere is integrated
-const PAYMENT_DELAY_MS = 900;
 
 interface CheckoutLine {
   productName: string;
@@ -150,14 +149,6 @@ export const CheckoutScreen = () => {
   const [isPaying, setIsPaying] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const paymentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (paymentTimer.current) clearTimeout(paymentTimer.current);
-    },
-    [],
-  );
-
   if (!line) {
     return (
       <Screen>
@@ -188,26 +179,24 @@ export const CheckoutScreen = () => {
     setQuantityText(String(next));
   };
 
-  const handlePay = () => {
-    if (!canPay || quantityKg === null) return;
+  const handlePay = async () => {
+    if (!canPay || quantityKg === null || isPaying) return;
     setSubmitError(null);
     setIsPaying(true);
-    paymentTimer.current = setTimeout(() => {
-      try {
-        const order = placeOrder({
-          source:
-            params.kind === 'product'
-              ? { kind: 'product', productId: params.productId, quantityKg }
-              : { kind: 'fulfillment', requestId: params.requestId },
-          deliveryMethod,
-          transport: needsTransport ? { deliveryLocation, requiredDate, requiredTime } : undefined,
-        });
-        navigation.replace('OrderDetail', { orderId: order.id, justPlaced: true });
-      } catch (error) {
-        setIsPaying(false);
-        setSubmitError(error instanceof Error ? error.message : 'The order could not be placed. Please try again.');
-      }
-    }, PAYMENT_DELAY_MS);
+    try {
+      const order = await placeOrder({
+        source:
+          params.kind === 'product'
+            ? { kind: 'product', productId: params.productId, quantityKg }
+            : { kind: 'fulfillment', requestId: params.requestId },
+        deliveryMethod,
+        transport: needsTransport ? { deliveryLocation, requiredDate, requiredTime } : undefined,
+      });
+      navigation.replace('OrderDetail', { orderId: order.id, justPlaced: true });
+    } catch (error) {
+      setIsPaying(false);
+      setSubmitError(error instanceof Error ? error.message : 'The order could not be placed. Please try again.');
+    }
   };
 
   return (

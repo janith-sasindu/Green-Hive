@@ -41,6 +41,8 @@ export const CreateRequirementScreen = () => {
   const [description, setDescription] = useState('');
   // Errors appear after the first submit attempt, then update as the seller corrects each field
   const [showErrors, setShowErrors] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const quantityKg = parsePositiveNumber(quantity);
   const maxBudgetPerKg = parsePositiveNumber(maxBudget);
@@ -58,21 +60,29 @@ export const CreateRequirementScreen = () => {
   }
   const visibleErrors: FieldErrors = showErrors ? errors : {};
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (Object.keys(errors).length > 0 || quantityKg === null || maxBudgetPerKg === null) {
       setShowErrors(true);
       return;
     }
-    const requirement = createRequirement({
-      productName,
-      category,
-      quantityNeededKg: quantityKg,
-      maxBudgetPerKg,
-      deliveryLocation,
-      description,
-      deadlineDate,
-    });
-    navigation.replace('RequirementDetail', { requirementId: requirement.id });
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const requirement = await createRequirement({
+        productName,
+        category,
+        quantityNeededKg: quantityKg,
+        maxBudgetPerKg,
+        deliveryLocation,
+        description,
+        deadlineDate,
+      });
+      navigation.replace('RequirementDetail', { requirementId: requirement.id });
+    } catch (error) {
+      setIsSubmitting(false);
+      setSubmitError(error instanceof Error ? error.message : 'The requirement could not be posted. Please try again.');
+    }
   };
 
   return (
@@ -175,7 +185,8 @@ export const CreateRequirementScreen = () => {
         style={{ paddingBottom: Math.max(insets.bottom, 12) }}
         className="border-t border-gray-100 bg-white px-4 pt-3 dark:border-slate-700 dark:bg-slate-800"
       >
-        <PrimaryButton label="Post Requirement" onPress={handleSubmit} />
+        {submitError && <Text className="mb-2 text-center text-sm font-semibold text-red-600">{submitError}</Text>}
+        <PrimaryButton label="Post Requirement" onPress={handleSubmit} loading={isSubmitting} disabled={isSubmitting} />
       </View>
     </Screen>
   );

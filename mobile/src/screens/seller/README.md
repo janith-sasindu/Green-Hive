@@ -4,7 +4,7 @@ The retail seller part of the Green Hive mobile app: buy farmer products, post p
 requirements, choose transporters and confirm delivery. Built with React Native (Expo),
 TypeScript and NativeWind.
 
-The module currently runs on built-in sample data, so it works without a server.
+The module reads and writes real data through the backend's `/api/seller` routes (MySQL on Aiven). Set `EXPO_PUBLIC_API_URL` in `mobile/.env`; with no login token the API serves the development seller (user id 5).
 
 ## Running it
 
@@ -66,15 +66,13 @@ other requests.
 | --- | --- |
 | `src/screens/seller/` | The screens listed above |
 | `src/components/seller/` | Shared parts: header, tab bar, cards, forms, bottom sheets |
-| `src/context/SellerContext.tsx` | The seller data and the actions that change it |
-| `src/data/sellerMockData.ts` | Sample data used by the module |
+| `src/context/SellerContext.tsx` | The seller data (loaded from the API) and the actions that change it |
+| `src/api/sellerApi.ts` | Calls to the `/api/seller` endpoints |
 | `src/utils/` | `sellerWorkflow.ts` (rules), `sellerStatus.ts` (status labels), `format.ts`, `validation.ts` |
 | `src/types/seller.ts` | Types for orders, products, requirements and notifications |
-| `tests/` | Unit tests for the rules and helpers |
+| `tests/` | Unit tests for the rules and helpers (`tests/fixtures/` holds test-only sample data) |
 
 ## Not built yet
 
-- **No server connection.** Data lives in memory and resets when the app restarts.
 - **Payment is simulated.** No payment gateway is called.
-- **Pickup confirmation** belongs to the Transporter module. The sample data already
-  includes an order that is picked up, so the rest of the flow can be tried.
+- **Pickup confirmation** belongs to the Transporter module (it moves the order to In Transit).
