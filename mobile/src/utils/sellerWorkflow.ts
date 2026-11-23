@@ -1,3 +1,4 @@
+// Workflow rules for the seller module: orders, requirements, transport offers and notifications.
 import { CATEGORY_EMOJI } from '../constants/productCategories';
 import type {
   CreateRequirementInput,
