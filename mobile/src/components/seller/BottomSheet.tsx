@@ -1,3 +1,4 @@
+// Slide-up modal sheet with a title, scrollable body and optional pinned footer.
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
