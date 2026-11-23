@@ -1,5 +1,5 @@
 // Tests for the seller workflow rules.
-import { createInitialSellerState } from '../src/data/sellerMockData';
+import { createInitialSellerState } from './fixtures/sellerFixture';
 import type { SellerState } from '../src/types/seller';
 import {
   approveTransportOffer,
