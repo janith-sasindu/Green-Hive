@@ -1,3 +1,4 @@
+// Domain types for the Retail Seller module.
 import type { Advertisement, FulfillmentRequest } from './farmer';
 import type { TransportationJob, TransportationOffer } from './transporter';
 
