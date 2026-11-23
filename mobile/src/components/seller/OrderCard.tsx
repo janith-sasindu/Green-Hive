@@ -1,3 +1,4 @@
+// Summary card for a seller order in list views.
 import React from 'react';
 import { Text, View } from 'react-native';
 import type { Order } from '../../types/seller';
