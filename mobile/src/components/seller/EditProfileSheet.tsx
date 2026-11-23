@@ -1,3 +1,4 @@
+// Bottom sheet for editing the seller's contact details and location, with validation.
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
