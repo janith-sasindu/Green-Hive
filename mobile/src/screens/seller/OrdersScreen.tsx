@@ -1,3 +1,4 @@
+// Seller orders list screen.
 import React, { useMemo, useState } from 'react';
 import { FlatList, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
