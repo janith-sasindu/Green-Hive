@@ -1,3 +1,4 @@
+// Bottom sheet with Help & Support FAQs for the seller.
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
