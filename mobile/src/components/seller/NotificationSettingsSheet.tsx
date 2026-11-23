@@ -1,3 +1,4 @@
+// Bottom sheet for choosing which notification categories the seller receives.
 import React, { useEffect, useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
