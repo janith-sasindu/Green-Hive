@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -171,10 +171,14 @@ export const OrderDetailScreen = () => {
   const releaseRecipient = transported ? (transporterName ?? 'the transporter') : order.farmer.name;
 
   // Only reachable while canConfirmReceipt(order) holds, which is the rule confirmReceipt enforces
-  const handleConfirmReceipt = () => {
+  const handleConfirmReceipt = async () => {
     setConfirmVisible(false);
-    confirmReceipt(order.id);
-    setNotice(`Receipt confirmed. ${formatLkr(releaseAmount)} was released to ${releaseRecipient}.`);
+    try {
+      await confirmReceipt(order.id);
+      setNotice(`Receipt confirmed. ${formatLkr(releaseAmount)} was released to ${releaseRecipient}.`);
+    } catch (error) {
+      Alert.alert('Could not confirm receipt', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
 
   return (
