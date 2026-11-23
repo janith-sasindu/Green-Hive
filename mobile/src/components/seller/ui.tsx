@@ -1,3 +1,4 @@
+// Shared UI building blocks for the seller screens: cards, buttons, badges, form fields and dialogs.
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
