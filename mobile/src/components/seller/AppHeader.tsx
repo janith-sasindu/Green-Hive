@@ -1,3 +1,4 @@
+// Shared header for the Retail Seller screens.
 import React from 'react';
 import { Image, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
