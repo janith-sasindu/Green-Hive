@@ -1,3 +1,4 @@
+// Labels and badge tones for seller order, requirement and payment statuses.
 import type { FulfillmentRequest } from '../types/farmer';
 import type { Order, PaymentStatus, SellerRequirement } from '../types/seller';
 import type { TransportationJob, TransportationOffer } from '../types/transporter';
