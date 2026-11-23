@@ -1,3 +1,4 @@
+// Summary card for a seller requirement in list views.
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';

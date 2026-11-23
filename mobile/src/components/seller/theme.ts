@@ -1,3 +1,4 @@
+// Theme helpers for the seller module: gradients and color-scheme aware values.
 import type React from 'react';
 import { useColorScheme } from 'nativewind';
 import type { Feather } from '@expo/vector-icons';

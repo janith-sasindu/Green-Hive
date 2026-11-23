@@ -1,3 +1,4 @@
+// Navigation param lists for the seller tab and stack navigators.
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type SellerTabParamList = {

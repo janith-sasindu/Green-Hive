@@ -1,3 +1,4 @@
+// Seller marketplace screen.
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';

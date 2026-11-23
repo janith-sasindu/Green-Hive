@@ -1,3 +1,4 @@
+// Custom bottom tab bar for the seller navigator.
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

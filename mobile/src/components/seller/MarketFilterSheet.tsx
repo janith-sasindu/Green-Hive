@@ -1,3 +1,4 @@
+// Bottom sheet for sorting and filtering marketplace listings.
 import React, { useEffect, useState } from 'react';
 import { Switch, Text, TouchableOpacity, View } from 'react-native';
 import { BottomSheet } from './BottomSheet';
